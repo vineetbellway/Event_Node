@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  s
+  <head>
+    <style>
+      html {
+        zoom: 0.4;
+      }
+      table {
+        font-size: 12;
+        font-family: arial, sans-serif;
+        border-collapse: collapse;
+      }
+
+      td,
+      th {
+        width: auto;
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+      }
+
+      tr:nth-child(even) {
+        background-color: #dddddd;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Employees List</h2>
+
+    <table>
+      <tr>
+        <th>name</th>
+        <th>designation</th>
+        <th>address</th>
+        <th>mobile</th>
+        <th>alternative_mobile</th>
+        <th>email</th>
+      </tr>
+
+      {{#each customers.cust}}
+      <tr>
+        <td>{{this.name}}</td>
+        <td>{{this.designation}}</td>
+        <td>{{this.address}}</td>
+        <td>{{this.mobile}}</td>
+        <td>${{this.alternative_mobile}}</td>
+        <td>${{this.email}}</td>
+      </tr>
+      {{/each}}
+    </table>
+  </body>
+</html>

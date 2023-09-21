@@ -23,14 +23,11 @@ mongoose
   });
 
 app.use(cors());
-app.set("views", path.resolve(__dirname, "./views"));
-app.set(path.join(__dirname, "./pdfs"));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static("/images"));
 app.use("/api/v1", require("./routes/app.routes"));
-app.use("/pdfs", express.static(path.join(__dirname, "pdfs")));
-Server.listen(process.env.PORT || 3010, function () {
+Server.listen(process.env.PORT || 3000, function () {
   console.log("Ready to go!");
 });
 

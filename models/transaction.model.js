@@ -1,30 +1,65 @@
 const mongoose = require("mongoose");
 const mongoosePaginate = require("mongoose-paginate-v2");
 var aggregatePaginate = require("mongoose-aggregate-paginate-v2");
+const { baseStatus } = require("../utils/enumerator");
 
 const schema = new mongoose.Schema(
   {
-    user_id: {
+    guest_id: {
       type: mongoose.Schema.Types.ObjectID,
-      ref: "User",
+      ref: "Guest",
     },
-    vendor_id: {
-      type: mongoose.Schema.Types.ObjectID,
-      ref: "Vendor",
-    },
-    type: {
+    booking_type: {
       type: String,
+      default: "entry", //entry, loyalty, order
+    },
+    event_id: {
+      type: mongoose.Schema.Types.ObjectID,
+      ref: "EventModel",
+    },
+    approver_type: {
+      type: String,
+      default: "validator", //validator, seller
+    },
+    validator_id: {
+      type: mongoose.Schema.Types.ObjectID,
+      ref: "Validator",
+    },
+    seller_id: {
+      type: mongoose.Schema.Types.ObjectID,
+      ref: "Seller",
+    },
+    approved_at: {
+      type: Date,
     },
     amount: {
       type: Number,
       required: true,
     },
+    points: {
+      type: Number,
+      default: 0,
+    },
+    total: {
+      type: Number,
+      required: true,
+    },
     status: {
       type: String,
-      default: "active",
+      default: baseStatus.pending,
     },
     upi_id: {
       type: String,
+    },
+    reference: {
+      type: String,
+    },
+    from: {
+      type: Date,
+      default: Date.now(),
+    },
+    to: {
+      type: Date,
     },
   },
   {
@@ -36,6 +71,4 @@ const schema = new mongoose.Schema(
 schema.plugin(mongoosePaginate);
 schema.plugin(aggregatePaginate);
 
-const Payment = mongoose.model("Payment", schema);
-
-module.exports = Payment;
+module.exports = mongoose.model("Transaction", schema);

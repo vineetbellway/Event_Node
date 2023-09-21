@@ -1,8 +1,6 @@
-const User = require("../../models/user.model");
+const User = require("../models/user.model");
+const { baseStatus, userStatus } = require("../utils/enumerator");
 
-const {
-  userStatus,
-} = require("../../utils/enumerator.js");
 //multer
 const multer = require("multer");
 const storage = multer.diskStorage({
@@ -21,31 +19,35 @@ const storage = multer.diskStorage({
   },
 });
 
-
-
 exports.login = async (req, res, next) => {
   let phone = req.body.phone;
   let code = req.body.code;
+  console.log("aaa0");
   if (!phone) {
+    console.log("aaa1");
     return res.status(400).send({
       status: false,
       message: "body phone missing",
     });
   } else if (!code) {
+    console.log("aaa3");
     return res.status(400).send({
       status: false,
       message: "body code missing",
     });
   } else
     try {
-      const userModel = await User.findByPhoneCode(code + phone);
+      console.log("aaa4");
+      const userModel = await User.findOne({ phone: phone, code: code });
       if (userModel) {
+        console.log("aaa5");
         return res.send({
           status: true,
           message: "Login Success",
           data: userModel,
         });
       } else {
+        console.log("aaa6");
         const user = new User({
           uid: req.uid,
           phone: phone,
@@ -53,17 +55,25 @@ exports.login = async (req, res, next) => {
           code_phone: code + phone,
         });
         try {
+          console.log("aaa7");
           await user.save();
+          console.log("aaa8");
           return res
             .status(201)
             .send({ status: true, message: "Sign-Up Success", data: user });
         } catch (error) {
-          return res.status(500).send({ status: false, message: error });
+          console.log("aaa9");
+          return res
+            .status(500)
+            .send({ status: false, message: error.toString() });
         }
       }
     } catch (error) {
+      console.log("aaa10");
       if (error) {
-        return res.status(500).send({ status: false, message: error });
+        return res
+          .status(500)
+          .send({ status: false, message: error.toString() });
       } else {
         return res
           .status(500)
@@ -72,10 +82,11 @@ exports.login = async (req, res, next) => {
     }
 };
 
-exports.get_user = async (req, res) => {
+exports.get_users = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
+    const status = req.query.status || userStatus.active;
 
     const myCustomLabels = {
       totalDocs: "totalDocs",
@@ -95,7 +106,7 @@ exports.get_user = async (req, res) => {
       customLabels: myCustomLabels,
       // populate: "user_id",
     };
-    await User.paginate({ status: userStatus.active }, options)
+    await User.paginate({}, options)
       .then((results) => {
         if (results) {
           res
@@ -108,7 +119,7 @@ exports.get_user = async (req, res) => {
       .catch((error) => {
         res.send({
           status: false,
-          message: error.toString() ?? "user search error",
+          message: error.toString() ?? "Error",
         });
       });
   } catch (error) {
@@ -119,13 +130,12 @@ exports.get_user = async (req, res) => {
   }
 };
 
-exports.get_user_by_id = async (req, res) => {
+exports.get_user = async (req, res) => {
   var id = req.params.id;
   if (!id) {
     res.status(400).send({ status: false, message: "id missing" });
   } else {
     try {
-      
       await User.findOne({ _id: id, status: userStatus.active })
         .then((results) => {
           if (results) {
@@ -139,7 +149,7 @@ exports.get_user_by_id = async (req, res) => {
         .catch((error) => {
           res.send({
             status: false,
-            message: error.toString() ?? "user search error",
+            message: error.toString() ?? "Error",
           });
         });
     } catch (error) {
@@ -151,6 +161,62 @@ exports.get_user_by_id = async (req, res) => {
   }
 };
 
+exports.delete_user = async (req, res) => {
+  var id = req.params.id;
+  if (!id) {
+    res.status(400).send({ status: false, message: "id missing" });
+  } else {
+    try {
+      await User.deleteOne({ _id: id })
+        .then((results) => {
+          if (results) {
+            res
+              .status(200)
+              .send({ status: true, message: "success", data: results });
+          } else {
+            res.status(404).send({ status: false, message: "user not found" });
+          }
+        })
+        .catch((error) => {
+          res.send({
+            status: false,
+            message: error.toString() ?? "Error",
+          });
+        });
+    } catch (error) {
+      res.status(500).send({
+        status: false,
+        error: error.toString() ?? "Internal Server Error",
+      });
+    }
+  }
+};
+
+exports.delete_users = async (req, res) => {
+  try {
+    await User.deleteMany()
+      .then((results) => {
+        if (results) {
+          res
+            .status(200)
+            .send({ status: true, message: "success", data: results });
+        } else {
+          res.status(404).send({ status: false, message: "user not found" });
+        }
+      })
+      .catch((error) => {
+        res.send({
+          status: false,
+          message: error.toString() ?? "Error",
+        });
+      });
+  } catch (error) {
+    res.status(500).send({
+      status: false,
+      error: error.toString() ?? "Internal Server Error",
+    });
+  }
+};
 
 exports.update_user = async (req, res, next) => {
   var id = req.params.id;
@@ -200,7 +266,7 @@ exports.delete_user = async (req, res, next) => {
         .catch((error) => {
           res.send({
             status: false,
-            message: error.toString() ?? "user search error",
+            message: error.toString() ?? "Error",
           });
         });
     } catch (error) {
@@ -212,60 +278,60 @@ exports.delete_user = async (req, res, next) => {
   }
 };
 
-exports.add_image = async (req,res,next) => {
-     var id = req.params.id;
-     if (id) {
-       var upload = multer({
-         storage: storage,
-         limits: {
-           fileSize: 1024 * 1024 * 5,
-         },
-         fileFilter: (req, file, cb) => {
-           if (
-             file.mimetype == "image/png" ||
-             file.mimetype == "image/jpg" ||
-             file.mimetype == "image/jpeg" ||
-             file.mimetype == "image/pjpeg"
-           ) {
-             cb(null, true);
-           } else {
-             cb(null, false);
-             return cb(
-               new Error("Only .png, .jpg and .jpeg .pjpeg format allowed!")
-             );
-           }
-         },
-       }).single("user_image");
-       upload(req, res, function (err) {
-         if (err) {
-           console.log(err.toString());
-           return res.status(500).send({
-             status: false,
-             message: err.toString(),
-           });
-         } else {
-           User.findByIdAndUpdate(
-             { _id: id },
-             { $set: { photo: `user-${id}.${file.mimetype}` } }
-           )
-             .then((link) => {
-               res.status(200).send({
-                 status: true,
-                 message: "images/user_images/" + req.file.originalname,
-               });
-             })
-             .catch((error) => {
-               res.send({
-                 status: false,
-                 message: error.toString() ?? "user search error",
-               });
-             });
-         }
-       });
-     } else {
-       return res.status(400).send({
-         status: false,
-         message: "param id missing",
-       });
-     }
-}
+exports.add_image = async (req, res, next) => {
+  var id = req.params.id;
+  if (id) {
+    var upload = multer({
+      storage: storage,
+      limits: {
+        fileSize: 1024 * 1024 * 5,
+      },
+      fileFilter: (req, file, cb) => {
+        if (
+          file.mimetype == "image/png" ||
+          file.mimetype == "image/jpg" ||
+          file.mimetype == "image/jpeg" ||
+          file.mimetype == "image/pjpeg"
+        ) {
+          cb(null, true);
+        } else {
+          cb(null, false);
+          return cb(
+            new Error("Only .png, .jpg and .jpeg .pjpeg format allowed!")
+          );
+        }
+      },
+    }).single("user_image");
+    upload(req, res, function (err) {
+      if (err) {
+        console.log(err.toString());
+        return res.status(500).send({
+          status: false,
+          message: err.toString(),
+        });
+      } else {
+        User.findByIdAndUpdate(
+          { _id: id },
+          { $set: { photo: `user-${id}.${file.mimetype}` } }
+        )
+          .then((link) => {
+            res.status(200).send({
+              status: true,
+              message: "images/user_images/" + req.file.originalname,
+            });
+          })
+          .catch((error) => {
+            res.send({
+              status: false,
+              message: error.toString() ?? "Error",
+            });
+          });
+      }
+    });
+  } else {
+    return res.status(400).send({
+      status: false,
+      message: "param id missing",
+    });
+  }
+};

@@ -3,42 +3,30 @@ const mongoosePaginate = require("mongoose-paginate-v2");
 var aggregatePaginate = require("mongoose-aggregate-paginate-v2");
 const { baseStatus } = require("../utils/enumerator");
 
-var validateMobile = function (mobile) {
-  var re = /^[0-9]{10}$/g;
-  return re.test(mobile);
-};
-
 const schema = new mongoose.Schema(
   {
-    uid: {
-      type: String,
+    user_id: {
+      type: mongoose.Schema.Types.ObjectID,
+      ref: "User",
       required: true,
       unique: true,
       index: true,
     },
-    phone: {
+    full_name: {
       type: String,
-      required: "Mobile is required",
-      validate: [validateMobile, "Please fill a valid mobile number"],
-      match: [/^[0-9]{10}$/g, "Please fill a valid mobile number"],
     },
-    code: {
+    district: {
       type: String,
-      required: true,
     },
-    code_phone: {
+    state: {
       type: String,
-      required: true,
-      unique: true,
-      index: true,
     },
-    type: {
+    country: {
       type: String,
-      default: "guest", //guest, seller, validator
     },
     status: {
       type: String,
-      default: baseStatus.pending,
+      default: baseStatus.active,
     },
   },
   {
@@ -49,4 +37,4 @@ const schema = new mongoose.Schema(
 schema.plugin(mongoosePaginate);
 schema.plugin(aggregatePaginate);
 
-module.exports = mongoose.model("User", schema);
+module.exports = mongoose.model("Validator", schema);

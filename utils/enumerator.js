@@ -6,39 +6,27 @@ const userStatus = {
 
 const userTypes = {
   admin: "admin",
-  stitcher: "stitcher",
-  embroider: "embroider",
-  cutter: "cutter",
-  packager: "packager",
-  finisher: "finisher",
+  guest: "guest",
+  seller: "seller",
+  validator: "validator",
 };
 
 const baseStatus = {
+  pending: "pending",
   active: "active",
   blocked: "blocked",
   deleted: "deleted",
 };
 
-const workStatus = {
+const sellerStatus = {
   pending: "pending",
-  completed: "completed",
-};
-
-const orderStatus = {
-  pending: "pending",
-  completed: "complete",
+  active: "active",
+  blocked: "blocked",
   deleted: "deleted",
 };
 
-const paymentStatus = {
-  pending: "pending",
-  paid: "paid",
-};
 module.exports = {
   userStatus,
   userTypes,
   baseStatus,
-  workStatus,
-  paymentStatus,
-  orderStatus,
 };

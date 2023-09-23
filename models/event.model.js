@@ -25,9 +25,11 @@ const schema = new mongoose.Schema(
     },
     name: {
       type: String,
+      index: "text",
     },
     venue: {
       type: String,
+      index: "text",
     },
     location: {
       type: String,
@@ -40,6 +42,7 @@ const schema = new mongoose.Schema(
     },
     coupon_name: {
       type: String,
+      index: "text",
     },
     tax_name: {
       type: String,

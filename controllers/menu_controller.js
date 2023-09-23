@@ -126,6 +126,39 @@ exports.get_menu = async (req, res) => {
   }
 };
 
+exports.get_menu_by_event_id = async (req, res) => {
+  try {
+    var id = req.params.id;
+    await Menu.aggregate([
+      {
+        $match: {
+          event_id: new mongoose.Types.ObjectId(id),
+        },
+      },
+    ])
+      .then((result) => {
+        if (result) {
+          res.status(200).send({
+            status: true,
+            message: "success",
+            data: result,
+          });
+        }
+      })
+      .catch((error) => {
+        res.send({
+          status: false,
+          message: error.toString() ?? "Error",
+        });
+      });
+  } catch (error) {
+    res.status(500).send({
+      status: false,
+      message: error.toString() ?? "Internal Server Error",
+    });
+  }
+};
+
 exports.delete_menu = async (req, res) => {
   var id = req.params.id;
   if (!id) {

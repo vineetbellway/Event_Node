@@ -24,6 +24,9 @@ const schema = new mongoose.Schema(
     address: {
       type: String,
     },
+    email: {
+      type: String,
+    },
     district: {
       type: String,
     },

@@ -13,6 +13,8 @@ const transactionController = require("../controllers/transaction_controller");
 const orderItemController = require("../controllers/order_item_controller");
 const invitationController = require("../controllers/invitation_controller");
 const relativeController = require("../controllers/relative_controller");
+const subscriptionPlanController = require("../controllers/subscription_plan_controller");
+const membershipController = require("../controllers/membership_controller");
 
 router.post("/user", auth, userController.login);
 router.put("/user/:id", auth, userController.update_user);
@@ -133,5 +135,53 @@ router.get("/relative", auth, relativeController.get_relatives);
 router.get("/relative/:id", auth, relativeController.get_relative);
 router.delete("/relative/:id", auth, relativeController.delete_relative);
 router.delete("/relative", auth, relativeController.delete_relatives);
+
+router.post(
+  "/subscription_plan",
+  auth,
+  subscriptionPlanController.create_subscription_plan
+);
+router.put(
+  "/subscription_plan/:id",
+  auth,
+  subscriptionPlanController.update_subscription_plan
+);
+router.get(
+  "/subscription_plan",
+  auth,
+  subscriptionPlanController.get_subscription_plans
+);
+router.get(
+  "/search_subscription_plan/:keyword",
+  auth,
+  subscriptionPlanController.search_subscription_plans
+);
+router.get(
+  "/subscription_plan/:id",
+  auth,
+  subscriptionPlanController.get_subscription_plan
+);
+router.delete(
+  "/subscription_plan/:id",
+  auth,
+  subscriptionPlanController.delete_subscription_plan
+);
+router.delete(
+  "/subscription_plan",
+  auth,
+  subscriptionPlanController.delete_subscription_plans
+);
+
+router.post("/membership", auth, membershipController.create_membership);
+router.put("/membership/:id", auth, membershipController.update_membership);
+router.get("/membership", auth, membershipController.get_memberships);
+router.get(
+  "/membership/:keyword",
+  auth,
+  membershipController.search_memberships
+);
+router.get("/membership/:id", auth, membershipController.get_membership);
+router.delete("/membership/:id", auth, membershipController.delete_membership);
+router.delete("/membership", auth, membershipController.delete_memberships);
 
 module.exports = router;

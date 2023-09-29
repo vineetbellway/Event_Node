@@ -14,10 +14,10 @@ const schema = new mongoose.Schema(
       type: String,
     },
     uom: {
-      type: String,
+      type: String, // ml, litre, piece, full, half, quarter
     },
     category: {
-      type: String,
+      type: String, // food, liquor, beverage
     },
     amount: {
       type: Number,

@@ -180,6 +180,57 @@ exports.search_events = async (req, res) => {
   }
 };
 
+exports.event_by_seller_id = async (req, res) => {
+  var id = req.params.id;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const myCustomLabels = {
+    totalDocs: "totalDocs",
+    docs: "data",
+    limit: "limit",
+    page: "page",
+    nextPage: "nextPage",
+    prevPage: "prevPage",
+    totalPages: "totalPages",
+    pagingCounter: "slNo",
+    meta: "paginator",
+  };
+
+  const options = {
+    page: page,
+    limit: limit,
+    customLabels: myCustomLabels,
+  };
+  try {
+    var myAggregate = EventModel.aggregate([
+      {
+        $match: { seller_id: new mongoose.Types.ObjectId(id) },
+      },
+    ]);
+    await EventModel.aggregatePaginate(myAggregate, options)
+      .then((result) => {
+        if (result) {
+          res.status(200).send({
+            status: true,
+            message: "success",
+            data: result,
+          });
+        }
+      })
+      .catch((error) => {
+        res.send({
+          status: false,
+          message: error.toString() ?? "Error",
+        });
+      });
+  } catch (error) {
+    res.status(500).send({
+      status: false,
+      message: error.toString() ?? "Internal Server Error",
+    });
+  }
+};
+
 exports.delete_event = async (req, res) => {
   var id = req.params.id;
   if (!id) {

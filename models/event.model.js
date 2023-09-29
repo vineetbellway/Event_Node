@@ -10,10 +10,10 @@ const schema = new mongoose.Schema(
       ref: "Seller",
       required: true,
     },
-    contact_name: {
+    primary_number: {
       type: String,
     },
-    contact_number: {
+    secondary_number: {
       type: String,
     },
     type: {
@@ -31,7 +31,13 @@ const schema = new mongoose.Schema(
       type: String,
       index: "text",
     },
-    location: {
+    country: {
+      type: String,
+    },
+    state: {
+      type: String,
+    },
+    city: {
       type: String,
     },
     start_time: {

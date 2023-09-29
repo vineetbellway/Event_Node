@@ -60,6 +60,7 @@ router.post("/event", auth, eventController.create_event);
 router.put("/event/:id", auth, eventController.update_event);
 router.get("/event", auth, eventController.get_events);
 router.get("/search_event/:keyword", auth, eventController.search_events);
+router.get("/event_by_seller_id/:id", auth, eventController.event_by_seller_id);
 router.get("/event/:id", auth, eventController.get_event);
 router.delete("/event/:id", auth, eventController.delete_event);
 router.delete("/event", auth, eventController.delete_events);

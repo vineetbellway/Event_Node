@@ -1,6 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const { auth } = require("../middleware/auth");
+const { checkSellerMemberShipPlanStatus } = require("../middleware/checkMemberShipPlanStatus");
+const cron = require("node-cron");
+
 
 const userController = require("../controllers/user_controller");
 const eventController = require("../controllers/event_controller");
@@ -16,7 +19,7 @@ const relativeController = require("../controllers/relative_controller");
 const subscriptionPlanController = require("../controllers/subscription_plan_controller");
 const membershipController = require("../controllers/membership_controller");
 
-router.post("/user", auth, userController.login);
+router.post("/user", checkSellerMemberShipPlanStatus, userController.login);
 router.put("/user/:id", auth, userController.update_user);
 router.get("/user", auth, userController.get_users);
 router.get("/user/:id", auth, userController.get_user);
@@ -44,10 +47,10 @@ router.get(
 router.delete("/seller/:id", auth, sellerController.delete_seller);
 router.delete("/seller", auth, sellerController.delete_sellers);
 
-router.post("/validator", auth, validatorController.create_validator);
-router.put("/validator/:id", auth, validatorController.update_validator);
-router.get("/validator", auth, validatorController.get_validators);
-router.get("/validator/:id", auth, validatorController.get_validator);
+router.post("/validator", validatorController.create_validator);
+router.put("/validator/:id", validatorController.update_validator);
+router.get("/validator", validatorController.get_validators);
+router.get("/validator/:id", validatorController.get_validator);
 router.get(
   "/validator_by_user_id/:id",
   auth,
@@ -75,106 +78,100 @@ router.delete("/menu", auth, menuController.delete_menus);
 
 router.post(
   "/validator-event",
-  auth,
   validatorEventController.create_validator_event
 );
 router.put(
   "/validator-event/:id",
-  auth,
   validatorEventController.update_validator_event
 );
 router.get(
   "/validator-event",
-  auth,
   validatorEventController.get_validator_events
 );
 router.get(
   "/validator-event/:id",
-  auth,
   validatorEventController.get_validator_event
 );
 router.delete(
   "/validator-event/:id",
-  auth,
   validatorEventController.delete_validator_event
 );
 router.delete(
   "/validator-event",
-  auth,
   validatorEventController.delete_validator_events
 );
 
-router.post("/order-item", auth, orderItemController.create_order_item);
-router.put("/order-item/:id", auth, orderItemController.update_order_item);
-router.get("/order-item", auth, orderItemController.get_order_items);
-router.get("/order-item/:id", auth, orderItemController.get_order_item);
-router.delete("/order-item/:id", auth, orderItemController.delete_order_item);
-router.delete("/order-item", auth, orderItemController.delete_order_items);
+router.post("/order-item", orderItemController.create_order_item);
+router.put("/order-item/:id", orderItemController.update_order_item);
+router.get("/order-item", orderItemController.get_order_items);
+router.get("/order-item/:id", orderItemController.get_order_item);
+router.delete("/order-item/:id", orderItemController.delete_order_item);
+router.delete("/order-item", orderItemController.delete_order_items);
 
-router.post("/transaction", auth, transactionController.create_transaction);
-router.put("/transaction/:id", auth, transactionController.update_transaction);
-router.get("/transaction", auth, transactionController.get_transactions);
-router.get("/transaction/:id", auth, transactionController.get_transaction);
+router.post("/transaction", transactionController.create_transaction);
+router.put("/transaction/:id", transactionController.update_transaction);
+router.get("/transaction", transactionController.get_transactions);
+router.get("/transaction/:id", transactionController.get_transaction);
 router.delete(
   "/transaction/:id",
-  auth,
   transactionController.delete_transaction
 );
 router.delete("/transaction", auth, transactionController.delete_transactions);
 
 router.post("/invitation", auth, invitationController.create_invitation);
 router.put("/invitation/:id", auth, invitationController.update_invitation);
-router.get("/invitation", auth, invitationController.get_invitations);
-router.get("/invitation/:id", auth, invitationController.get_invitation);
-router.delete("/invitation/:id", auth, invitationController.delete_invitation);
-router.delete("/invitation", auth, invitationController.delete_invitations);
+router.get("/invitation", checkSellerMemberShipPlanStatus
+, invitationController.get_invitations);
+router.get("/invitation/:id", checkSellerMemberShipPlanStatus
+, invitationController.get_invitation);
+router.delete("/invitation/:id", checkSellerMemberShipPlanStatus
+, invitationController.delete_invitation);
+router.delete("/invitation", checkSellerMemberShipPlanStatus
+, invitationController.delete_invitations);
 
-router.post("/relative", auth, relativeController.create_relative);
-router.post("/many_relative", auth, relativeController.create_many_relative);
-router.put("/relative/:id", auth, relativeController.update_relative);
-router.get("/relative", auth, relativeController.get_relatives);
-router.get("/relative/:id", auth, relativeController.get_relative);
-router.delete("/relative/:id", auth, relativeController.delete_relative);
-router.delete("/relative", auth, relativeController.delete_relatives);
+router.post("/relative", relativeController.create_relative);
+router.post("/many_relative", relativeController.create_many_relative);
+router.put("/relative/:id", relativeController.update_relative);
+router.get("/relative", relativeController.get_relatives);
+router.get("/relative/:id",relativeController.get_relative);
+router.delete("/relative/:id", relativeController.delete_relative);
+router.delete("/relative",  relativeController.delete_relatives);
 
 router.post(
   "/subscription_plan",
-  auth,
+
   subscriptionPlanController.create_subscription_plan
 );
 router.put(
   "/subscription_plan/:id",
-  auth,
   subscriptionPlanController.update_subscription_plan
 );
 router.get(
   "/subscription_plan",
-  auth,
+   checkSellerMemberShipPlanStatus,
+
   subscriptionPlanController.get_subscription_plans
 );
 router.get(
   "/search_subscription_plan/:keyword",
-  auth,
   subscriptionPlanController.search_subscription_plans
 );
 router.get(
   "/subscription_plan/:id",
-  auth,
   subscriptionPlanController.get_subscription_plan
 );
 router.delete(
   "/subscription_plan/:id",
-  auth,
   subscriptionPlanController.delete_subscription_plan
 );
 router.delete(
   "/subscription_plan",
-  auth,
   subscriptionPlanController.delete_subscription_plans
 );
+router.post("/membership",membershipController.create_membership);
+router.put("/membership/:id",membershipController.update_membership);
+router.put("/update-membership-plan-status/:id", membershipController.update_membership_plan_status);
 
-router.post("/membership", auth, membershipController.create_membership);
-router.put("/membership/:id", auth, membershipController.update_membership);
 router.get("/membership", auth, membershipController.get_memberships);
 router.get(
   "/membership/:keyword",
@@ -184,5 +181,9 @@ router.get(
 router.get("/membership/:id", auth, membershipController.get_membership);
 router.delete("/membership/:id", auth, membershipController.delete_membership);
 router.delete("/membership", auth, membershipController.delete_memberships);
+
+cron.schedule("* * * * *", function () {
+  disableSellerServices();
+});
 
 module.exports = router;

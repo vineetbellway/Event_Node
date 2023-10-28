@@ -18,6 +18,9 @@ const invitationController = require("../controllers/invitation_controller");
 const relativeController = require("../controllers/relative_controller");
 const subscriptionPlanController = require("../controllers/subscription_plan_controller");
 const membershipController = require("../controllers/membership_controller");
+const orderController = require("../controllers/order_controller");
+
+
 
 router.post("/user", checkSellerMemberShipPlanStatus, userController.login);
 router.put("/user/:id", auth, userController.update_user);
@@ -59,7 +62,7 @@ router.get(
 router.delete("/validator/:id", auth, validatorController.delete_validator);
 router.delete("/validator", auth, validatorController.delete_validators);
 
-router.post("/event", auth, eventController.create_event);
+router.post("/event", eventController.create_event);
 router.put("/event/:id", auth, eventController.update_event);
 router.get("/event", auth, eventController.get_events);
 router.get("/search_event/:keyword", auth, eventController.search_events);
@@ -181,6 +184,9 @@ router.get(
 router.get("/membership/:id", auth, membershipController.get_membership);
 router.delete("/membership/:id", auth, membershipController.delete_membership);
 router.delete("/membership", auth, membershipController.delete_memberships);
+
+router.post("/create-order", orderController.create_order);
+
 
 cron.schedule("* * * * *", function () {
   disableSellerServices();

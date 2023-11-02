@@ -19,8 +19,8 @@ const relativeController = require("../controllers/relative_controller");
 const subscriptionPlanController = require("../controllers/subscription_plan_controller");
 const membershipController = require("../controllers/membership_controller");
 const orderController = require("../controllers/order_controller");
-
-
+const loyalityController = require("../controllers/loyalty_controller");
+const facilityController = require("../controllers/facility_controller");
 
 router.post("/user", checkSellerMemberShipPlanStatus, userController.login);
 router.put("/user/:id", auth, userController.update_user);
@@ -186,6 +186,15 @@ router.delete("/membership/:id", auth, membershipController.delete_membership);
 router.delete("/membership", auth, membershipController.delete_memberships);
 
 router.post("/create-order", orderController.create_order);
+router.post("/consume-loyalty-point", loyalityController.consume_loyalty_point);
+
+
+router.post("/add-facility", facilityController.add_facility);
+router.put("/update-facility", facilityController.update_facility);
+router.get("/facilities", facilityController.get_facilities);
+
+// manage validator event status
+router.put("/manage-validator-event-status/:id", validatorEventController.manage_validator_event_status);
 
 
 cron.schedule("* * * * *", function () {

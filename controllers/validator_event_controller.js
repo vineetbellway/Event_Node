@@ -260,3 +260,39 @@ exports.update_validator_event = (req, res, next) => {
     }
   }
 };
+
+
+exports.manage_validator_event_status = (req, res, next) => {
+  const id = req.params.id;
+  if (!id) {
+    res.status(400).send({ status: false, message: "id missing" });
+  } else {
+    try {
+      ValidatorEvent.findByIdAndUpdate(id,{"status": req.body.status}, { new: true })
+        .then((result) => {
+          if (result) {
+            res.status(201).send({
+              status: true,
+              message: "Updated",
+              data: result,
+            });
+          } else {
+            res.status(404).send({ status: false, message: "Not updated" });
+          }
+        })
+        .catch((error) => {
+          res.send({
+            status: false,
+            message: error.toString() ?? "Error",
+          });
+        });
+    } catch (error) {
+      res.status(500).send({
+        status: false,
+        message: "failure",
+        error: error ?? "Internal Server Error",
+      });
+    }
+  }
+};
+

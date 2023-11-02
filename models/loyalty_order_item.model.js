@@ -47,4 +47,4 @@ const schema = new mongoose.Schema(
 schema.plugin(mongoosePaginate);
 schema.plugin(aggregatePaginate);
 
-module.exports = mongoose.model("OrderItem", schema);
+module.exports = mongoose.model("LoyalityOrderItem", schema);

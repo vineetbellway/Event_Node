@@ -1,4 +1,5 @@
 const EventModel = require("../models/event.model");
+const LoyalityOrderItem = require("../models/loyalty_order_item.model");
 const mongoose = require("mongoose");
 const { baseStatus, userStatus } = require("../utils/enumerator");
 
@@ -11,12 +12,28 @@ exports.create_event = (req, res, next) => {
   } else {
     try {
       EventModel(req.body)
-        .save()
-        .then((result) => {
-          if (result) {
-            res
-              .status(201)
-              .send({ status: true, message: "success", data: result });
+              .save()
+              .then((result) => {
+                if (result) {
+                  if(req.body.type == 'loyalty'){
+                    LoyalityOrderItem(req.body)
+                        .save()
+                        .then((result) => {
+                            if (result) {
+                              res.status(201).send({ status: true, message: "success", data: result });
+                            } else {
+                                res.status(404).send({ status: false, message: "Not created" });
+                              }
+                            }).catch((error) => {
+                            res.send({
+                            status: false,
+                            message: error.toString() ?? "Error",
+                            });
+                        });
+
+            }
+
+              res.status(201).send({ status: true, message: "success", data: result });
           } else {
             res.status(404).send({ status: false, message: "Not created" });
           }

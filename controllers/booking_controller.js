@@ -246,7 +246,7 @@ const sendEventNotification = () => {
 };
 
 module.exports = {
-  sendEventNotification ,
+  sendEventNotification,
   manage_bookings,
   get_bookings,
   book

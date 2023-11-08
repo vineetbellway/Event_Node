@@ -1,6 +1,7 @@
 const Booking = require("../models/booking.model");
 const mongoose = require("mongoose");
 const { baseStatus } = require("../utils/enumerator");
+const { sendSystemNotification } = require('../helpers/notification_helper');
 
 // It will book event by guest
 
@@ -15,7 +16,7 @@ exports.book = (req, res, next) => {
         Booking(req.body)
               .save()
               .then((result) => {
-                if (result) {              
+                if (result) {          
                         res.status(201).send({ status: true, message: "success", data: result });
                 } else {
                     res.status(404).send({ status: false, message: "Not created" });
@@ -37,3 +38,143 @@ exports.book = (req, res, next) => {
     }
   }
 };
+
+
+exports.get_bookings = async (req, res) => {
+    var guest_id = req.body.guest_id;
+    var status = req.body.status;
+  
+    if (!guest_id || !status) {
+      res.status(400).json({ status: false, message: "Guest ID and status are required in the request body" });
+    } else {
+      try {
+        Booking.aggregate([
+          {
+            $match: {
+              guest_id: new mongoose.Types.ObjectId(guest_id),
+              status: status,
+            },
+          },
+          {
+            $lookup: {
+              from: 'eventmodels',
+              localField: 'event_id',
+              foreignField: '_id',
+              as: 'event_data',
+            },
+          },
+        ])
+        .then((result) => {
+          if (result && result.length > 0) {
+            // Assuming there's only one result, you can access it directly
+            const booking = result[0];
+  
+            // Combine transaction data and event data into a single JSON object
+            const response = {
+              _id: booking._id,
+              event_id: booking.event_id,
+              guest_id: booking.guest_id,
+              payment_mode: booking.payment_mode,
+              status: booking.status,
+              transaction_id: booking.transaction_id,
+              booking_date: booking.booking_date,
+              createdAt: booking.createdAt,
+              updatedAt: booking.updatedAt,
+              seller_id: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].seller_id : null,
+              contact_name: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].contact_name : null,
+              contact_number: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].contact_number : null,
+              type: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].type : null,
+              image: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].image : null,
+              name: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].name : null,
+              venue: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].venue : null,
+              location: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].location : null,
+              start_time: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].start_time : null,
+              end_time: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].end_time : null,
+              coupon_name: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].coupon_name : null,
+              tax_name: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].tax_name : null,
+              tax_percent: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].tax_percent : null,
+              amount: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].amount : null,
+              instructions: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].instructions : null,  
+
+            };
+  
+            res.status(200).json({
+              status: true,
+              message: "Data found",
+              data: response,
+            });
+          } else {
+            res.status(404).json({ status: false, message: "No bookings found for the specified guest and status" });
+          }
+        })
+        .catch((error) => {
+          console.log("error", error);
+          res.status(500).json({
+            status: false,
+            message: error.toString() || "Internal Server Error",
+          });
+        });
+      } catch (error) {
+        console.log("error", error);
+        res.status(500).json({
+          status: false,
+          message: error.toString() || "Internal Server Error",
+        });
+      }
+    }
+};
+ 
+
+// It will manage bookings by validator
+  
+exports.manage_bookings = async (req, res) => {
+  var booking_id = req.body.booking_id;
+  var status = req.body.status;
+
+  // validator id will be taken from token
+
+  if (!booking_id || !status) {
+    res.status(400).json({ status: false, message: "booking ID and status are required in the request body" });
+  } else {
+    try {
+      Booking.findByIdAndUpdate(booking_id,{'status':status})
+      .then((result) => {
+        if (result) {   
+          if(status == "active"){
+              status = "approved";
+          } else {
+              status = "rejected";
+          }
+           // validator id will be later taken from token
+
+           var validator_id = "650bdb1e015e74e090374652";
+           var message = "Booking "+status+" successfully";
+           // send notification
+           sendSystemNotification(validator_id,result.guest_id,message);
+
+          res.status(200).json({
+            status: true,
+            message: message,
+            data: result,
+          });
+        }
+      })
+      .catch((error) => {
+        console.log("error", error);
+        res.status(500).json({
+          status: false,
+          message: error.toString() || "Internal Server Error",
+        });
+      });
+    } catch (error) {
+      console.log("error", error);
+      res.status(500).json({
+        status: false,
+        message: error.toString() || "Internal Server Error",
+      });
+    }
+  }
+}; 
+  
+  
+  

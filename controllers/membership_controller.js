@@ -310,8 +310,10 @@ exports.update_membership_plan_status = (req, res, next) => {
 };
 
 const disableSellerServices = () => {
+  console.log("hi")
   try {
     var current_date = new moment().format("YYYY-MM-DDTHH:mm:ss.SSSZ");
+    console.log("here 3 s")
     Membership.find({ status: 'active', end_date: { $gt: current_date } })
       .then((result) => {
         if (result) {

@@ -1,11 +1,14 @@
 const Booking = require("../models/booking.model");
+const User = require("../models/user.model");
 const mongoose = require("mongoose");
 const { baseStatus } = require("../utils/enumerator");
 const { sendSystemNotification } = require('../helpers/notification_helper');
+const { sendPushNotification } = require('../config/firebase.config'); // Update with the correct path to your module.
+
 
 // It will book event by guest
 
-exports.book = (req, res, next) => {
+const book = (req, res, next) => {
   if (!req.body) {
     res.status(400).send({
       status: false,
@@ -16,8 +19,26 @@ exports.book = (req, res, next) => {
         Booking(req.body)
               .save()
               .then((result) => {
-                if (result) {          
-                        res.status(201).send({ status: true, message: "success", data: result });
+                if (result) {  
+                  
+                  const registrationToken = 'YOUR_DEVICE_REGISTRATION_TOKEN';
+                  const notification = {
+                    title: 'New Message',
+                    body: 'You have a new message!',
+                  };
+                  const data = {
+                    // Additional data to send with the notification, if needed.
+                  };
+                  
+                  sendPushNotification(registrationToken, notification, data)
+                    .then(() => {
+                      console.log('Push notification sent successfully.');
+                    })
+                    .catch((error) => {
+                      console.error('Error sending push notification:', error);
+                    });
+                  
+                    res.status(201).send({ status: true, message: "success", data: result });
                 } else {
                     res.status(404).send({ status: false, message: "Not created" });
                 }
@@ -40,7 +61,7 @@ exports.book = (req, res, next) => {
 };
 
 
-exports.get_bookings = async (req, res) => {
+const  get_bookings = async (req, res) => {
     var guest_id = req.body.guest_id;
     var status = req.body.status;
   
@@ -127,7 +148,7 @@ exports.get_bookings = async (req, res) => {
 
 // It will manage bookings by validator
   
-exports.manage_bookings = async (req, res) => {
+const manage_bookings = async (req, res) => {
   var booking_id = req.body.booking_id;
   var status = req.body.status;
 
@@ -175,6 +196,60 @@ exports.manage_bookings = async (req, res) => {
     }
   }
 }; 
-  
-  
+
+
+const sendEventNotification = () => {
+  console.log("here")
+  const current_date = moment().format("YYYY-MM-DD");
+  const oneDayBefore = moment().subtract(1, 'day').format("YYYY-MM-DD");
+
+  // Find guests with bookings one day before the current date
+  Booking.find({ status: 'active', booking_date: oneDayBefore })
+    .then((result) => {
+      if (result) {
+        for (const bookingData of result) {
+          // Fetch the guest's device token
+          const guestId = bookingData.guestId; // Replace with the actual guest ID field
+          User.findById(guestId, { type: 'guest' })
+            .then((guest) => {
+              if (guest && guest.device_token) {
+                // Send push notification to the guest
+                const deviceToken = guest.device_token;
+                const notification = {
+                  title: 'Upcoming Booking Notification',
+                  body: 'You have a booking on ' + bookingData.booking_date,
+                };
+                const data = {
+                  // Additional data to send with the notification, if needed.
+                };
+
+                sendPushNotification(deviceToken, notification, data)
+                  .then(() => {
+                    console.log('Push notification sent successfully to guest.');
+                  })
+                  .catch((error) => {
+                    console.error('Error sending push notification to guest:', error);
+                  });
+              }
+            })
+            .catch((error) => {
+              console.error(error.toString() || "Error fetching guest");
+            });
+        }
+      } else {
+        console.log("Data not found");
+      }
+    })
+    .catch((error) => {
+      console.error(error.toString() || "Error");
+    });
+};
+
+module.exports = {
+  sendEventNotification ,
+  manage_bookings,
+  get_bookings,
+  book
+
+}; 
   

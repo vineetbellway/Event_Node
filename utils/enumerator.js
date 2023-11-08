@@ -14,6 +14,7 @@ const userTypes = {
 const baseStatus = {
   pending: "pending",
   active: "active",
+  rejected: "rejected",
   blocked: "blocked",
   deleted: "deleted",
 };

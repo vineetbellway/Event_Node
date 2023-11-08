@@ -64,7 +64,7 @@ const schema = new mongoose.Schema(
     },
     status: {
       type: String,
-      default: baseStatus.active,
+      default: baseStatus.pending,
     },
   },
   {
@@ -75,4 +75,4 @@ const schema = new mongoose.Schema(
 schema.plugin(mongoosePaginate);
 schema.plugin(aggregatePaginate);
 
-module.exports = mongoose.model("EventModel", schema);
+module.exports = mongoose.model("Event", schema);

@@ -9,4 +9,24 @@ admin.initializeApp({
   databaseURL: process.env.FIREBASE_DATABASE_URL,
 });
 
-module.exports = { admin };
+/**
+ * Send a push notification.
+ * @param {string} registrationToken - The FCM registration token of the device you want to send the notification to.
+ * @param {object} notification - The notification object, including title and body.
+ * @param {object} data - Additional data to send with the notification.
+ * @returns {Promise} A promise that resolves when the notification is sent.
+ */
+function sendPushNotification(registrationToken, notification, data) {
+  const message = {
+    token: registrationToken,
+    notification: {
+      title: notification.title,
+      body: notification.body,
+    },
+    data: data || {},
+  };
+
+  return admin.messaging().send(message);
+}
+
+module.exports = { admin, sendPushNotification };

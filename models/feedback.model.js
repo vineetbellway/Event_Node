@@ -10,29 +10,24 @@ const schema = new mongoose.Schema(
       ref: "EventModel",
       required: true,
     },
-    guest_id: {
-      type: mongoose.Schema.Types.ObjectID,
-      ref: "Guest",
-      required: true,
-    },
-    managed_by: {
-      type: mongoose.Schema.Types.ObjectID,
-      ref: "Validator",
-    },
-    payment_mode: {
+    first_name: {
       type: String,
       required: true,
     },
-    status: {
-      type: String,
-      default: baseStatus.pending,
-    },
-    transaction_id:{
+    last_name: {
         type: String,
     },
-    booking_date: {
+    phone: {
         type: String,
     },
+    email: {
+        type: String,
+        required: true,
+    },
+    message: {
+        type: String,
+        required: true,
+    },    
   },
   {
     timestamps: true,
@@ -42,4 +37,4 @@ const schema = new mongoose.Schema(
 schema.plugin(mongoosePaginate);
 schema.plugin(aggregatePaginate);
 
-module.exports = mongoose.model("Booking", schema);
+module.exports = mongoose.model("Feedback", schema);

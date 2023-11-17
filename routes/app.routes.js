@@ -211,8 +211,8 @@ router.post("/approve-guest-consumption/:id", loyalityController.approve_guest_c
 router.post("/give-feedback", feedbackController.give_feedback);
 
 cron.schedule("* * * * *", function () {
- // disableSellerServices();
-  bookingController.sendEventNotification();
+  disableSellerServices();
+//  bookingController.sendEventNotification();
 });
 
 module.exports = router;

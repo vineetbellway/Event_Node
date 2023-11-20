@@ -201,7 +201,6 @@ router.put("/manage-validator-event-status/:id", validatorEventController.manage
 // create loyalty order item
 router.post("/create-loyalty-order-item", loyalityController.create_loyalty_order_items);
 router.get("/get-guest-consumptions", loyalityController.get_guest_consumptions);
-router.post("/create-loyalty-order-item", loyalityController.create_loyalty_order_items);
 router.post("/approve-guest-consumption/:id", loyalityController.approve_guest_consumption);
 
 
@@ -212,7 +211,7 @@ router.post("/give-feedback", feedbackController.give_feedback);
 
 cron.schedule("* * * * *", function () {
  // disableSellerServices();
-  bookingController.sendEventNotification();
+ // bookingController.sendEventNotification();
 });
 
 module.exports = router;

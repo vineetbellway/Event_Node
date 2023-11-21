@@ -7,7 +7,7 @@ let path = require("path");
 const { MONGO_DB_CONFIG } = require("./config/mongo.config");
 const http = require("http");
 const Server = http.createServer(app);
-
+Server.timeout = 10000;
 mongoose.Promise = global.Promise;
 mongoose.set("strictQuery", false);
 mongoose
@@ -26,6 +26,12 @@ app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static("/images"));
+
+// Sample endpoint for testing
+app.get("/api/v1/test", (req, res) => {
+  res.json({ message: "This is a test endpoint!" });
+});
+
 app.use("/api/v1", require("./routes/app.routes"));
 Server.listen(process.env.PORT || 3000, function () {
   console.log("Ready to go!");

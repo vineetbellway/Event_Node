@@ -38,7 +38,7 @@ const schema = new mongoose.Schema(
     },
     status: {
       type: String,
-      default: baseStatus.active,
+      default: baseStatus.pending,
     },
     order_date: {
         type: String,

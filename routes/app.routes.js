@@ -25,7 +25,7 @@ const bookingController = require("../controllers/booking_controller");
 const feedbackController = require("../controllers/feedback_controller");
 const notificationController = require("../controllers/notification_controller");
 
-router.post("/user", userController.login);
+router.post("/user",auth, userController.login);
 router.put("/user/:id", auth, userController.update_user);
 router.get("/user", auth, userController.get_users);
 router.get("/user/:id", auth, userController.get_user);

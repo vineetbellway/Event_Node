@@ -59,7 +59,7 @@ exports.login = async (req, res, next) => {
             .status(201)
             .send({ status: true, message: "Sign-Up Success", data: user });
         } catch (error) {
-          console.log("aaa9");
+          console.log("aaa9",error);
           return res
             .status(500)
             .send({ status: false, message: error.toString() });

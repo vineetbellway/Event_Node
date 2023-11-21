@@ -91,15 +91,10 @@ const  get_bookings = async (req, res) => {
         ])
         .then((result) => {
           if (result && result.length > 0) {
-            // Assuming there's only one result, you can access it directly
-            const booking = result[0];
-
-            console.log("result",result)
             var booking_data = [];
          
 
             for(const booking of result){
-               // Combine transaction data and event data into a single JSON object
                 const response = {
                   _id: booking._id,
                   event_id: booking.event_id,
@@ -110,29 +105,12 @@ const  get_bookings = async (req, res) => {
                  // booking_date: booking.booking_date,
                   createdAt: booking.createdAt,
                   updatedAt: booking.updatedAt,
-                  seller_id: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].seller_id : null,
-                  contact_name: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].contact_name : null,
-                  contact_number: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].contact_number : null,
-                  type: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].type : null,
-                  image: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].image : null,
-                  name: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].name : null,
-                  venue: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].venue : null,
-                  location: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].location : null,
-                  start_time: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].start_time : null,
-                  end_time: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].end_time : null,
-                  coupon_name: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].coupon_name : null,
-                  tax_name: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].tax_name : null,
-                  tax_percent: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].tax_percent : null,
-                  amount: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].amount : null,
-                  instructions: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].instructions : null,  
+                  event_data:booking.event_data && booking.event_data.length > 0 ? booking.event_data[0] : [],  
 
                 };
                 booking_data.push(response)
 
             }
-  
-           
-  
             res.status(200).json({
               status: true,
               message: "Data found",
@@ -165,10 +143,11 @@ const  get_bookings = async (req, res) => {
 const manage_bookings = async (req, res) => {
   var booking_id = req.body.booking_id;
   var status = req.body.status;
+  var validator_id = req.body.validator_id;
 
   // validator id will be taken from token
 
-  if (!booking_id || !status) {
+  if (!booking_id || !status || !validator_id) {
     res.status(400).json({ status: false, message: "booking ID and status are required in the request body" });
   } else {
     try {
@@ -180,9 +159,6 @@ const manage_bookings = async (req, res) => {
           } else {
               status = "rejected";
           }
-           // validator id will be later taken from token
-
-           var validator_id = "650bdb1e015e74e090374652";
            var message = "Booking "+status+" successfully";
            // send notification
            sendAppNotification(validator_id,result.guest_id,message);

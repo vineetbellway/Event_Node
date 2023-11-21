@@ -44,7 +44,7 @@ exports.login = async (req, res, next) => {
           data: userModel,
         });
       } else {
-        console.log("uid",req.uid)
+
         const user = new User({
           uid: req.body.uid,
           phone: phone,

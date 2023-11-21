@@ -29,10 +29,10 @@ const schema = new mongoose.Schema(
     },
     transaction_id:{
         type: String,
-    },
-    booking_date: {
+    }
+    /*booking_date: {
         type: String,
-    },
+    },*/
   },
   {
     timestamps: true,

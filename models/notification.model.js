@@ -1,21 +1,25 @@
 const mongoose = require("mongoose");
 const mongoosePaginate = require("mongoose-paginate-v2");
 var aggregatePaginate = require("mongoose-aggregate-paginate-v2");
-const { baseStatus } = require("../utils/enumerator");
 
-const schema = new mongoose.Schema(
+const notificationSchema = new mongoose.Schema(
   {
     from_user_id: {
-      type: String,
-      required: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
     },
     to_user_id: {
-        type: String,
-        required: true,
-    },  
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
     message: {
-        type: String,
-        required: true,
+      type: String, 
+    },
+
+    is_read: {
+      type: Number,
+      enum: [0, 1], // Define the possible numeric values for is_read
+      default: 0, // Set a default value
     },
   },
   {
@@ -23,7 +27,9 @@ const schema = new mongoose.Schema(
   }
 );
 
-schema.plugin(mongoosePaginate);
-schema.plugin(aggregatePaginate);
+notificationSchema.plugin(mongoosePaginate);
+notificationSchema.plugin(aggregatePaginate);
 
-module.exports = mongoose.model("Notification", schema);
+const Notification = mongoose.model("Notification", notificationSchema);
+
+module.exports = Notification;

@@ -2,7 +2,7 @@ const Booking = require("../models/booking.model");
 const User = require("../models/user.model");
 const mongoose = require("mongoose");
 const { baseStatus } = require("../utils/enumerator");
-const { sendSystemNotification } = require('../helpers/notification_helper');
+const { sendAppNotification } = require('../helpers/notification_helper');
 const { sendPushNotification } = require('../config/firebase.config'); // Update with the correct path to your module.
 
 
@@ -23,8 +23,8 @@ const book = (req, res, next) => {
                   
                   const registrationToken = 'YOUR_DEVICE_REGISTRATION_TOKEN';
                   const notification = {
-                    title: 'New Message',
-                    body: 'You have a new message!',
+                    title: 'Event booked',
+                    body: 'New event is booked!',
                   };
                   const data = {
                     // Additional data to send with the notification, if needed.
@@ -85,45 +85,58 @@ const  get_bookings = async (req, res) => {
               as: 'event_data',
             },
           },
+          {
+            $sort: { createdAt: -1 }, // Sort by createdAt in descending order
+          },
         ])
         .then((result) => {
           if (result && result.length > 0) {
             // Assuming there's only one result, you can access it directly
             const booking = result[0];
-  
-            // Combine transaction data and event data into a single JSON object
-            const response = {
-              _id: booking._id,
-              event_id: booking.event_id,
-              guest_id: booking.guest_id,
-              payment_mode: booking.payment_mode,
-              status: booking.status,
-              transaction_id: booking.transaction_id,
-              booking_date: booking.booking_date,
-              createdAt: booking.createdAt,
-              updatedAt: booking.updatedAt,
-              seller_id: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].seller_id : null,
-              contact_name: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].contact_name : null,
-              contact_number: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].contact_number : null,
-              type: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].type : null,
-              image: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].image : null,
-              name: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].name : null,
-              venue: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].venue : null,
-              location: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].location : null,
-              start_time: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].start_time : null,
-              end_time: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].end_time : null,
-              coupon_name: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].coupon_name : null,
-              tax_name: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].tax_name : null,
-              tax_percent: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].tax_percent : null,
-              amount: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].amount : null,
-              instructions: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].instructions : null,  
 
-            };
+            console.log("result",result)
+            var booking_data = [];
+         
+
+            for(const booking of result){
+               // Combine transaction data and event data into a single JSON object
+                const response = {
+                  _id: booking._id,
+                  event_id: booking.event_id,
+                  guest_id: booking.guest_id,
+                  payment_mode: booking.payment_mode,
+                  status: booking.status,
+                  transaction_id: booking.transaction_id,
+                 // booking_date: booking.booking_date,
+                  createdAt: booking.createdAt,
+                  updatedAt: booking.updatedAt,
+                  seller_id: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].seller_id : null,
+                  contact_name: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].contact_name : null,
+                  contact_number: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].contact_number : null,
+                  type: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].type : null,
+                  image: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].image : null,
+                  name: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].name : null,
+                  venue: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].venue : null,
+                  location: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].location : null,
+                  start_time: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].start_time : null,
+                  end_time: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].end_time : null,
+                  coupon_name: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].coupon_name : null,
+                  tax_name: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].tax_name : null,
+                  tax_percent: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].tax_percent : null,
+                  amount: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].amount : null,
+                  instructions: booking.event_data && booking.event_data.length > 0 ? booking.event_data[0].instructions : null,  
+
+                };
+                booking_data.push(response)
+
+            }
+  
+           
   
             res.status(200).json({
               status: true,
               message: "Data found",
-              data: response,
+              data: booking_data,
             });
           } else {
             res.status(404).json({ status: false, message: "No bookings found" });
@@ -172,7 +185,7 @@ const manage_bookings = async (req, res) => {
            var validator_id = "650bdb1e015e74e090374652";
            var message = "Booking "+status+" successfully";
            // send notification
-           sendSystemNotification(validator_id,result.guest_id,message);
+           sendAppNotification(validator_id,result.guest_id,message);
 
           res.status(200).json({
             status: true,

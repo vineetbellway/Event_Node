@@ -22,42 +22,39 @@ const storage = multer.diskStorage({
 exports.login = async (req, res, next) => {
   let phone = req.body.phone;
   let code = req.body.code;
-  console.log("aaa0");
+  let device_type = req.body.device_type;
+  let device_token = req.body.device_token;
   if (!phone) {
-    console.log("aaa1");
     return res.status(400).send({
       status: false,
       message: "body phone missing",
     });
   } else if (!code) {
-    console.log("aaa3");
     return res.status(400).send({
       status: false,
       message: "body code missing",
     });
   } else
     try {
-      console.log("aaa4");
-      const userModel = await User.findOne({ phone: phone, code: code });
+      const userModel = await User.findOne({ phone: phone, code: code , device_type: device_type, device_token: device_token });
       if (userModel) {
-        console.log("aaa5");
         return res.send({
           status: true,
           message: "Login Success",
           data: userModel,
         });
       } else {
-        console.log("aaa6");
+        console.log("uid",req.uid)
         const user = new User({
-          uid: req.uid,
+          uid: req.body.uid,
           phone: phone,
           code: code,
           code_phone: code + phone,
+          device_type: device_type,
+          device_token: device_token,
         });
         try {
-          console.log("aaa7");
           await user.save();
-          console.log("aaa8");
           return res
             .status(201)
             .send({ status: true, message: "Sign-Up Success", data: user });
@@ -69,7 +66,6 @@ exports.login = async (req, res, next) => {
         }
       }
     } catch (error) {
-      console.log("aaa10");
       if (error) {
         return res
           .status(500)

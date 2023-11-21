@@ -46,7 +46,7 @@ exports.login = async (req, res, next) => {
       } else {
 
         const user = new User({
-          uid: req.body.uid,
+          uid: req.uid,
           phone: phone,
           code: code,
           code_phone: code + phone,

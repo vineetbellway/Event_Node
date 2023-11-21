@@ -204,7 +204,16 @@ router.get("/get-guest-consumptions", loyalityController.get_guest_consumptions)
 router.post("/approve-guest-consumption/:id", loyalityController.approve_guest_consumption);
 
 
+// book event/loyalty
 
+router.post("/book", bookingController.book);
+
+
+// get bookings
+router.get("/get-bookings", bookingController.get_bookings);
+
+// manage bookings
+router.post("/manage-bookings", bookingController.manage_bookings);
 
 // give feedback
 router.post("/give-feedback", feedbackController.give_feedback);

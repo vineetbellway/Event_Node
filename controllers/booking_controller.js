@@ -62,8 +62,8 @@ const book = (req, res, next) => {
 
 
 const  get_bookings = async (req, res) => {
-    var guest_id = req.body.guest_id;
-    var status = req.body.status;
+    var guest_id = req.params.guest_id;
+    var status = req.params.status;
   
     if (!guest_id || !status) {
       res.status(400).json({ status: false, message: "Guest ID and status are required in the request body" });

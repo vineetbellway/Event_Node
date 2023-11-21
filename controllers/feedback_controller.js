@@ -1,7 +1,7 @@
 const Feedback = require("../models/feedback.model");
 const Event = require("../models/event.model"); // Import the Event model
 const nodemailer = require('nodemailer');
-const { sendSystemNotification } = require('../helpers/notification_helper');
+const { sendAppNotification } = require('../helpers/notification_helper');
 
 
 exports.give_feedback = (req, res, next) => {
@@ -34,7 +34,7 @@ exports.give_feedback = (req, res, next) => {
 
                   var guest_id = "650bdb1e015e74e090374652";
                   // send notification
-                  sendSystemNotification(guest_id,event.seller_id,'New feedback received');
+                  sendAppNotification(guest_id,event.seller_id,'New feedback received');
 
                   res.status(201).send({
                     status: true,

@@ -62,8 +62,9 @@ const book = (req, res, next) => {
 
 
 const  get_bookings = async (req, res) => {
-    var guest_id = req.params.guest_id;
-    var status = req.params.status;
+    var guest_id = req.query.guest_id;
+    var status = req.query.status;
+
   
     if (!guest_id || !status) {
       res.status(400).json({ status: false, message: "Guest ID and status are required in the request body" });
@@ -125,7 +126,7 @@ const  get_bookings = async (req, res) => {
               data: response,
             });
           } else {
-            res.status(404).json({ status: false, message: "No bookings found for the specified guest and status" });
+            res.status(404).json({ status: false, message: "No bookings found" });
           }
         })
         .catch((error) => {

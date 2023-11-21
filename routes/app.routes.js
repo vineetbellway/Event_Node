@@ -24,6 +24,7 @@ const facilityController = require("../controllers/facility_controller");
 const bookingController = require("../controllers/booking_controller");
 const feedbackController = require("../controllers/feedback_controller");
 const notificationController = require("../controllers/notification_controller");
+const upiController = require("../controllers/upi_controller");
 
 router.post("/user",auth, userController.login);
 router.put("/user/:id", auth, userController.update_user);
@@ -167,6 +168,18 @@ router.get("/get-app-notifications", notificationController.get_app_notification
 // get unread notifications count api
 
 router.get("/get-unread-notifications-count", notificationController.get_unread_notifications_count);
+
+// create seller upi id api
+
+router.post("/create-seller-upi-id", upiController.create_seller_upi_id);
+
+// get seller upi id api
+
+router.get("/get-seller-upi-id", upiController.get_seller_upi_id);
+
+// update seller upi id api
+
+router.put("/update-seller-upi-id", upiController.update_seller_upi_id);
 
 cron.schedule("* * * * *", function () {
  // disableSellerServices();

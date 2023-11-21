@@ -1,9 +1,10 @@
 const Notification = require("../models/notification.model");
 const mongoose = require("mongoose");
 
-const get_app_notifications = async (req, res) => {
+const get_notifications = async (req, res) => {
     var user_id = req.query.user_id;
-    console.log("user_id",user_id)
+    var type = req.query.type;
+
     if (!user_id) {
       res.status(400).send({ status: false, message: "user_id missing" });
     } else {
@@ -12,6 +13,7 @@ const get_app_notifications = async (req, res) => {
           {
             $match: {
               to_user_id: new mongoose.Types.ObjectId(user_id),
+              type : type
             },
           },
           {
@@ -27,7 +29,7 @@ const get_app_notifications = async (req, res) => {
           },
         ])
           .then((result) => {
-            console.log("result",result)
+
             if (result) {
               res.status(200).send({
                 status: true,
@@ -54,7 +56,7 @@ const get_app_notifications = async (req, res) => {
 
 const get_unread_notifications_count = async (req, res) => {
     var user_id = req.query.user_id;
-    console.log("user_id",user_id)
+
     if (!user_id) {
       res.status(400).send({ status: false, message: "user_id missing" });
     } else {
@@ -63,7 +65,8 @@ const get_unread_notifications_count = async (req, res) => {
           {
             $match: {
               to_user_id: new mongoose.Types.ObjectId(user_id),
-              is_read : 0
+              is_read : 0,
+              type : 'app'
             },
           },
           {
@@ -106,6 +109,6 @@ const get_unread_notifications_count = async (req, res) => {
 
 
 module.exports = {
-  get_app_notifications,
+  get_notifications,
   get_unread_notifications_count
 };

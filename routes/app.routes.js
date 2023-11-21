@@ -150,6 +150,10 @@ router.post("/approve-guest-consumption/:id", loyalityController.approve_guest_c
 
 router.post("/book", bookingController.book);
 
+// get cash event list 
+
+router.get("/get-cash-bookings", bookingController.get_cash_bookings);
+
 
 // get bookings
 router.get("/get-bookings", bookingController.get_bookings);
@@ -161,9 +165,9 @@ router.post("/manage-bookings", bookingController.manage_bookings);
 router.post("/give-feedback", feedbackController.give_feedback);
 
 
-// get app notifications api
+// get notifications api
 
-router.get("/get-app-notifications", notificationController.get_app_notifications);
+router.get("/get-notifications", notificationController.get_notifications);
 
 // get unread notifications count api
 

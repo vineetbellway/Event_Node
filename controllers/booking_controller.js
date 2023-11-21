@@ -1,8 +1,7 @@
 const Booking = require("../models/booking.model");
 const User = require("../models/user.model");
 const mongoose = require("mongoose");
-const { baseStatus } = require("../utils/enumerator");
-const { sendAppNotification } = require('../helpers/notification_helper');
+const { addNotification } = require('../helpers/notification_helper');
 const { sendPushNotification } = require('../config/firebase.config'); // Update with the correct path to your module.
 
 
@@ -21,7 +20,7 @@ const book = (req, res, next) => {
               .then((result) => {
                 if (result) {  
                   
-                  const registrationToken = 'YOUR_DEVICE_REGISTRATION_TOKEN';
+                  const registrationToken = req.body.device_token;
                   const notification = {
                     title: 'Event booked',
                     body: 'New event is booked!',
@@ -29,6 +28,11 @@ const book = (req, res, next) => {
                   const data = {
                     // Additional data to send with the notification, if needed.
                   };
+
+                  var message = 'New event is booked!';
+                  var type = 'push';
+  
+                  addNotification(req.body.guest_id,req.body.guest_id,'Event booked',message,type);
                   
                   sendPushNotification(registrationToken, notification, data)
                     .then(() => {
@@ -136,6 +140,7 @@ const  get_bookings = async (req, res) => {
       }
     }
 };
+
  
 
 // It will manage bookings by validator
@@ -161,7 +166,7 @@ const manage_bookings = async (req, res) => {
           }
            var message = "Booking "+status+" successfully";
            // send notification
-           sendAppNotification(validator_id,result.guest_id,message);
+           sendNotification(validator_id,result.guest_id,message);
 
           res.status(200).json({
             status: true,
@@ -207,11 +212,19 @@ const sendEventNotification = () => {
                 const deviceToken = guest.device_token;
                 const notification = {
                   title: 'Upcoming Booking Notification',
-                  body: 'You have a booking on ' + bookingData.booking_date,
+                  body: 'You have a booking on ' + bookingData.createdAt,
                 };
                 const data = {
                   // Additional data to send with the notification, if needed.
                 };
+
+                
+                var message = 'You have a booking on ' + bookingData.createdAt;
+                var type = 'push';
+
+                addNotification(result.guest_id,result.guest_id,'Upcoming Booking Notification',message,type);
+
+               
 
                 sendPushNotification(deviceToken, notification, data)
                   .then(() => {
@@ -235,11 +248,88 @@ const sendEventNotification = () => {
     });
 };
 
+const  get_cash_bookings = async (req, res) => {
+  var guest_id = req.query.guest_id;
+
+
+
+  if (!guest_id) {
+    res.status(400).json({ status: false, message: "Guest ID  are required in the request body" });
+  } else {
+    try {
+      Booking.aggregate([
+        {
+          $match: {
+            guest_id: new mongoose.Types.ObjectId(guest_id),
+            payment_mode : 'cash'
+          },
+        },
+        {
+          $lookup: {
+            from: 'eventmodels',
+            localField: 'event_id',
+            foreignField: '_id',
+            as: 'event_data',
+          },
+        },
+        {
+          $sort: { createdAt: -1 }, // Sort by createdAt in descending order
+        },
+      ])
+      .then((result) => {
+        if (result && result.length > 0) {
+          var booking_data = [];
+       
+
+          for(const booking of result){
+              const response = {
+                _id: booking._id,
+                event_id: booking.event_id,
+                guest_id: booking.guest_id,
+                payment_mode: booking.payment_mode,
+                status: booking.status,
+                transaction_id: booking.transaction_id,
+               // booking_date: booking.booking_date,
+                createdAt: booking.createdAt,
+                updatedAt: booking.updatedAt,
+                event_data:booking.event_data && booking.event_data.length > 0 ? booking.event_data[0] : null,  
+
+              };
+              booking_data.push(response)
+
+          }
+          res.status(200).json({
+            status: true,
+            message: "Data found",
+            data: booking_data,
+          });
+        } else {
+          res.status(404).json({ status: false, message: "No bookings found" });
+        }
+      })
+      .catch((error) => {
+        console.log("error", error);
+        res.status(500).json({
+          status: false,
+          message: error.toString() || "Internal Server Error",
+        });
+      });
+    } catch (error) {
+      console.log("error", error);
+      res.status(500).json({
+        status: false,
+        message: error.toString() || "Internal Server Error",
+      });
+    }
+  }
+};
+
 module.exports = {
   sendEventNotification,
   manage_bookings,
   get_bookings,
-  book
+  book,
+  get_cash_bookings
 
 }; 
   

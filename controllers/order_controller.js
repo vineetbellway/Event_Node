@@ -17,7 +17,6 @@ exports.create_order = (req, res, next) => {
         .save()
         .then((result) => {
             if (result) {
-                    //console.log("result",result)
                     var order_id = result._id;
                     // find menu record by menu id
                     Menu.aggregate([

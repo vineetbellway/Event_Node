@@ -15,11 +15,17 @@ const notificationSchema = new mongoose.Schema(
     message: {
       type: String, 
     },
-
+    title: {
+      type: String, 
+    },
     is_read: {
       type: Number,
       enum: [0, 1], // Define the possible numeric values for is_read
       default: 0, // Set a default value
+    },
+    type: {
+      type: String,
+      default: 'app'
     },
   },
   {

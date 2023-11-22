@@ -409,12 +409,28 @@ const sendExpiredEventNotification = () => {
   console.log("here 22")
 
   // Find guests with bookings one day before the current date
-  Booking.find({ status: 'active' })
+  Booking.aggregate([
+    {
+      $match: {
+        status: 'active'
+      },
+    },
+    {
+      $lookup: {
+        from: 'eventmodels',
+        localField: 'event_id',
+        foreignField: '_id',
+        as: 'event_data',
+      },
+    },
+
+  ])
     .then((result) => {
       if (result && result.length > 0) { 
         for (const bookingData of result) {
           // Fetch the guest's device token
           const guestId = bookingData.guestId; // Replace with the actual guest ID field
+          console.log("bookingData",bookingData)
           User.findById(guestId, { type: 'guest' })
             .then((guest) => {
               if (guest && guest.device_token) {

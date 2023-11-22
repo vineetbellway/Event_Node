@@ -1,10 +1,11 @@
 const Category = require("../models/category.model"); 
+const mongoose = require("mongoose");
 
 const create_category = async (req, res) => {
     try {
       // Check if a category with the same name already exists
       const existingCategory = await Category.findOne({ name: req.body.name });
-      console.log("existingCategory",existingCategory)  
+
       if (existingCategory) {
         // Category with the same name already exists
         return res.status(409).send({
@@ -34,9 +35,14 @@ const create_category = async (req, res) => {
   
 
 const get_all_categories = async (req, res) => {
-
+  const seller_id = req.query.seller_id;
         try {
             await Category.aggregate([
+              {
+                $match: {
+                  seller_id: new mongoose.Types.ObjectId(seller_id),
+                },
+              },
               {
                 $sort: { createdAt: -1 }, // Sort by createdAt in descending order
               },

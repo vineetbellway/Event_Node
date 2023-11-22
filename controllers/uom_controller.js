@@ -1,4 +1,5 @@
 const UOM = require("../models/uom.model");
+const mongoose = require("mongoose");
 
 const create_uom = async (req, res) => {
   try {
@@ -33,16 +34,33 @@ const create_uom = async (req, res) => {
 };
 
 const get_all_uoms = async (req, res) => {
+  const seller_id = req.query.seller_id;
   try {
-    const result = await UOM.find().sort({ createdAt: -1 });
-
-    if (result) {
-      res.status(200).send({
-        status: true,
-        message: "Data found",
-        data: result,
+    await UOM.aggregate([
+      {
+        $match: {
+          seller_id: new mongoose.Types.ObjectId(seller_id),
+        },
+      },
+      {
+        $sort: { createdAt: -1 }, // Sort by createdAt in descending order
+      },
+    ])
+      .then((result) => {
+        if (result) {
+          res.status(200).send({
+            status: true,
+            message: "Data found",
+            data: result,
+          });
+        }
+      })
+      .catch((error) => {
+        res.send({
+          status: false,
+          message: error.toString() ?? "Error",
+        });
       });
-    }
   } catch (error) {
     console.error("Error:", error);
     res.status(500).send({

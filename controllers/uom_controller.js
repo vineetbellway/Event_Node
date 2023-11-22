@@ -156,7 +156,7 @@ const delete_uom = async (req, res) => {
     const result = await UOM.findByIdAndDelete(uom_id);
 
     if (result) {
-      return res.status(204).send(); // 204 No Content for successful DELETE
+      return res.status(200).send({ status: true, message: "Category deleted" }); 
     } else {
       return res.status(404).send({ status: false, message: "UOM not found" });
     }

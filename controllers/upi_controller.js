@@ -33,7 +33,7 @@ const create_seller_upi_id = async (req, res) => {
 
 const get_seller_upi_id = async (req, res) => {
     const seller_id = req.query.seller_id;
-
+    console.log("seller_id",seller_id)
     if (!seller_id) {
         res.status(400).send({ status: false, message: "seller_id missing" });
     } else {
@@ -83,37 +83,34 @@ const get_seller_upi_id = async (req, res) => {
 };
 
 const update_seller_upi_id = async (req, res) => {
- 
-    const seller_id = req.body.seller_id;
+  const seller_upi_id = req.body.seller_upi_id;
 
-        try {
-            UPI.findByIdAndUpdate({seller_id:seller_id}, req.body)
-        .then((result) => {
-          if (result) {
-            res.status(201).send({
-              status: true,
-              message: "Updated",
-              data: result,
-            });
-          } else {
-            res.status(404).send({ status: false, message: "Not updated" });
-          }
-        })
-        .catch((error) => {
-          res.send({
-            status: false,
-            message: error.toString() ?? "Error",
+  try {
+    UPI.findByIdAndUpdate({_id:seller_upi_id}, req.body, { new: true })
+      .then((result) => {
+        if (result) {
+          res.status(201).send({
+            status: true,
+            message: "Updated",
+            data: result,
           });
+        } else {
+          res.status(404).send({ status: false, message: "Not updated" });
+        }
+      })
+      .catch((error) => {
+        res.send({
+          status: false,
+          message: error.toString() ?? "Error",
         });
-    } catch (error) {
-      res.status(500).send({
-        status: false,
-        message: "failure",
-        error: error ?? "Internal Server Error",
       });
-    }
-    
-    
+  } catch (error) {
+    res.status(500).send({
+      status: false,
+      message: "failure",
+      error: error ?? "Internal Server Error",
+    });
+  }
 };
 
 module.exports = {

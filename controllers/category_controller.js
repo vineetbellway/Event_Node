@@ -148,7 +148,7 @@ const update_category = async (req, res) => {
   
 
   const delete_category = async (req, res) => {
-    const category_id = req.body.category_id;
+    const category_id = req.query.category_id;
    // console.log("category_id",category_id)
     if (!category_id) {
       return res.status(400).send({ status: false, message: "Category ID missing" });

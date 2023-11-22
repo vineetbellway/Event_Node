@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const create_category = async (req, res) => {
     try {
       // Check if a category with the same name already exists
-      const existingCategory = await Category.findOne({ name: req.body.name ,  seller_id: req.body.seller_id });
+      const existingCategory = await Category.findOne({ name: req.body.name , seller_id: req.body.seller_id });
 
       if (existingCategory) {
         // Category with the same name already exists

@@ -226,7 +226,7 @@ console.log("Before cron.schedule");
 cron.schedule("* * * * *", function () {
     console.log("Cron job is running");
  // disableSellerServices();
-   sendEventNotification();
+   //sendEventNotification();
    bookingController.sendExpiredEventNotification();
 });
 

@@ -127,7 +127,7 @@ const update_uom = async (req, res) => {
 };
 
 const delete_uom = async (req, res) => {
-  const uom_id = req.body.uom_id;
+  const uom_id = req.query.uom_id;
 
   if (!uom_id) {
     return res.status(400).send({ status: false, message: "UOM ID missing" });

@@ -327,9 +327,6 @@ const  get_cash_bookings = async (req, res) => {
 
 const  get_booking_detail = async (req, res) => {
   var booking_id = req.query.booking_id;
-
-
-
   if (!booking_id) {
     res.status(400).json({ status: false, message: "booking ID are required in the request body" });
   } else {
@@ -348,6 +345,15 @@ const  get_booking_detail = async (req, res) => {
             as: 'event_data',
           },
         },
+        {
+          $lookup: {
+            from: 'guests',
+            localField: 'guest_id',
+            foreignField: 'user_id',
+            as: 'guest_data',
+          },
+        },
+
       ])
       .then((result) => {
         if (result && result.length > 0) {     
@@ -359,10 +365,10 @@ const  get_booking_detail = async (req, res) => {
                 _id: booking._id,
                 event_id: booking.event_id,
                 guest_id: booking.guest_id,
+                guest_name: booking.guest_data && booking.guest_data.length > 0 ? booking.guest_data[0].full_name : null, // Replace 'name' with the actual field name in your 'users' collection
                 payment_mode: booking.payment_mode,
                 status: booking.status,
                 transaction_id: booking.transaction_id,
-               // booking_date: booking.booking_date,
                 createdAt: booking.createdAt,
                 updatedAt: booking.updatedAt,
                 event_data:booking.event_data && booking.event_data.length > 0 ? booking.event_data[0] : null,  

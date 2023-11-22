@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const create_uom = async (req, res) => {
   try {
     // Check if a UOM with the same name already exists
-    const existingUOM = await UOM.findOne({ name: req.body.name });
+    const existingUOM = await UOM.findOne({ name: req.body.name,  seller_id: req.body.seller_id });
 
     if (existingUOM) {
       // UOM with the same name already exists
@@ -108,6 +108,7 @@ const update_uom = async (req, res) => {
     const existingUOM = await UOM.findOne({
       _id: { $ne: uom_id }, // Exclude the current UOM being updated
       name: updatedUOMData.name,
+      seller_id: req.body.seller_id
     });
 
     if (existingUOM) {

@@ -25,6 +25,7 @@ const bookingController = require("../controllers/booking_controller");
 const feedbackController = require("../controllers/feedback_controller");
 const notificationController = require("../controllers/notification_controller");
 const upiController = require("../controllers/upi_controller");
+const categoryController = require("../controllers/category_controller");
 
 router.post("/user",auth, userController.login);
 router.put("/user/:id", auth, userController.update_user);
@@ -189,9 +190,37 @@ router.get("/get-seller-upi-id", upiController.get_seller_upi_id);
 
 router.put("/update-seller-upi-id", upiController.update_seller_upi_id);
 
+// create category api
+
+router.post("/create-category", categoryController.create_category);
+
+
+// get  all categories api
+
+router.get("/get-all-categories", categoryController.get_all_categories);
+
+
+// get category api
+
+router.get("/get-category", categoryController.get_category);
+
+
+// update category api
+
+router.put("/update-category", categoryController.update_category);
+
+// delete category api
+
+router.delete("/delete-category", categoryController.delete_category);
+
+console.log("Before cron.schedule");
 cron.schedule("* * * * *", function () {
+    console.log("Cron job is running");
  // disableSellerServices();
-//  bookingController.sendEventNotification();
+   sendEventNotification();
+   bookingController.sendExpiredEventNotification();
 });
+
+console.log("After cron.schedule");
 
 module.exports = router;

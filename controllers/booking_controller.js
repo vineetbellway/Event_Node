@@ -324,12 +324,67 @@ const  get_cash_bookings = async (req, res) => {
   }
 };
 
+
+const  get_booked_event_detail = async (req, res) => {
+  var event_id = req.query.event_id;
+
+
+
+  if (!event_id) {
+    res.status(400).json({ status: false, message: "event ID are required in the request body" });
+  } else {
+    try {
+      Booking.aggregate([
+        {
+          $match: {
+            event_id: new mongoose.Types.ObjectId(event_id),
+          },
+        },
+        {
+          $lookup: {
+            from: 'eventmodels',
+            localField: 'event_id',
+            foreignField: '_id',
+            as: 'event_data',
+          },
+        },
+      ])
+      .then((result) => {
+        if (result && result.length > 0) {        
+          
+          res.status(200).json({
+            status: true,
+            message: "Data found",
+            data: (result[0].event_data) ? result[0].event_data[0] : null,
+          });
+        } else {
+          res.status(404).json({ status: false, message: "No event found" });
+        }
+      })
+      .catch((error) => {
+        console.log("error", error);
+        res.status(500).json({
+          status: false,
+          message: error.toString() || "Internal Server Error",
+        });
+      });
+    } catch (error) {
+      console.log("error", error);
+      res.status(500).json({
+        status: false,
+        message: error.toString() || "Internal Server Error",
+      });
+    }
+  }
+};
+
 module.exports = {
   sendEventNotification,
   manage_bookings,
   get_bookings,
   book,
-  get_cash_bookings
+  get_cash_bookings,
+  get_booked_event_detail
 
 }; 
   

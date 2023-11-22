@@ -4,6 +4,11 @@ var aggregatePaginate = require("mongoose-aggregate-paginate-v2");
 
 const uomSchema = new mongoose.Schema(
   {
+    seller_id: {
+      type: mongoose.Schema.Types.ObjectID,
+      ref: "Seller",
+      required: true,
+    },
     name: {
       type: String,
       required: true,

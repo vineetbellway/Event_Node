@@ -155,6 +155,10 @@ router.post("/book", bookingController.book);
 router.get("/get-cash-bookings", bookingController.get_cash_bookings);
 
 
+// get booked event detail
+router.get("/get-booked-event-detail", bookingController.get_booked_event_detail);
+
+
 // get bookings
 router.get("/get-bookings", bookingController.get_bookings);
 

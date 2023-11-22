@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const create_uom = async (req, res) => {
   try {
     // Check if a UOM with the same name already exists
-    const existingUOM = await UOM.findOne({ name: req.body.name,  seller_id: req.body.seller_id });
+    const existingUOM = await UOM.findOne({ name: req.body.name,seller_id: req.body.seller_id });
 
     if (existingUOM) {
       // UOM with the same name already exists
@@ -43,15 +43,40 @@ const get_all_uoms = async (req, res) => {
         },
       },
       {
+        $lookup: {
+          from: 'categories',
+          localField: 'category_id',
+          foreignField: '_id',
+          as: 'category_data',
+        },
+      },
+      {
         $sort: { createdAt: -1 }, // Sort by createdAt in descending order
       },
     ])
       .then((result) => {
         if (result) {
+          var uom_data = [];
+       
+
+          for(const uom of result){
+              const response = {
+                _id: uom._id,
+                seller_id: uom.seller_id,
+                category_id: uom.category_id,
+                categoty_name: uom.category_data && uom.category_data.length > 0 ? uom.category_data[0].name : null,
+                createdAt: uom.createdAt,
+                updatedAt: uom.updatedAt,
+                category_data:uom.category_data && uom.category_data.length > 0 ? uom.category_data[0] : null,  
+
+              };
+              uom_data.push(response);
+
+          }
           res.status(200).send({
             status: true,
             message: "Data found",
-            data: result,
+            data: uom_data,
           });
         }
       })

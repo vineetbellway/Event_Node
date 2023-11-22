@@ -9,6 +9,11 @@ const uomSchema = new mongoose.Schema(
       ref: "Seller",
       required: true,
     },
+    category_id: {
+      type: mongoose.Schema.Types.ObjectID,
+      ref: "Category",
+      required: true,
+    },
     name: {
       type: String,
       required: true,

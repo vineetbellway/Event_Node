@@ -112,7 +112,7 @@ const  get_bookings = async (req, res) => {
                   event_data:booking.event_data && booking.event_data.length > 0 ? booking.event_data[0] : null,  
 
                 };
-                booking_data.push(response)
+                booking_data.push(response);
 
             }
             res.status(200).json({

@@ -26,6 +26,7 @@ const feedbackController = require("../controllers/feedback_controller");
 const notificationController = require("../controllers/notification_controller");
 const upiController = require("../controllers/upi_controller");
 const categoryController = require("../controllers/category_controller");
+const uomController = require("../controllers/uom_controller");
 
 router.post("/user",auth, userController.login);
 router.put("/user/:id", auth, userController.update_user);
@@ -191,27 +192,35 @@ router.get("/get-seller-upi-id", upiController.get_seller_upi_id);
 router.put("/update-seller-upi-id", upiController.update_seller_upi_id);
 
 // create category api
-
 router.post("/create-category", categoryController.create_category);
 
-
 // get  all categories api
-
 router.get("/get-all-categories", categoryController.get_all_categories);
 
-
 // get category api
-
 router.get("/get-category", categoryController.get_category);
 
-
 // update category api
-
 router.put("/update-category", categoryController.update_category);
 
 // delete category api
-
 router.delete("/delete-category", categoryController.delete_category);
+
+// Create UOM API
+router.post("/create-uom", uomController.create_uom);
+
+// Get all UOMs API
+router.get("/get-all-uoms", uomController.get_all_uoms);
+
+// Get UOM API
+router.get("/get-uom", uomController.get_uom);
+
+// Update UOM API
+router.put("/update-uom", uomController.update_uom);
+
+// Delete UOM API
+router.delete("/delete-uom", uomController.delete_uom);
+
 
 console.log("Before cron.schedule");
 cron.schedule("* * * * *", function () {

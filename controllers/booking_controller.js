@@ -211,7 +211,7 @@ const sendEventNotification = () => {
                 // Send push notification to the guest
                 const deviceToken = guest.device_token;
                 const notification = {
-                  title: 'Upcoming Booking Notification',
+                  title: 'Upcoming booking notification',
                   body: 'You have a booking on ' + bookingData.createdAt,
                 };
                 const data = {
@@ -222,7 +222,7 @@ const sendEventNotification = () => {
                 var message = 'You have a booking on ' + bookingData.createdAt;
                 var type = 'push';
 
-                addNotification(result.guest_id,result.guest_id,'Upcoming Booking Notification',message,type);
+                addNotification(result.guest_id,result.guest_id,'Upcoming booking notification',message,type);
 
                
 
@@ -405,8 +405,60 @@ const  get_booking_detail = async (req, res) => {
   }
 };
 
+const sendExpiredEventNotification = () => {
+  console.log("here 22")
+
+  // Find guests with bookings one day before the current date
+  Booking.find({ status: 'active' })
+    .then((result) => {
+      if (result && result.length > 0) { 
+        for (const bookingData of result) {
+          // Fetch the guest's device token
+          const guestId = bookingData.guestId; // Replace with the actual guest ID field
+          User.findById(guestId, { type: 'guest' })
+            .then((guest) => {
+              if (guest && guest.device_token) {
+                // Send push notification to the guest
+                const deviceToken = guest.device_token;
+                var title = "Event Expired";
+                var message = 'Your event has been expired';
+
+                const notification = {
+                  title: title,
+                  body: message,
+                };
+                const data = {
+                  // Additional data to send with the notification, if needed.
+                };                
+                
+                var type = 'app';
+                addNotification(result.guest_id,result.guest_id,title,message,type);               
+
+                sendPushNotification(deviceToken, notification, data)
+                  .then(() => {
+                    console.log('Push notification sent successfully to guest.');
+                  })
+                  .catch((error) => {
+                    console.error('Error sending push notification to guest:', error);
+                  });
+              }
+            })
+            .catch((error) => {
+              console.error(error.toString() || "Error fetching guest");
+            });
+        }
+      } else {
+        console.log("No bookings found");
+      }
+    })
+    .catch((error) => {
+      console.error(error.toString() || "Error");
+    });
+};
+
 module.exports = {
   sendEventNotification,
+  sendExpiredEventNotification,
   manage_bookings,
   get_bookings,
   book,

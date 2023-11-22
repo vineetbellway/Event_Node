@@ -17,6 +17,7 @@ const baseStatus = {
   rejected: "rejected",
   blocked: "blocked",
   deleted: "deleted",
+  expired: "expired"
 };
 
 const sellerStatus = {

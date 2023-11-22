@@ -325,19 +325,19 @@ const  get_cash_bookings = async (req, res) => {
 };
 
 
-const  get_booked_event_detail = async (req, res) => {
-  var event_id = req.query.event_id;
+const  get_booking_detail = async (req, res) => {
+  var booking_id = req.query.booking_id;
 
 
 
-  if (!event_id) {
-    res.status(400).json({ status: false, message: "event ID are required in the request body" });
+  if (!booking_id) {
+    res.status(400).json({ status: false, message: "booking ID are required in the request body" });
   } else {
     try {
       Booking.aggregate([
         {
           $match: {
-            event_id: new mongoose.Types.ObjectId(event_id),
+            _id: new mongoose.Types.ObjectId(booking_id),
           },
         },
         {
@@ -350,15 +350,36 @@ const  get_booked_event_detail = async (req, res) => {
         },
       ])
       .then((result) => {
-        if (result && result.length > 0) {        
-          
+        if (result && result.length > 0) {     
+          var booking_data = [];
+       
+
+          for(const booking of result){
+              const response = {
+                _id: booking._id,
+                event_id: booking.event_id,
+                guest_id: booking.guest_id,
+                payment_mode: booking.payment_mode,
+                status: booking.status,
+                transaction_id: booking.transaction_id,
+               // booking_date: booking.booking_date,
+                createdAt: booking.createdAt,
+                updatedAt: booking.updatedAt,
+                event_data:booking.event_data && booking.event_data.length > 0 ? booking.event_data[0] : null,  
+
+              };
+              booking_data.push(response);
+
+          }
           res.status(200).json({
             status: true,
             message: "Data found",
-            data: (result[0].event_data) ? result[0].event_data[0] : null,
-          });
+            data: (booking_data.length > 0)  ? booking_data[0] : null,
+          });   
+          
+         
         } else {
-          res.status(404).json({ status: false, message: "No event found" });
+          res.status(404).json({ status: false, message: "No booking found" });
         }
       })
       .catch((error) => {
@@ -384,7 +405,7 @@ module.exports = {
   get_bookings,
   book,
   get_cash_bookings,
-  get_booked_event_detail
+  get_booking_detail
 
 }; 
   

@@ -154,75 +154,75 @@ router.post("/book",auth,  bookingController.book);
 
 // get cash event list 
 
-router.get("/get-cash-bookings", bookingController.get_cash_bookings);
+router.get("/get-cash-bookings",auth,  bookingController.get_cash_bookings);
 
 
 // get booking detail
-router.get("/get-booking-detail", bookingController.get_booking_detail);
+router.get("/get-booking-detail",auth,  bookingController.get_booking_detail);
 
 
 // get bookings
-router.get("/get-bookings", bookingController.get_bookings);
+router.get("/get-bookings",auth,  bookingController.get_bookings);
 
 // manage bookings
-router.post("/manage-bookings", bookingController.manage_bookings);
+router.post("/manage-bookings", auth, bookingController.manage_bookings);
 
 // give feedback
-router.post("/give-feedback", feedbackController.give_feedback);
+router.post("/give-feedback",auth,  feedbackController.give_feedback);
 
 
 // get notifications api
 
-router.get("/get-notifications", notificationController.get_notifications);
+router.get("/get-notifications",auth,  notificationController.get_notifications);
 
 // get unread notifications count api
 
-router.get("/get-unread-notifications-count", notificationController.get_unread_notifications_count);
+router.get("/get-unread-notifications-count", auth, notificationController.get_unread_notifications_count);
 
 // create seller upi id api
 
-router.post("/create-seller-upi-id", upiController.create_seller_upi_id);
+router.post("/create-seller-upi-id",auth,  upiController.create_seller_upi_id);
 
 // get seller upi id api
 
-router.get("/get-seller-upi-id", upiController.get_seller_upi_id);
+router.get("/get-seller-upi-id",auth,  upiController.get_seller_upi_id);
 
 // update seller upi id api
 
-router.put("/update-seller-upi-id", upiController.update_seller_upi_id);
+router.put("/update-seller-upi-id",auth,  upiController.update_seller_upi_id);
 
 // create category api
-router.post("/create-category", categoryController.create_category);
+router.post("/create-category",auth,  categoryController.create_category);
 
 // get  all categories api
-router.get("/get-all-categories", categoryController.get_all_categories);
+router.get("/get-all-categories",auth,  categoryController.get_all_categories);
 
 // get category api
-router.get("/get-category", categoryController.get_category);
+router.get("/get-category",auth,  categoryController.get_category);
 
 // update category api
-router.put("/update-category", categoryController.update_category);
+router.put("/update-category",auth,  categoryController.update_category);
 
 // delete category api
-router.delete("/delete-category", categoryController.delete_category);
+router.delete("/delete-category",auth,  categoryController.delete_category);
 
 // Create UOM API
-router.post("/create-uom", uomController.create_uom);
+router.post("/create-uom",auth,  uomController.create_uom);
 
 // Get all UOMs API
-router.get("/get-all-uoms", uomController.get_all_uoms);
+router.get("/get-all-uoms",auth,  uomController.get_all_uoms);
 
 // Get UOM API
-router.get("/get-uom", uomController.get_uom);
+router.get("/get-uom",auth,  uomController.get_uom);
 
 // Update UOM API
-router.put("/update-uom", uomController.update_uom);
+router.put("/update-uom",auth,  uomController.update_uom);
 
 // Delete UOM API
-router.delete("/delete-uom", uomController.delete_uom);
+router.delete("/delete-uom",auth,  uomController.delete_uom);
 
 // search UOMs API
-router.get("/search-uom", uomController.search_uom);
+router.get("/search-uom",auth,  uomController.search_uom);
 
 cron.schedule("* * * * *", function () {
     console.log("Cron job is running");

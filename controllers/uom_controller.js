@@ -195,10 +195,71 @@ const delete_uom = async (req, res) => {
   }
 };
 
+const search_uom = async (req, res) => {
+  const category_name = req.query.category_name;
+
+  try {
+    const result = await UOM.aggregate([
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'category_id',
+          foreignField: '_id',
+          as: 'category_data',
+        },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+    ]);
+    
+    if (result && result.length > 0) {
+      const uom_data = result.map((uom) => {
+        return {
+          _id: uom._id,
+          seller_id: uom.seller_id,
+          category_id: uom.category_id,
+          name: uom.name,
+          createdAt: uom.createdAt,
+          updatedAt: uom.updatedAt,
+          category_data: uom.category_data && uom.category_data.length > 0
+            ? uom.category_data[0]
+            : null,
+        };
+      });
+
+      
+
+      // Filter the uom_data based on the name in category_data
+      const filteredUOMData = uom_data.filter(uom => uom.category_data && uom.category_data.name === category_name);
+     // console.log("filteredUOMData",filteredUOMData)
+      res.status(200).send({
+        status: true,
+        message: "Data found",
+        data: filteredUOMData,
+      });
+    } else {
+      res.status(200).send({
+        status: true,
+        message: "No data found",
+        data: [],
+      });
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).send({
+      status: false,
+      message: error.toString() || "Internal Server Error",
+    });
+  }
+};
+
+
 module.exports = {
   create_uom,
   get_all_uoms,
   get_uom,
   update_uom,
   delete_uom,
+  search_uom
 };

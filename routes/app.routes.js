@@ -222,14 +222,14 @@ router.put("/update-uom", uomController.update_uom);
 router.delete("/delete-uom", uomController.delete_uom);
 
 
-console.log("Before cron.schedule");
+
 cron.schedule("* * * * *", function () {
     console.log("Cron job is running");
  // disableSellerServices();
    //sendEventNotification();
-  // bookingController.sendExpiredEventNotification();
+   //bookingController.sendExpiredEventNotification();
 });
 
-console.log("After cron.schedule");
+
 
 module.exports = router;

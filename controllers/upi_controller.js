@@ -10,7 +10,7 @@ const create_seller_upi_id = async (req, res) => {
           if (result) {            
             res.status(201).send({ status: true, message: "success", data: result });
           } else {
-              res.status(404).send({ status: false, message: "Not created" });
+              res.status(404).send({ status: false, message: "Not created",data: null });
           }
           })
           .catch((error) => {
@@ -18,6 +18,7 @@ const create_seller_upi_id = async (req, res) => {
             res.send({
                 status: false,
                 message: error.toString() ?? "Error",
+                data:null
             });
         });
 
@@ -26,6 +27,7 @@ const create_seller_upi_id = async (req, res) => {
         res.status(500).send({
             status: false,
             message: error.toString() ?? "Internal Server Error",
+            data:null
         });
     }
     
@@ -35,7 +37,7 @@ const get_seller_upi_id = async (req, res) => {
     const seller_id = req.query.seller_id;
     console.log("seller_id",seller_id)
     if (!seller_id) {
-        res.status(400).send({ status: false, message: "seller_id missing" });
+        res.status(400).send({ status: false, message: "seller_id missing",data:null });
     } else {
         try {
             await UPI.aggregate([
@@ -70,6 +72,7 @@ const get_seller_upi_id = async (req, res) => {
                 res.send({
                   status: false,
                   message: error.toString() ?? "Error",
+                  data:null
                 });
               });
           } catch (error) {
@@ -77,6 +80,7 @@ const get_seller_upi_id = async (req, res) => {
             res.status(500).send({
               status: false,
               message: error.toString() ?? "Internal Server Error",
+              data:null
             });
           }
     }
@@ -95,20 +99,21 @@ const update_seller_upi_id = async (req, res) => {
             data: result,
           });
         } else {
-          res.status(404).send({ status: false, message: "Not updated" });
+          res.status(404).send({ status: false, message: "Not updated",data:null });
         }
       })
       .catch((error) => {
         res.send({
           status: false,
           message: error.toString() ?? "Error",
+          data:null
         });
       });
   } catch (error) {
     res.status(500).send({
       status: false,
-      message: "failure",
-      error: error ?? "Internal Server Error",
+      message: error.toString() ?? "Error",
+      data:null
     });
   }
 };

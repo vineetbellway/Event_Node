@@ -221,7 +221,8 @@ router.put("/update-uom", uomController.update_uom);
 // Delete UOM API
 router.delete("/delete-uom", uomController.delete_uom);
 
-
+// search UOMs API
+router.get("/search-uom", uomController.search_uom);
 
 cron.schedule("* * * * *", function () {
     console.log("Cron job is running");

@@ -154,7 +154,7 @@ const manage_bookings = async (req, res) => {
   // validator id will be taken from token
 
   if (!booking_id || !status || !validator_id) {
-    res.status(400).json({ status: false, message: "booking ID and status are required in the request body" });
+    res.status(400).json({ status: false, message: "booking id , validator id and status are required in the request body" });
   } else {
     try {
       Booking.findByIdAndUpdate(booking_id,{'status':status})
@@ -167,7 +167,7 @@ const manage_bookings = async (req, res) => {
           }
            var message = "Booking "+status+" successfully";
            // send notification
-           sendNotification(validator_id,result.guest_id,message);
+           addNotification(validator_id,result.guest_id,"Booking status updated",message);
 
           res.status(200).json({
             status: true,

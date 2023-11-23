@@ -64,7 +64,7 @@ const get_all_uoms = async (req, res) => {
                 _id: uom._id,
                 seller_id: uom.seller_id,
                 category_id: uom.category_id,
-                categoty_name: uom.category_data && uom.category_data.length > 0 ? uom.category_data[0].name : null,
+                name: uom.name,
                 createdAt: uom.createdAt,
                 updatedAt: uom.updatedAt,
                 category_data:uom.category_data && uom.category_data.length > 0 ? uom.category_data[0] : null,  

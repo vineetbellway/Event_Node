@@ -1,6 +1,7 @@
 const Booking = require("../models/booking.model");
 const User = require("../models/user.model");
 const mongoose = require("mongoose");
+const moment = require("moment");
 const { addNotification } = require('../helpers/notification_helper');
 const { sendPushNotification } = require('../config/firebase.config'); // Update with the correct path to your module.
 
@@ -406,7 +407,7 @@ const  get_booking_detail = async (req, res) => {
 };
 
 const sendExpiredEventNotification = () => {
-  console.log("here 22")
+  /*console.log("here 22")*/
 
   // Find guests with bookings one day before the current date
   Booking.aggregate([
@@ -426,19 +427,40 @@ const sendExpiredEventNotification = () => {
 
   ])
     .then((result) => {
+      //console.log("result",result)
       if (result && result.length > 0) { 
+        const current_date = moment().format("YYYY-MM-DD");
+      //  console.log("current_date",current_date);
         for (const bookingData of result) {
           // Fetch the guest's device token
-          const guestId = bookingData.guestId; // Replace with the actual guest ID field
-          console.log("bookingData",bookingData)
+          const guestId = bookingData.guest_id; // Replace with the actual guest ID field
+        
+
+        
           User.findById(guestId, { type: 'guest' })
-            .then((guest) => {
-              if (guest && guest.device_token) {
+            .then((guest_result) => {
+              console.log("guest_result",guest_result)
+              if (guest_result && guest_result.device_token) {
+
+                console.log("result 3",result.event_data[0]);
                 // Send push notification to the guest
-                const deviceToken = guest.device_token;
+                const deviceToken = guest_result.device_token;
                 var title = "Event Expired";
                 var message = 'Your event has been expired';
 
+                var event_data =  result.event_data && result.event_data.length > 0 ? result.event_data[0] : null; 
+                var end_time = event_data.end_time;
+                console.log("end_time",end_time)
+                console.log("current_date",current_date)
+                if(end_time > current_date){
+                  Booking.findByIdAndUpdate(result._id,{'status': 'expired'})
+                    .then((result) => {
+                      if (result) {   
+                      }
+                    });
+
+                }
+               /* console.log("event_data",event_data)*/
                 const notification = {
                   title: title,
                   body: message,

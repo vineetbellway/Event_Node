@@ -19,7 +19,7 @@ const storage = multer.diskStorage({
   },
 });
 
-exports.login = async (req, res, next) => {
+exports.loginold = async (req, res, next) => {
   let phone = req.body.phone;
   let code = req.body.code;
   let device_type = req.body.device_type;
@@ -87,6 +87,78 @@ exports.login = async (req, res, next) => {
       }
     }
 };
+
+exports.login = async (req, res, next) => {
+  let phone = req.body.phone;
+  let code = req.body.code;
+  let device_type = req.body.device_type;
+  let device_token = req.body.device_token;
+
+  if (!phone) {
+    return res.status(400).send({
+      status: false,
+      message: "body phone missing",
+    });
+  } else if (!code) {
+    return res.status(400).send({
+      status: false,
+      message: "body code missing",
+    });
+  } else {
+    try {
+      const existingUser = await User.findOne({ phone: phone, code: code });
+
+      if (existingUser) {
+        console.log("existingUser", existingUser);
+
+        // Update the existing user's device_type and device_token
+        await User.findOneAndUpdate(
+          { _id: existingUser.id },
+          { device_type: device_type, device_token: device_token },
+          {
+            new: true,
+          }
+        );
+
+        return res.send({
+          status: true,
+          message: "Login Success",
+          data: existingUser,
+        });
+      } else {
+        // User with the given phone and code doesn't exist, create a new user
+        const user = new User({
+          uid: req.uid, // This assumes req.uid is available
+          phone: phone,
+          code: code,
+          code_phone: code + phone,
+          device_type: device_type,
+          device_token: device_token,
+        });
+
+        try {
+          await user.save();
+
+          return res
+            .status(201)
+            .send({ status: true, message: "Sign-Up Success", data: user });
+        } catch (error) {
+          console.log("aaa9", error);
+          return res
+            .status(500)
+            .send({ status: false, message: error.toString() });
+        }
+      }
+    } catch (error) {
+      console.log("Error:", error);
+      return res.status(500).send({
+        status: false,
+        message: error.toString() || "Internal Server Error",
+      });
+    }
+  }
+};
+
 
 exports.get_users = async (req, res) => {
   try {

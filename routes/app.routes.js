@@ -134,9 +134,9 @@ router.post("/create-order", orderController.create_order);
 router.post("/consume-loyalty-point", loyalityController.consume_loyalty_point);
 
 
-router.post("/add-facility", facilityController.add_facility);
-router.put("/update-facility", facilityController.update_facility);
-router.get("/facilities", facilityController.get_facilities);
+router.post("/add-facility",auth, facilityController.add_facility);
+router.put("/update-facility",auth,  facilityController.update_facility);
+router.get("/facilities",auth,  facilityController.get_facilities);
 
 // manage validator event status
 router.put("/manage-validator-event-status/:id", validatorEventController.manage_validator_event_status);
@@ -150,7 +150,7 @@ router.post("/approve-guest-consumption/:id", loyalityController.approve_guest_c
 
 // book event/loyalty
 
-router.post("/book", bookingController.book);
+router.post("/book",auth,  bookingController.book);
 
 // get cash event list 
 

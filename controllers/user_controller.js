@@ -38,11 +38,19 @@ exports.login = async (req, res, next) => {
     try {
       const userModel = await User.findOne({ phone: phone, code: code , device_type: device_type, device_token: device_token });
       if (userModel) {
+
+        console.log("userModel",userModel)
+        
+        await User.findOneAndUpdate({ _id: userModel.id }, { device_type: device_type, device_token: device_token } , {
+          new: true,
+        });
         return res.send({
           status: true,
           message: "Login Success",
           data: userModel,
         });
+        
+
       } else {
 
         const user = new User({
@@ -55,6 +63,8 @@ exports.login = async (req, res, next) => {
         });
         try {
           await user.save();
+
+
           return res
             .status(201)
             .send({ status: true, message: "Sign-Up Success", data: user });

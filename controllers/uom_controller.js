@@ -11,6 +11,7 @@ const create_uom = async (req, res) => {
       return res.status(409).send({
         status: false,
         message: "UOM already exists",
+        data:null
       });
     }
 
@@ -29,6 +30,7 @@ const create_uom = async (req, res) => {
     res.status(500).send({
       status: false,
       message: error.toString() || "Internal Server Error",
+      data:null
     });
   }
 };
@@ -84,6 +86,7 @@ const get_all_uoms = async (req, res) => {
         res.send({
           status: false,
           message: error.toString() ?? "Error",
+          data:null
         });
       });
   } catch (error) {
@@ -91,6 +94,7 @@ const get_all_uoms = async (req, res) => {
     res.status(500).send({
       status: false,
       message: error.toString() || "Internal Server Error",
+      data:null
     });
   }
 };
@@ -99,7 +103,7 @@ const get_uom = async (req, res) => {
   const uom_id = req.query.uom_id;
 
   if (!uom_id) {
-    res.status(400).send({ status: false, message: "UOM ID missing" });
+    res.status(400).send({ status: false, message: "UOM ID missing", data:null });
   } else {
     try {
       const result = await UOM.findById(uom_id);
@@ -111,13 +115,14 @@ const get_uom = async (req, res) => {
           data: result,
         });
       } else {
-        res.status(404).send({ status: false, message: "UOM not found" });
+        res.status(404).send({ status: false, message: "UOM not found", data:null });
       }
     } catch (error) {
       console.error("Error:", error);
       res.status(500).send({
         status: false,
         message: error.toString() || "Internal Server Error",
+        data:null
       });
     }
   }
@@ -141,6 +146,7 @@ const update_uom = async (req, res) => {
       return res.status(409).send({
         status: false,
         message: "UOM already exists",
+        data:null
       });
     }
 
@@ -158,14 +164,14 @@ const update_uom = async (req, res) => {
         data: updatedUOM,
       });
     } else {
-      res.status(404).send({ status: false, message: "UOM not found" });
+      res.status(404).send({ status: false, message: "UOM not found", data:null });
     }
   } catch (error) {
     console.error("Error:", error);
     res.status(500).send({
       status: false,
-      message: "Internal Server Error",
-      error: error.toString(),
+      message: error.toString() || "Internal Server Error",
+      data:null
     });
   }
 };
@@ -174,23 +180,24 @@ const delete_uom = async (req, res) => {
   const uom_id = req.query.uom_id;
 
   if (!uom_id) {
-    return res.status(400).send({ status: false, message: "UOM ID missing" });
+    return res.status(400).send({ status: false, message: "UOM ID missing",data:null });
   }
 
   try {
     const result = await UOM.findByIdAndDelete(uom_id);
 
     if (result) {
-      return res.status(200).send({ status: true, message: "Category deleted" }); 
+      return res.status(200).send({ status: true, message: "UOM deleted",data:null }); 
     } else {
-      return res.status(404).send({ status: false, message: "UOM not found" });
+      return res.status(404).send({ status: false, message: "UOM not found", data:null });
     }
   } catch (error) {
     console.error("Error:", error);
     return res.status(500).send({
       status: false,
-      message: "Internal Server Error",
-      error: error.toString(),
+      message: error.toString() || "Internal Server Error",
+      data:null
+      
     });
   }
 };
@@ -250,6 +257,7 @@ const search_uom = async (req, res) => {
     res.status(500).send({
       status: false,
       message: error.toString() || "Internal Server Error",
+      data:null
     });
   }
 };

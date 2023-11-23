@@ -139,7 +139,7 @@ router.put("/update-facility",auth,  facilityController.update_facility);
 router.get("/facilities",auth,  facilityController.get_facilities);
 
 // manage validator event status
-router.put("/manage-validator-event-status/:id", validatorEventController.manage_validator_event_status);
+router.put("/manage-validator-event-statauthus/:id", validatorEventController.manage_validator_event_status);
 
 // create loyalty order item
 router.post("/create-loyalty-order-item", loyalityController.create_loyalty_order_items);

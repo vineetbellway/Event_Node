@@ -84,7 +84,7 @@ const  get_bookings = async (req, res) => {
           },
           {
             $lookup: {
-              from: 'eventmodels',
+              from: 'events',
               localField: 'event_id',
               foreignField: '_id',
               as: 'event_data',
@@ -267,7 +267,7 @@ const  get_cash_bookings = async (req, res) => {
         },
         {
           $lookup: {
-            from: 'eventmodels',
+            from: 'events',
             localField: 'event_id',
             foreignField: '_id',
             as: 'event_data',
@@ -340,7 +340,7 @@ const  get_booking_detail = async (req, res) => {
         },
         {
           $lookup: {
-            from: 'eventmodels',
+            from: 'events',
             localField: 'event_id',
             foreignField: '_id',
             as: 'event_data',
@@ -418,7 +418,7 @@ const sendExpiredEventNotification = () => {
     },
     {
       $lookup: {
-        from: 'eventmodels',
+        from: 'events',
         localField: 'event_id',
         foreignField: '_id',
         as: 'event_data',

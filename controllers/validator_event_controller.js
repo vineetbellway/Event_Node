@@ -77,7 +77,7 @@ exports.get_validator_events = async (req, res) => {
       },
       {
         $lookup: {
-          from: "eventmodels",
+          from: "events",
           localField: "event_id",
           foreignField: "_id",
           as: "event",
@@ -136,7 +136,7 @@ exports.get_validator_event = async (req, res) => {
         },
         {
           $lookup: {
-            from: "eventmodels",
+            from: "events",
             localField: "event_id",
             foreignField: "_id",
             as: "event",

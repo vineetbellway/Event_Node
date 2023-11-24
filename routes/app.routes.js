@@ -3,7 +3,36 @@ const router = express.Router();
 const { auth } = require("../middleware/auth");
 const { checkSellerMemberShipPlanStatus } = require("../middleware/checkMemberShipPlanStatus");
 const cron = require("node-cron");
-
+const multer = require('multer');
+const path = require('path');
+// Set up storage for multer
+const storage = multer.diskStorage({
+   destination: function (req, file, cb) {
+     cb(null, 'uploads/events');
+   },
+   filename: function (req, file, cb) {
+     cb(null, Date.now() + path.extname(file.originalname));
+   },
+ });
+ var upload = multer({
+   storage: storage,
+   limits: {
+     fileSize: 1024 * 1024 * 5,
+   },
+   fileFilter: (req, file, cb) => {
+     if (
+       file.mimetype == "image/png" ||
+       file.mimetype == "image/jpg" ||
+       file.mimetype == "image/jpeg" ||
+       file.mimetype == "image/pjpeg"
+     ) {
+       cb(null, true);
+     } else {
+       cb(null, false);
+       return cb(new Error("Only .png, .jpg and .jpeg .pjpeg format allowed!"));
+     }
+   },
+ });
 
 const userController = require("../controllers/user_controller");
 const eventController = require("../controllers/event_controller");
@@ -60,7 +89,8 @@ router.get("/validator_by_user_id/:id",auth,validatorController.get_validator_by
 router.delete("/validator/:id", auth, validatorController.delete_validator);
 router.delete("/validator", auth, validatorController.delete_validators);
 
-router.post("/event", eventController.create_event);
+router.post("/event", upload.single('image'), eventController.create_event);
+
 router.put("/event/:id", auth, eventController.update_event);
 router.get("/event", auth, eventController.get_events);
 router.get("/search_event/:keyword", auth, eventController.search_events);

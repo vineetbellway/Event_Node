@@ -1,6 +1,8 @@
 const express = require("express");
 const app = express();
 const cors = require("cors");
+
+const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 require("dotenv").config();
 let path = require("path");
@@ -23,6 +25,7 @@ mongoose
   });
 
 app.use(cors());
+app.use(bodyParser.urlencoded({ extended: false }))
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static("/images"));

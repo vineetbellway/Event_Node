@@ -6,9 +6,8 @@ const { baseStatus } = require("../utils/enumerator");
 const schema = new mongoose.Schema(
   {
     seller_id: {
-      type: mongoose.Schema.Types.ObjectID,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "Seller",
-      required: true,
     },
     primary_number: {
       type: String,

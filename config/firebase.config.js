@@ -17,13 +17,13 @@ admin.initializeApp({
  * @param {string} sound - The name of the sound file to play (optional).
  * @returns {Promise} A promise that resolves when the notification is sent.
  */
-function sendPushNotification(fcm_token, notification, data) {
+function sendPushNotification(fcm_token, notification, data, sound) {
   const message = {
     token: fcm_token,
     notification: {
       title: notification.title,
       body: notification.body,
-     // sound: sound || "default", // You can set a default sound or provide a specific sound file name
+      sound: sound || "default", // You can set a default sound or provide a specific sound file name
     },
     data: data || {},
   };

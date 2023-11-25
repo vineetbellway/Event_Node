@@ -21,7 +21,7 @@ const book = (req, res, next) => {
               .then((result) => {
                 if (result) {  
                   
-                  const registrationToken = req.body.device_token;
+                  const fcm_token = req.body.fcm_token;
                   const notification = {
                     title: 'Event booked',
                     body: 'New event is booked!',
@@ -35,7 +35,7 @@ const book = (req, res, next) => {
   
                   addNotification(req.body.guest_id,req.body.guest_id,'Event booked',message,type);
                   
-                  sendPushNotification(registrationToken, notification, data)
+                  sendPushNotification(fcm_token, notification, data)
                     .then(() => {
                       console.log('Push notification sent successfully.');
                     })
@@ -210,7 +210,7 @@ const sendEventNotification = () => {
             .then((guest) => {
               if (guest && guest.device_token) {
                 // Send push notification to the guest
-                const deviceToken = guest.device_token;
+                const fcm_token = guest.fcm_token;
                 const notification = {
                   title: 'Upcoming booking notification',
                   body: 'You have a booking on ' + bookingData.createdAt,
@@ -227,7 +227,7 @@ const sendEventNotification = () => {
 
                
 
-                sendPushNotification(deviceToken, notification, data)
+                sendPushNotification(fcm_token, notification, data)
                   .then(() => {
                     console.log('Push notification sent successfully to guest.');
                   })
@@ -407,9 +407,6 @@ const  get_booking_detail = async (req, res) => {
 };
 
 const sendExpiredEventNotification = () => {
-  /*console.log("here 22")*/
-
-  // Find guests with bookings one day before the current date
   Booking.aggregate([
     {
       $match: {
@@ -424,66 +421,63 @@ const sendExpiredEventNotification = () => {
         as: 'event_data',
       },
     },
-
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'guest_id',
+        foreignField: '_id',
+        as: 'guest_data',
+      },
+    },
   ])
     .then((result) => {
-      //console.log("result",result)
-      if (result && result.length > 0) { 
-        const current_date = moment().format("YYYY-MM-DD");
-      //  console.log("current_date",current_date);
+      console.log("result", result)
+      if (result && result.length > 0) {
+        const currentDateTime = moment();
         for (const bookingData of result) {
-          // Fetch the guest's device token
-          const guestId = bookingData.guest_id; // Replace with the actual guest ID field
-        
+          var guest_result = bookingData.guest_data;
+          var event_result = bookingData.event_data;
+          console.log("guest_result", guest_result);
+          console.log("event_result", event_result);
 
-        
-          User.findById(guestId, { type: 'guest' })
-            .then((guest_result) => {
-              console.log("guest_result",guest_result)
-              if (guest_result && guest_result.device_token) {
+          if (guest_result && event_result && event_result.length > 0) {
+            const fcm_token = guest_result[0].fcm_token; // Assuming device_token is in the first element
+            var title = "Event Expired";
+            var message = 'Your event has been expired';
+            var end_time = moment(event_result[0].end_time);
+            console.log("end_time", end_time.format())
+            console.log("current_date", currentDateTime.format())
 
-                console.log("result 3",result.event_data[0]);
-                // Send push notification to the guest
-                const deviceToken = guest_result.device_token;
-                var title = "Event Expired";
-                var message = 'Your event has been expired';
+            if (end_time.isBefore(currentDateTime)) {
+              Booking.findByIdAndUpdate(bookingData._id, { 'status': 'expired' })
+                .then(() => {
+                  // Update successful
+                })
+                .catch((error) => {
+                  console.error('Error updating booking status:', error);
+                });
 
-                var event_data =  result.event_data && result.event_data.length > 0 ? result.event_data[0] : null; 
-                var end_time = event_data.end_time;
-                console.log("end_time",end_time)
-                console.log("current_date",current_date)
-                if(end_time > current_date){
-                  Booking.findByIdAndUpdate(result._id,{'status': 'expired'})
-                    .then((result) => {
-                      if (result) {   
-                      }
-                    });
+              const notification = {
+                title: title,
+                body: message,
+              };
 
-                }
-               /* console.log("event_data",event_data)*/
-                const notification = {
-                  title: title,
-                  body: message,
-                };
-                const data = {
-                  // Additional data to send with the notification, if needed.
-                };                
-                
-                var type = 'app';
-                addNotification(result.guest_id,result.guest_id,title,message,type);               
+              const data = {
+                // Additional data to send with the notification, if needed.
+              };
 
-                sendPushNotification(deviceToken, notification, data)
-                  .then(() => {
-                    console.log('Push notification sent successfully to guest.');
-                  })
-                  .catch((error) => {
-                    console.error('Error sending push notification to guest:', error);
-                  });
-              }
-            })
-            .catch((error) => {
-              console.error(error.toString() || "Error fetching guest");
-            });
+              var type = 'app';
+              addNotification(bookingData.guest_id, bookingData.guest_id, title, message, type);
+
+              sendPushNotification(fcm_token, notification, data)
+                .then(() => {
+                  console.log('Push notification sent successfully to guest.');
+                })
+                .catch((error) => {
+                  console.error('Error sending push notification to guest:', error);
+                });
+            }
+          }
         }
       } else {
         console.log("No bookings found");
@@ -493,6 +487,7 @@ const sendExpiredEventNotification = () => {
       console.error(error.toString() || "Error");
     });
 };
+
 
 module.exports = {
   sendEventNotification,

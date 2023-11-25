@@ -262,7 +262,10 @@ router.get("/get-banner-detail", auth, bannerController.get_banner);
 router.put("/update-banner",auth,banner_upload.single('image'),  bannerController.update_banner);
 
 // Delete banner API
-router.delete("/delete-banner",  bannerController.delete_banner);
+router.delete("/delete-banner",auth,bannerController.delete_banner);
+
+// Get seller event API
+router.get("/get-seller-events", eventController.get_seller_events);
 
 
 cron.schedule("* * * * *", function () {

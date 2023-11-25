@@ -2,6 +2,7 @@ const EventModel = require("../models/event.model");
 const LoyalityOrderItem = require("../models/loyalty_order_item.model");
 const mongoose = require("mongoose");
 const { ObjectId } = require('mongoose').Types;
+const moment = require("moment");
 const { baseStatus, userStatus } = require("../utils/enumerator");
 
 exports.create_event = (req, res, next) => {
@@ -276,6 +277,67 @@ exports.event_by_seller_id = async (req, res) => {
     });
   }
 };
+
+
+exports.get_seller_events = async (req, res) => {
+  const seller_id = req.query.seller_id;
+
+  try {
+    const events = await EventModel.find({ seller_id: new mongoose.Types.ObjectId(seller_id), 'status': 'active' });
+
+    if (events.length > 0) {
+      const currentDateTime = moment();
+      const eventsWithImageUrl = [];
+
+      for (const event of events) {
+        // Get the host (domain and port)
+        const protocol = req.protocol;
+        const host = req.get('host');
+
+        // Combine protocol, host, and any other parts of the base URL you need
+        const baseURL = `${protocol}://${host}`;
+        const image = event.image ? `${baseURL}/uploads/events/${event.image}` : null;
+        const end_time = moment(event.end_time);
+
+        if (end_time >= currentDateTime) {
+          eventsWithImageUrl.push({
+            ...event.toObject(),
+            image: image,
+          });
+        }
+      }
+
+      if (eventsWithImageUrl.length > 0) {
+        res.status(200).send({
+          status: true,
+          message: "Success",
+          data: eventsWithImageUrl,
+        });
+      } else {
+        res.status(200).send({
+          status: false,
+          message: "No active events found",
+          data: [],
+        });
+      }
+    } else {
+      res.status(200).send({
+        status: false,
+        message: "No events found",
+        data: [],
+      });
+    }
+  } catch (error) {
+    res.status(500).send({
+      status: false,
+      message: error.toString() || "Internal Server Error",
+    });
+  }
+};
+
+
+
+
 
 exports.delete_event = async (req, res) => {
   var id = req.params.id;

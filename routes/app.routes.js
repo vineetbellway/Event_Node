@@ -55,7 +55,7 @@ const uomController = require("../controllers/uom_controller");
 const bannerController = require("../controllers/banner_controller");
 
 
-router.post("/user", userController.login);
+router.post("/user", auth,userController.login);
 router.put("/user/:id", auth, userController.update_user);
 router.get("/user", auth, userController.get_users);
 router.get("/user/:id", auth, userController.get_user);

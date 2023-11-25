@@ -93,6 +93,7 @@ exports.login = async (req, res, next) => {
   let code = req.body.code;
   let device_type = req.body.device_type;
   let device_token = req.body.device_token;
+  let fcm_token = req.body.fcm_token;
 
   if (!phone) {
     return res.status(400).send({
@@ -111,10 +112,10 @@ exports.login = async (req, res, next) => {
       if (existingUser) {
         console.log("existingUser", existingUser);
 
-        // Update the existing user's device_type and device_token
+        // Update the existing user's device_type and device_token and fcm_token
         await User.findOneAndUpdate(
           { _id: existingUser.id },
-          { device_type: device_type, device_token: device_token },
+          { device_type: device_type, device_token: device_token, fcm_token: fcm_token },
           {
             new: true,
           }
@@ -134,6 +135,7 @@ exports.login = async (req, res, next) => {
           code_phone: code + phone,
           device_type: device_type,
           device_token: device_token,
+          fcm_token: fcm_token,
         });
 
         try {

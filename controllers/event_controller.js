@@ -11,7 +11,6 @@ exports.create_event = (req, res, next) => {
     const primary_number = req.body.primary_number.trim();
     const secondary_number = req.body.secondary_number.trim();
     const type = req.body.type.trim();
-    const images = req.files.map(file => file.filename);
     const image = req.file ? req.file.filename : undefined
     const name = req.body.name.trim();
     const venue = req.body.venue.trim();

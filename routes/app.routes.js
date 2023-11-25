@@ -18,6 +18,18 @@ const storage = multer.diskStorage({
    storage: storage
  });
 
+ const banner_storage = multer.diskStorage({
+   destination: function (req, file, cb) {
+     cb(null, 'uploads/banners');
+   },
+   filename: function (req, file, cb) {
+     cb(null, Date.now() + path.extname(file.originalname));
+   },
+ });
+ var banner_upload = multer({
+   storage: banner_storage
+ });
+
 const userController = require("../controllers/user_controller");
 const eventController = require("../controllers/event_controller");
 const guestController = require("../controllers/guest_controller");
@@ -40,6 +52,8 @@ const notificationController = require("../controllers/notification_controller")
 const upiController = require("../controllers/upi_controller");
 const categoryController = require("../controllers/category_controller");
 const uomController = require("../controllers/uom_controller");
+const bannerController = require("../controllers/banner_controller");
+
 
 router.post("/user",auth, userController.login);
 router.put("/user/:id", auth, userController.update_user);
@@ -73,8 +87,7 @@ router.get("/validator_by_user_id/:id",auth,validatorController.get_validator_by
 router.delete("/validator/:id", auth, validatorController.delete_validator);
 router.delete("/validator", auth, validatorController.delete_validators);
 
-router.post("/event", upload.single('image'), eventController.create_event);
-
+router.post("/event",auth, upload.single('image'), eventController.create_event);
 router.put("/event/:id", auth, eventController.update_event);
 router.get("/event", auth, eventController.get_events);
 router.get("/search_event/:keyword", auth, eventController.search_events);
@@ -236,11 +249,27 @@ router.put("/update-uom",auth,  uomController.update_uom);
 router.delete("/delete-uom",auth,  uomController.delete_uom);
 
 
+// Create banner API
+router.post("/create-banner",banner_upload.single('image'), bannerController.create_banner);
+
+// Get all UOMs API
+router.get("/get-all-banners",  bannerController.get_all_banners);
+
+// Get banner detail API
+router.get("/get-banner-detail",  bannerController.get_banner);
+
+// Update banner API
+router.put("/update-banner",banner_upload.single('image'),  bannerController.update_banner);
+
+// Delete banner API
+router.delete("/delete-banner",  bannerController.delete_banner);
+
+
 cron.schedule("* * * * *", function () {
     console.log("Cron job is running");
- // disableSellerServices();
-   //sendEventNotification();
-   //bookingController.sendExpiredEventNotification();
+    // bookingController.disableSellerServices();
+   //bookingController.sendEventNotification();
+   bookingController.sendExpiredEventNotification();
 });
 
 

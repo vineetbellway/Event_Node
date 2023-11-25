@@ -298,6 +298,19 @@ exports.event_by_seller_id = async (req, res) => {
     await EventModel.aggregatePaginate(myAggregate, options)
       .then((result) => {
         if (result) {
+          // Get the host (domain and port)
+          const protocol = req.protocol;
+          const host = req.get('host');
+
+          // Combine protocol, host, and any other parts of the base URL you need
+          const baseURL = `${protocol}://${host}`;
+          //console.log("result",result)
+          // Modify each event to include the image upload path
+          if(result.data.length > 0){
+            result.data.forEach((event) => {
+              event.image = baseURL + '/uploads/events/' + event.image;
+            });
+          } 
           res.status(200).send({
             status: true,
             message: "success",

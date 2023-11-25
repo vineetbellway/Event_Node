@@ -24,6 +24,11 @@ exports.create_event = (req, res, next) => {
     const tax_percent = req.body.tax_percent.trim();
     const amount = req.body.amount.trim();
     const instructions = req.body.instructions.trim();
+    const transportation_charge = req.body.transportation_charge.trim();
+    const hire_charge = req.body.hire_charge.trim();
+    const labour_charge = req.body.labour_charge.trim();
+    const commision_charge = req.body.commision_charge.trim();
+    const others = req.body.others.trim();
     const status = req.body.status.trim();
 
     const eventData = {
@@ -44,6 +49,11 @@ exports.create_event = (req, res, next) => {
       tax_percent,
       amount,
       instructions,
+      transportation_charge,
+      hire_charge,
+      labour_charge,
+      commision_charge,
+      others,
       status,
     };
 

@@ -229,6 +229,7 @@ exports.search_events = async (req, res) => {
 
 exports.event_by_seller_id = async (req, res) => {
   var id = req.params.id;
+  console.log("id",id)
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const myCustomLabels = {

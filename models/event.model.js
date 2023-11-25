@@ -62,16 +62,16 @@ const schema = new mongoose.Schema(
       type: String,
     },
     transportation_charge: {
-      type: Number,
+      type: String,
     },
     hire_charge: {
-      type: Number,
+      type: String,
     },
     labour_charge: {
-      type: Number,
+      type: String,
     },
     commision_charge: {
-      type: Number,
+      type: String,
     },
     others: {
       type: String,

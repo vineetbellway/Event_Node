@@ -9,16 +9,15 @@ const schema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Seller",
     }, 
-    image: {
-      type: String,
+    event_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Event",
       required:true
-    },
-    redirect_url: {
-     type: String,
-     required:true
-    },
-    
-    
+    }, 
+    images: {
+      type: [String], // Change to an array of strings
+      required: true,
+    },  
   },
   {
     timestamps: true,

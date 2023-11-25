@@ -25,6 +25,8 @@ mongoose
   });
 
 app.use(cors());
+// Set up static file serving
+app.use('/uploads', express.static('uploads'));
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());

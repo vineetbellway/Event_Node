@@ -11,6 +11,7 @@ exports.create_event = (req, res, next) => {
     const primary_number = req.body.primary_number.trim();
     const secondary_number = req.body.secondary_number.trim();
     const type = req.body.type.trim();
+    const images = req.files.map(file => file.filename);
     const image = req.file ? req.file.filename : undefined
     const name = req.body.name.trim();
     const venue = req.body.venue.trim();
@@ -24,6 +25,11 @@ exports.create_event = (req, res, next) => {
     const tax_percent = req.body.tax_percent.trim();
     const amount = req.body.amount.trim();
     const instructions = req.body.instructions.trim();
+    const transportation_charge = req.body.transportation_charge.trim();
+    const hire_charge = req.body.hire_charge.trim();
+    const labour_charge = req.body.labour_charge.trim();
+    const commision_charge = req.body.commision_charge.trim();
+    const others = req.body.others.trim();
     const status = req.body.status.trim();
 
     const eventData = {
@@ -44,6 +50,11 @@ exports.create_event = (req, res, next) => {
       tax_percent,
       amount,
       instructions,
+      transportation_charge,
+      hire_charge,
+      labour_charge,
+      commision_charge,
+      others,
       status,
     };
 

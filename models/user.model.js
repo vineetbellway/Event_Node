@@ -42,6 +42,9 @@ const schema = new mongoose.Schema(
     device_token: {
       type: String,
     },
+    fcm_token: {
+      type: String,
+    },
     status: {
       type: String,
       default: baseStatus.pending,

@@ -61,6 +61,21 @@ const schema = new mongoose.Schema(
     instructions: {
       type: String,
     },
+    transportation_charge: {
+      type: Number,
+    },
+    hire_charge: {
+      type: Number,
+    },
+    labour_charge: {
+      type: Number,
+    },
+    commision_charge: {
+      type: Number,
+    },
+    others: {
+      type: String,
+    },
     status: {
       type: String,
       default: baseStatus.pending,

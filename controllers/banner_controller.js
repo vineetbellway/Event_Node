@@ -1,35 +1,21 @@
 const BannerModel = require("../models/banner.model");
 const mongoose = require("mongoose");
 const { ObjectId } = require('mongoose').Types;
-const { baseStatus, userStatus } = require("../utils/enumerator");
+const fs = require('fs');
+const path = require('path');
+
 
 exports.create_banner = (req, res, next) => {
   try {
     // Trim values to remove extra spaces
     const seller_id = req.body.seller_id !== undefined && req.body.seller_id !== null ? req.body.seller_id.toString().trim() : null;
-    const redirect_url = req.body.redirect_url.trim();
+    const event_id  = req.body.event_id !== undefined && req.body.event_id !== null ? req.body.event_id.toString().trim() : null;
     const image = req.file ? req.file.filename : undefined;
-    console.log("ss",req.file)
-
-    const urlRegex = /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/;
     
-
-    // Validate the redirect URL using a regular expression
-    const isValidRedirectUrl = urlRegex.test(redirect_url);
-
-    if (!isValidRedirectUrl) {
-      return res.status(400).send({
-        status: false,
-        message: 'Invalid redirect URL',
-        data: null,
-      });
-    }
-
-
     const eventData = {
       seller_id: new ObjectId(seller_id),
+      event_id: new ObjectId(event_id),
       image,
-      redirect_url
 
     };
 
@@ -37,7 +23,23 @@ exports.create_banner = (req, res, next) => {
       .save()
       .then((result) => {
         if (result) {
-          res.status(201).send({ status: true, message: 'Success', data: result });
+             // Get the host (domain and port)
+            const protocol = req.protocol;
+            const host = req.get('host');
+
+             // Combine protocol, host, and any other parts of the base URL you need
+            const baseURL = `${protocol}://${host}`;
+            const imageUrl = baseURL + '/uploads/banners/' + result.image;
+
+           res.status(201).send({
+             status: true,
+             message: 'Success',
+             data: {
+               ...result.toObject(),
+               image: imageUrl,
+             },
+           });
+          
         } else {
           res.status(404).send({ status: false, message: 'Not created' });
         }
@@ -80,10 +82,18 @@ exports.get_all_banners = async (req, res) => {
          
   
             for(const banner of result){
+               // Get the host (domain and port)
+            const protocol = req.protocol;
+            const host = req.get('host');
+
+             // Combine protocol, host, and any other parts of the base URL you need
+            const baseURL = `${protocol}://${host}`;
+            const imageUrl = baseURL + '/uploads/banners/' + banner.image;
                 const response = {
                   _id: banner._id,
                   seller_id: banner.seller_id,
-                  image: "uplods/banners/"+banner.image,
+                  event_id: banner.event_id,
+                  image: imageUrl,
                   redirect_url: banner.redirect_url,
                   createdAt: banner.createdAt,
                   updatedAt: banner.updatedAt,
@@ -126,10 +136,21 @@ exports.get_all_banners = async (req, res) => {
         const result = await BannerModel.findById(banner_id);
   
         if (result) {
+          const baseURL = `${req.protocol}://${req.get('host')}`;
+          const imageUrl =  baseURL + '/uploads/banners/' + result.image;
+  
+          const bannerData = {
+            _id: result._id,
+            seller_id: result.seller_id,
+            event_id: result.event_id,
+            images: imageUrl,
+            createdAt: result.createdAt,
+            updatedAt: result.updatedAt,
+          };
           res.status(200).send({
             status: true,
             message: "Data found",
-            data: result,
+            data: bannerData,
           });
         } else {
           res.status(404).send({ status: false, message: "Banner not found", data:null });
@@ -149,30 +170,10 @@ exports.get_all_banners = async (req, res) => {
     try {
   
       // Trim values to remove extra spaces
-      const seller_id = req.body.seller_id !== undefined && req.body.seller_id !== null ? req.body.seller_id.toString().trim() : null;
-      const redirect_url = req.body.redirect_url.trim();
-      const image = req.file ? req.file.filename : undefined;
       const banner_id = req.body.banner_id.trim();
-      console.log("ss",req.file);
-
-      const urlRegex = /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/;
-    
-
-    // Validate the redirect URL using a regular expression
-    const isValidRedirectUrl = urlRegex.test(redirect_url);
-
-    if (!isValidRedirectUrl) {
-      return res.status(400).send({
-        status: false,
-        message: 'Invalid redirect URL',
-        data: null,
-      });
-    }
-     // return false;
-      var bannerData = {
-          seller_id: new ObjectId(seller_id),          
-          redirect_url:redirect_url,        
-      };
+      const image = req.file ? req.file.filename : undefined;
+  
+       var bannerData = {};
       // Check if image is not undefined
         if (image !== undefined) {
           bannerData.image = image;
@@ -186,15 +187,24 @@ exports.get_all_banners = async (req, res) => {
         bannerData,
         { new: true }
       );
+       if (updatedBanner) {
 
+          // Get the host (domain and port)
+          const protocol = req.protocol;
+          const host = req.get('host');
 
+            // Combine protocol, host, and any other parts of the base URL you need
+          const baseURL = `${protocol}://${host}`;
+          const imageUrl = baseURL + '/uploads/banners/' + updatedBanner.image;
 
-    if (updatedBanner) {
-        res.status(200).send({
-          status: true,
-          message: "Banner updated successfully",
-          data: updatedBanner,
-        });
+          res.status(201).send({
+            status: true,
+            message: 'Banner updated successfully',
+            data: {
+              ...updatedBanner.toObject(),
+              image: imageUrl,
+            },
+          });
       } else {
         res.status(404).send({ status: false, message: "Banner not found", data:null });
       }
@@ -213,24 +223,42 @@ exports.get_all_banners = async (req, res) => {
     const banner_id = req.query.banner_id;
   
     if (!banner_id) {
-      return res.status(400).send({ status: false, message: "banner ID missing",data:null });
+      return res.status(400).send({ status: false, message: "banner ID missing", data: null });
     }
   
     try {
+      const banner = await BannerModel.findById(banner_id);
+  
+      if (!banner) {
+        return res.status(404).send({ status: false, message: "Banner not found", data: null });
+      }
+  
+      // Delete associated image from the folder
+      if (banner.image) {
+        const imagePath = path.join(__dirname, '../uploads/banners'); // Adjust the path accordingly
+        const filePath = path.join(imagePath, banner.image);
+  
+        try {
+          fs.unlinkSync(filePath); // Synchronously delete the file
+        } catch (err) {
+          console.error("Error deleting file:", err);
+          // Handle the error as needed, e.g., log it and continue
+        }
+      }
+  
       const result = await BannerModel.findByIdAndDelete(banner_id);
   
       if (result) {
-        return res.status(200).send({ status: true, message: "Banner deleted",data:null }); 
+        return res.status(200).send({ status: true, message: "Banner deleted", data: null });
       } else {
-        return res.status(404).send({ status: false, message: "Banner not found", data:null });
+        return res.status(404).send({ status: false, message: "Banner not found", data: null });
       }
     } catch (error) {
       console.error("Error:", error);
       return res.status(500).send({
         status: false,
         message: error.toString() || "Internal Server Error",
-        data:null
-        
+        data: null
       });
     }
   };

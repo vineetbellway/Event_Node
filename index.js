@@ -24,11 +24,16 @@ mongoose
     console.log("DB cannot connect : " + error);
   });
 
+
+
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static("/images"));
+
+// Set up static file serving
+app.use('/uploads', express.static('uploads'));
 
 // Sample endpoint for testing
 app.get("/api/v1/test", (req, res) => {

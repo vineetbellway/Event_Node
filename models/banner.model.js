@@ -8,15 +8,17 @@ const schema = new mongoose.Schema(
     seller_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Seller",
+      required:true
     }, 
     image: {
       type: String,
       required:true
     },
-    redirect_url: {
-     type: String,
-     required:true
-    },
+    event_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Event",
+      required:true
+    }, 
     
     
   },

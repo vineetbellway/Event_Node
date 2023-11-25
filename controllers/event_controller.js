@@ -281,6 +281,7 @@ exports.event_by_seller_id = async (req, res) => {
 
 exports.get_seller_events = async (req, res) => {
   const seller_id = req.query.seller_id;
+  console.log("seller_id",seller_id)
 
   try {
     const events = await EventModel.find({ seller_id: new mongoose.Types.ObjectId(seller_id), 'status': 'active' });

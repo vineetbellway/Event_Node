@@ -6,12 +6,13 @@ const cron = require("node-cron");
 const multer = require('multer');
 const path = require('path');
 // Set up storage for multer
+
 const storage = multer.diskStorage({
    destination: function (req, file, cb) {
      cb(null, 'uploads/events');
    },
    filename: function (req, file, cb) {
-     cb(null, Date.now() + path.extname(file.originalname));
+     cb(null, Date.now() +  path.extname(file.originalname));
    },
  });
  var upload = multer({
@@ -250,19 +251,19 @@ router.delete("/delete-uom",auth,  uomController.delete_uom);
 
 
 // Create banner API
-router.post("/create-banner",banner_upload.single('image'), bannerController.create_banner);
+router.post("/create-banner",auth,banner_upload.array('images'), bannerController.create_banner);
 
 // Get all UOMs API
-router.get("/get-all-banners",  bannerController.get_all_banners);
+router.get("/get-all-banners",auth,  bannerController.get_all_banners);
 
 // Get banner detail API
-router.get("/get-banner-detail",  bannerController.get_banner);
+router.get("/get-banner-detail",auth,  bannerController.get_banner);
 
 // Update banner API
-router.put("/update-banner",banner_upload.single('image'),  bannerController.update_banner);
+router.put("/update-banner",auth,banner_upload.array('images'),  bannerController.update_banner);
 
 // Delete banner API
-router.delete("/delete-banner",  bannerController.delete_banner);
+router.delete("/delete-banner",auth,  bannerController.delete_banner);
 
 
 cron.schedule("* * * * *", function () {

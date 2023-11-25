@@ -115,6 +115,20 @@ exports.get_events = async (req, res) => {
     await EventModel.aggregatePaginate(myAggregate, options)
       .then((result) => {
         if (result) {
+          // Get the host (domain and port)
+          const protocol = req.protocol;
+          const host = req.get('host');
+
+          // Combine protocol, host, and any other parts of the base URL you need
+          const baseURL = `${protocol}://${host}`;
+          //console.log("result",result)
+          // Modify each event to include the image upload path
+          if(result.data.length > 0){
+            result.data.forEach((event) => {
+              event.image = baseURL + '/uploads/events/' + event.image;
+            });
+          }        
+
           res.status(200).send({
             status: true,
             message: "success",
@@ -136,6 +150,7 @@ exports.get_events = async (req, res) => {
   }
 };
 
+
 exports.get_event = async (req, res) => {
   var id = req.params.id;
   if (!id) {
@@ -150,11 +165,22 @@ exports.get_event = async (req, res) => {
         },
       ])
         .then((result) => {
-          if (result) {
+          if (result && result.length > 0) {
+            const baseURL = `${req.protocol}://${req.get('host')}`;
+            const imageUrl =  baseURL + '/uploads/events/' + result[0].image;
+            console.log("result",result[0]);
             res.status(200).send({
               status: true,
               message: "success",
-              data: result[0],
+              data: {
+                ...result[0],  // Use the properties directly without toObject
+                image: imageUrl,
+              },
+            });
+          } else {
+            res.status(404).send({
+              status: false,
+              message: "Event not found",
             });
           }
         })
@@ -172,6 +198,7 @@ exports.get_event = async (req, res) => {
     }
   }
 };
+
 
 exports.search_events = async (req, res) => {
   var keyword = req.params.keyword;
@@ -206,6 +233,19 @@ exports.search_events = async (req, res) => {
     await EventModel.aggregatePaginate(myAggregate, options)
       .then((result) => {
         if (result) {
+            // Get the host (domain and port)
+            const protocol = req.protocol;
+            const host = req.get('host');
+  
+            // Combine protocol, host, and any other parts of the base URL you need
+            const baseURL = `${protocol}://${host}`;
+            //console.log("result",result)
+            // Modify each event to include the image upload path
+            if(result.data.length > 0){
+              result.data.forEach((event) => {
+                event.image = baseURL + '/uploads/events/' + event.image;
+              });
+            }     
           res.status(200).send({
             status: true,
             message: "success",
@@ -398,31 +438,102 @@ exports.delete_events = async (req, res) => {
   }
 };
 
-exports.update_event = (req, res, next) => {
+exports.update_event = async (req, res, next) => {
   const id = req.params.id;
   if (!id) {
     res.status(400).send({ status: false, message: "id missing" });
   } else {
     try {
-      EventModel.findByIdAndUpdate(id, req.body, { new: true })
-        .then((result) => {
-          if (result) {
-            res.status(201).send({
-              status: true,
-              message: "Updated",
-              data: result,
-            });
-          } else {
-            res.status(404).send({ status: false, message: "Not updated" });
-          }
-        })
-        .catch((error) => {
-          res.send({
-            status: false,
-            message: error.toString() ?? "Error",
-          });
+
+        console.log("body",req.body)
+
+        // Trim values to remove extra spaces
+    const seller_id = req.body.seller_id !== undefined && req.body.seller_id !== null ? req.body.seller_id.toString().trim() : null;
+    const primary_number = req.body.primary_number.trim();
+    const secondary_number = req.body.secondary_number.trim();
+    const type = req.body.type.trim();
+    const image = req.file ? req.file.filename : undefined
+    const name = req.body.name.trim();
+    const venue = req.body.venue.trim();
+    const country = req.body.country.trim();
+    const state = req.body.state.trim();
+    const city = req.body.city.trim();
+    const start_time = req.body.start_time.trim();
+    const end_time = req.body.end_time.trim();
+    const coupon_name = req.body.coupon_name.trim();
+    const tax_name = req.body.tax_name.trim();
+    const tax_percent = req.body.tax_percent.trim();
+    const amount = req.body.amount.trim();
+    const instructions = req.body.instructions.trim();
+    const transportation_charge = req.body.transportation_charge.trim();
+    const hire_charge = req.body.hire_charge.trim();
+    const labour_charge = req.body.labour_charge.trim();
+    const commision_charge = req.body.commision_charge.trim();
+    const others = req.body.others.trim();
+    const status = req.body.status.trim();
+
+    const eventData = {
+      seller_id: new ObjectId(seller_id),
+      primary_number,
+      secondary_number,
+      type,
+      name,
+      venue,
+      country,
+      state,
+      city,
+      start_time,
+      end_time,
+      coupon_name,
+      tax_name,
+      tax_percent,
+      amount,
+      instructions,
+      transportation_charge,
+      hire_charge,
+      labour_charge,
+      commision_charge,
+      others,
+      status,
+    }; 
+
+      // Check if image is not undefined
+      if (image !== undefined) {
+        eventData.image = image;
+      }
+   
+
+      const updatedEvent =  await EventModel.findByIdAndUpdate(
+        { _id: id },
+        eventData,
+        { new: true }
+      );
+      if (updatedEvent) {
+
+        // Get the host (domain and port)
+        const protocol = req.protocol;
+        const host = req.get('host');
+
+          // Combine protocol, host, and any other parts of the base URL you need
+        const baseURL = `${protocol}://${host}`;
+        const imageUrl = baseURL + '/uploads/events/' + updatedEvent.image;
+
+        res.status(200).send({
+          status: true,
+          message: 'Event updated successfully',
+          data: {
+            ...updatedEvent.toObject(),
+            image: imageUrl,
+          },
         });
+    } else {
+      res.status(404).send({ status: false, message: "Banner not found", data:null });
+    }
+      
+      
+     
     } catch (error) {
+      console.log("error",error)
       res.status(500).send({
         status: false,
         message: "failure",

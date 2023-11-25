@@ -94,7 +94,7 @@ exports.login = async (req, res, next) => {
   let device_type = req.body.device_type;
   let device_token = req.body.device_token;
   let fcm_token = req.body.fcm_token;
-
+  console.log("body",req.body);
   if (!phone) {
     return res.status(400).send({
       status: false,

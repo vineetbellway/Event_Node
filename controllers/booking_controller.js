@@ -37,19 +37,17 @@ const book = (req, res, next) => {
                   
                   sendPushNotification(fcm_token, notification, data)
                     .then(() => {
-                     // res.status(200).send({ status: true, message: "Push notification sent successfully.", data: notification });
                       console.log('Push notification sent successfully.');
                     })
                     .catch((error) => {
-                      res.status(200).send({ status: true, message: error, data: null });
                       console.error('Error sending push notification:', error);
-                    });
-                  
-                    
+                    });                  
+                    res.status(201).send({ status: true, message: "success", data: result });
                 } else {
                     res.status(404).send({ status: false, message: "Not created" });
                 }
                 })
+                
                 .catch((error) => {
                 console.log("error",error)
                 res.send({

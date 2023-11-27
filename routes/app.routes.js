@@ -166,7 +166,7 @@ router.put("/update-facility",auth,  facilityController.update_facility);
 router.get("/facilities",auth,  facilityController.get_facilities);
 
 // manage validator event status
-router.put("/manage-validator-event-statauthus/:id", validatorEventController.manage_validator_event_status);
+router.put("/manage-validator-event-status/:id", validatorEventController.manage_validator_event_status);
 
 // create loyalty order item
 router.post("/create-loyalty-order-item", loyalityController.create_loyalty_order_items);
@@ -177,19 +177,16 @@ router.post("/approve-guest-consumption/:id", loyalityController.approve_guest_c
 
 // book event/loyalty
 
-router.post("/book",auth,  bookingController.book);
+router.post("/book",auth, bookingController.book);
 
-// get cash event list 
-
+// get cash bookings list 
 router.get("/get-cash-bookings",auth,  bookingController.get_cash_bookings);
-
-
-// get booking detail
-router.get("/get-booking-detail",auth,  bookingController.get_booking_detail);
-
 
 // get bookings
 router.get("/get-bookings",auth,  bookingController.get_bookings);
+
+// get booking detail
+router.get("/get-booking-detail",auth,  bookingController.get_booking_detail);
 
 // manage bookings
 router.post("/manage-bookings", auth, bookingController.manage_bookings);
@@ -197,25 +194,19 @@ router.post("/manage-bookings", auth, bookingController.manage_bookings);
 // give feedback
 router.post("/give-feedback",auth,  feedbackController.give_feedback);
 
-
 // get notifications api
-
 router.get("/get-notifications",auth,  notificationController.get_notifications);
 
 // get unread notifications count api
-
 router.get("/get-unread-notifications-count", auth, notificationController.get_unread_notifications_count);
 
 // create seller upi id api
-
 router.post("/create-seller-upi-id",auth,  upiController.create_seller_upi_id);
 
 // get seller upi id api
-
 router.get("/get-seller-upi-id",auth,  upiController.get_seller_upi_id);
 
 // update seller upi id api
-
 router.put("/update-seller-upi-id",auth,  upiController.update_seller_upi_id);
 
 // create category api
@@ -274,11 +265,12 @@ router.post("/add-event-validator",auth, validatorEventController.add_event_vali
 // get guest banner list API
 router.get("/get-guest-banner-list",auth, bannerController.get_guest_banner_list);
 
-
+// get seller validator list API
+router.get("/get-seller-validator-list", validatorController.get_seller_validator_list);
 
 
 cron.schedule("* * * * *", function () {
-    console.log("Cron job is running");
+  //  console.log("Cron job is running");
     // bookingController.disableSellerServices();
    //bookingController.sendEventNotification();
    bookingController.sendExpiredEventNotification();

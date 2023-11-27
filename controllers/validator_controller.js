@@ -293,7 +293,7 @@ exports.get_seller_validator_list = async (req, res) => {
   const seller_id = req.query.seller_id;
 
   try {
-    const seller = await SellerModel.findById(seller_id);
+    const seller = await SellerModel.findOne({ user_id: seller_id });
     if (!seller) {
       return res.status(404).send({
         status: false,

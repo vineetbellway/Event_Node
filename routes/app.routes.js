@@ -179,8 +179,9 @@ router.post("/approve-guest-consumption/:id", loyalityController.approve_guest_c
 
 router.post("/book",auth, bookingController.book);
 
-// get cash bookings list 
-router.get("/get-cash-bookings",auth,  bookingController.get_cash_bookings);
+// get bookings by payment mode
+
+router.get("/get-bookings-by-payment-mode",bookingController.get_bookings_by_payment_mode);
 
 // get bookings
 router.get("/get-bookings",auth,  bookingController.get_bookings);

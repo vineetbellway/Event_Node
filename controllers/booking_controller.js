@@ -262,9 +262,9 @@ const sendEventNotification = () => {
     });
 };
 
-const  get_cash_bookings = async (req, res) => {
+const  get_bookings_by_payment_mode = async (req, res) => {
   var guest_id = req.query.guest_id;
-
+  var payment_mode = req.query.payment_mode;
 
 
   if (!guest_id) {
@@ -275,7 +275,7 @@ const  get_cash_bookings = async (req, res) => {
         {
           $match: {
             guest_id: new mongoose.Types.ObjectId(guest_id),
-            payment_mode : 'cash'
+            payment_mode : payment_mode
           },
         },
         {
@@ -306,7 +306,11 @@ const  get_cash_bookings = async (req, res) => {
                // booking_date: booking.booking_date,
                 createdAt: booking.createdAt,
                 updatedAt: booking.updatedAt,
-                event_data:booking.event_data && booking.event_data.length > 0 ? booking.event_data[0] : null,  
+                event_data: booking.event_data && booking.event_data.length > 0 ? {
+                  ...booking.event_data[0],
+                  // Constructing image URL
+                  image: constructImageUrl(req, booking.event_data[0].image),
+                } : null,
 
               };
               booking_data.push(response)
@@ -403,7 +407,7 @@ const  get_booking_detail = async (req, res) => {
           
          
         } else {
-          res.status(404).json({ status: false, message: "No booking found" });
+          res.status(404).json({ status: false, message: "No boobookingking found" });
         }
       })
       .catch((error) => {
@@ -512,7 +516,7 @@ module.exports = {
   manage_bookings,
   get_bookings,
   book,
-  get_cash_bookings,
+  get_bookings_by_payment_mode,
   get_booking_detail
 
 }; 

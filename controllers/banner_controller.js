@@ -279,6 +279,8 @@ exports.get_all_banners = async (req, res) => {
   
       const guestCity = guest.district;
 
+      console.log("guestCity",guestCity)
+
       const banners = await BannerModel.aggregate([
         {
           $sort: { createdAt: -1 }, // Sort by createdAt in descending order
@@ -287,9 +289,10 @@ exports.get_all_banners = async (req, res) => {
   
       if (banners && banners.length > 0) {
         const banner_data = [];
-  
+    
         for (const banner of banners) {
-          const seller = await SellerModel.findById(banner.seller_id);
+          const seller = await SellerModel.findOne({ user_id: banner.seller_id, district: guestCity });
+
           if (seller && seller.district === guestCity) {
             // Cities match, include banner in the response
             const protocol = req.protocol;

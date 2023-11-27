@@ -1,6 +1,7 @@
 const Validator = require("../models/validator.model");
 const mongoose = require("mongoose");
 const { baseStatus, userStatus } = require("../utils/enumerator");
+const SellerModel = require("../models/seller.model");
 
 exports.create_validator = (req, res, next) => {
   if (!req.body) {
@@ -288,3 +289,69 @@ exports.update_validator = (req, res, next) => {
 };
 
 
+exports.get_seller_validator_list = async (req, res) => {
+  const seller_id = req.query.seller_id;
+
+  try {
+    const seller = await SellerModel.findById(seller_id);
+    if (!seller) {
+      return res.status(404).send({
+        status: false,
+        message: "Seller not found",
+        data: null,
+      });
+    }
+
+    const sellerCity = seller.district;
+
+    console.log("sellerCity",sellerCity)
+      
+    const validators = await Validator.aggregate([
+      {
+        $sort: { createdAt: -1 }, // Sort by createdAt in descending order
+      },
+    ]);
+
+    if (validators && validators.length > 0) {
+      const validator_data = [];
+
+      for (const validator of validators) {
+
+        if (validator.district === sellerCity) {
+          const response = {
+            ...validator
+          };
+
+          validator_data.push(response);
+        }
+      }
+      if(validator_data.length > 0){
+        res.status(200).send({
+          status: true,
+          message: "Data found",
+          data: validator_data,
+        });
+      } else {
+        res.status(200).send({
+          status: true,
+          message: "No validators found",
+          data: validator_data,
+        });
+      }
+      
+    } else {
+      res.status(200).send({
+        status: true,
+        message: "No validators found",
+        data: [],
+      });
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).send({
+      status: false,
+      message: error.toString() || "Internal Server Error",
+      data: null,
+    });
+  }
+};

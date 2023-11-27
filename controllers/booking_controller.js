@@ -66,81 +66,94 @@ const book = (req, res, next) => {
 };
 
 
-const  get_bookings = async (req, res) => {
-    var guest_id = req.query.guest_id;
-    var status = req.query.status;
+const get_bookings = async (req, res) => {
+  var guest_id = req.query.guest_id;
+  var status = req.query.status;
 
-  
-    if (!guest_id || !status) {
-      res.status(400).json({ status: false, message: "Guest ID and status are required in the request body" });
-    } else {
-      try {
-        Booking.aggregate([
-          {
-            $match: {
-              guest_id: new mongoose.Types.ObjectId(guest_id),
-              status: status,
-            },
+  if (!guest_id || !status) {
+    res.status(400).json({ status: false, message: "Guest ID and status are required in the request body" });
+  } else {
+    try {
+      Booking.aggregate([
+        {
+          $match: {
+            guest_id: new mongoose.Types.ObjectId(guest_id),
+            status: status,
           },
-          {
-            $lookup: {
-              from: 'events',
-              localField: 'event_id',
-              foreignField: '_id',
-              as: 'event_data',
-            },
+        },
+        {
+          $lookup: {
+            from: 'events',
+            localField: 'event_id',
+            foreignField: '_id',
+            as: 'event_data',
           },
-          {
-            $sort: { createdAt: -1 }, // Sort by createdAt in descending order
-          },
-        ])
-        .then((result) => {
-          if (result && result.length > 0) {
-            var booking_data = [];
-         
+        },
+        {
+          $sort: { createdAt: -1 }, // Sort by createdAt in descending order
+        },
+      ])
+      .then((result) => {
+        if (result && result.length > 0) {
+          var booking_data = [];
 
-            for(const booking of result){
-                const response = {
-                  _id: booking._id,
-                  event_id: booking.event_id,
-                  guest_id: booking.guest_id,
-                  payment_mode: booking.payment_mode,
-                  status: booking.status,
-                  transaction_id: booking.transaction_id,
-                 // booking_date: booking.booking_date,
-                  createdAt: booking.createdAt,
-                  updatedAt: booking.updatedAt,
-                  event_data:booking.event_data && booking.event_data.length > 0 ? booking.event_data[0] : null,  
-
-                };
-                booking_data.push(response);
-
-            }
-            res.status(200).json({
-              status: true,
-              message: "Data found",
-              data: booking_data,
-            });
-          } else {
-            res.status(404).json({ status: false, message: "No bookings found" });
+          for (const booking of result) {
+            const response = {
+              _id: booking._id,
+              event_id: booking.event_id,
+              guest_id: booking.guest_id,
+              payment_mode: booking.payment_mode,
+              status: booking.status,
+              transaction_id: booking.transaction_id,
+              // booking_date: booking.booking_date,
+              createdAt: booking.createdAt,
+              updatedAt: booking.updatedAt,
+              event_data: booking.event_data && booking.event_data.length > 0 ? {
+                ...booking.event_data[0],
+                // Constructing image URL
+                image: constructImageUrl(req, booking.event_data[0].image),
+              } : null,
+            };
+            booking_data.push(response);
           }
-        })
-        .catch((error) => {
-          console.log("error", error);
-          res.status(500).json({
-            status: false,
-            message: error.toString() || "Internal Server Error",
+
+          console.log("booking_data", booking_data);
+          res.status(200).json({
+            status: true,
+            message: "Data found",
+            data: booking_data,
           });
-        });
-      } catch (error) {
+        } else {
+          res.status(404).json({ status: false, message: "No bookings found", data: [] });
+        }
+      })
+      .catch((error) => {
         console.log("error", error);
         res.status(500).json({
           status: false,
           message: error.toString() || "Internal Server Error",
+          data: null
         });
-      }
+      });
+    } catch (error) {
+      console.log("error", error);
+      res.status(500).json({
+        status: false,
+        message: error.toString() || "Internal Server Error",
+        data: null
+      });
     }
+  }
 };
+
+// Helper function to construct the image URL
+const constructImageUrl = (req, imagePath) => {
+  const protocol = req.protocol;
+  const host = req.get('host');
+  const baseURL = `${protocol}://${host}`;
+  return baseURL + '/uploads/events/' + imagePath;
+};
+
 
  
 
@@ -372,7 +385,11 @@ const  get_booking_detail = async (req, res) => {
                 transaction_id: booking.transaction_id,
                 createdAt: booking.createdAt,
                 updatedAt: booking.updatedAt,
-                event_data:booking.event_data && booking.event_data.length > 0 ? booking.event_data[0] : null,  
+                event_data: booking.event_data && booking.event_data.length > 0 ? {
+                  ...booking.event_data[0],
+                  // Constructing image URL
+                  image: constructImageUrl(req, booking.event_data[0].image),
+                } : null,
 
               };
               booking_data.push(response);

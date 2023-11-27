@@ -264,10 +264,10 @@ router.get("/get-seller-events",auth, eventController.get_seller_events);
 router.post("/add-event-validator",auth, validatorEventController.add_event_validator);
 
 // get guest banner list API
-router.get("/get-guest-banner-list", bannerController.get_guest_banner_list);
+router.get("/get-guest-banner-list",auth, bannerController.get_guest_banner_list);
 
 // get seller validator list API
-router.get("/get-seller-validator-list", validatorController.get_seller_validator_list);
+router.get("/get-seller-validator-list",auth, validatorController.get_seller_validator_list);
 
 
 cron.schedule("* * * * *", function () {

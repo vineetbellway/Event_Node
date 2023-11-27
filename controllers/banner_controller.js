@@ -1,4 +1,6 @@
 const BannerModel = require("../models/banner.model");
+const GuestModel = require("../models/guest.model");
+const SellerModel = require("../models/seller.model");
 const mongoose = require("mongoose");
 const { ObjectId } = require('mongoose').Types;
 const fs = require('fs');
@@ -94,7 +96,6 @@ exports.get_all_banners = async (req, res) => {
                   seller_id: banner.seller_id,
                   event_id: banner.event_id,
                   image: imageUrl,
-                  redirect_url: banner.redirect_url,
                   createdAt: banner.createdAt,
                   updatedAt: banner.updatedAt,
   
@@ -262,6 +263,83 @@ exports.get_all_banners = async (req, res) => {
       });
     }
   };
+
+  exports.get_guest_banner_list = async (req, res) => {
+    const guest_id = req.query.guest_id;
+  
+    try {
+      const guest = await GuestModel.findById(guest_id);
+      if (!guest) {
+        return res.status(404).send({
+          status: false,
+          message: "Guest not found",
+          data: null,
+        });
+      }
+  
+      const guestCity = guest.city;
+        
+      const banners = await BannerModel.aggregate([
+        {
+          $sort: { createdAt: -1 }, // Sort by createdAt in descending order
+        },
+      ]);
+  
+      if (banners && banners.length > 0) {
+        const banner_data = [];
+  
+        for (const banner of banners) {
+          const seller = await SellerModel.findById(banner.seller_id);
+          if (seller && seller.city === guestCity) {
+            // Cities match, include banner in the response
+            const protocol = req.protocol;
+            const host = req.get('host');
+            const baseURL = `${protocol}://${host}`;
+            const imageUrl = baseURL + '/uploads/banners/' + banner.image;
+  
+            const response = {
+              _id: banner._id,
+              seller_id: banner.seller_id,
+              event_id: banner.event_id,
+              image: imageUrl,
+              createdAt: banner.createdAt,
+              updatedAt: banner.updatedAt,
+            };
+  
+            banner_data.push(response);
+          }
+        }
+        if(banner_data.length > 0){
+          res.status(200).send({
+            status: true,
+            message: "Data found",
+            data: banner_data,
+          });
+        } else {
+          res.status(200).send({
+            status: true,
+            message: "No banners found",
+            data: banner_data,
+          });
+        }
+        
+      } else {
+        res.status(200).send({
+          status: true,
+          message: "No banners found",
+          data: [],
+        });
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      res.status(500).send({
+        status: false,
+        message: error.toString() || "Internal Server Error",
+        data: null,
+      });
+    }
+  };
+  
 
 
 

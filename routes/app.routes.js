@@ -252,7 +252,7 @@ router.delete("/delete-uom",auth,  uomController.delete_uom);
 // Create banner API
 router.post("/create-banner",auth,banner_upload.single('image'), bannerController.create_banner);
 
-// Get all UOMs API
+// Get all banners API
 router.get("/get-all-banners", auth, bannerController.get_all_banners);
 
 // Get banner detail API
@@ -266,6 +266,15 @@ router.delete("/delete-banner",auth,bannerController.delete_banner);
 
 // Get seller event API
 router.get("/get-seller-events",auth, eventController.get_seller_events);
+
+
+// Add event validator API
+router.post("/add-event-validator",auth, validatorEventController.add_event_validator);
+
+// get guest banner list API
+router.get("/get-guest-banner-list",auth, bannerController.get_guest_banner_list);
+
+
 
 
 cron.schedule("* * * * *", function () {

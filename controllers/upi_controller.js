@@ -60,10 +60,16 @@ const get_seller_upi_id = async (req, res) => {
             ])
               .then((result) => {
                 console.log("result",result)
-                if (result) {
+                if (result.length > 0) {
                   res.status(200).send({
                     status: true,
-                    message: "success",
+                    message: "Data found",
+                    data: result,
+                  });
+                } else {
+                  res.status(404).send({
+                    status: true,
+                    message: "No data found",
                     data: result,
                   });
                 }

@@ -79,7 +79,7 @@ exports.get_all_banners = async (req, res) => {
       ])
         .then((result) => {
           if (result) {
-            console.log("result",result)
+          //  console.log("result",result)
             var banner_data = [];
          
   

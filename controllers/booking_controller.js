@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const moment = require("moment");
 const { addNotification } = require('../helpers/notification_helper');
 const { sendPushNotification } = require('../config/firebase.config'); // Update with the correct path to your module.
-
+const SellerModel = require("../models/seller.model");
 
 // It will book event by guest
 
@@ -452,22 +452,20 @@ const sendExpiredEventNotification = () => {
     },
   ])
     .then((result) => {
-      console.log("result", result)
+     // console.log("result", result)
       if (result && result.length > 0) {
         const currentDateTime = moment();
         for (const bookingData of result) {
           var guest_result = bookingData.guest_data;
           var event_result = bookingData.event_data;
-          console.log("guest_result", guest_result);
-          console.log("event_result", event_result);
+
 
           if (guest_result && event_result && event_result.length > 0) {
             const fcm_token = guest_result[0].fcm_token; // Assuming device_token is in the first element
             var title = "Event Expired";
             var message = 'Your event has been expired';
             var end_time = moment(event_result[0].end_time);
-            console.log("end_time", end_time.format())
-            console.log("current_date", currentDateTime.format())
+
 
             if (end_time.isBefore(currentDateTime)) {
               Booking.findByIdAndUpdate(bookingData._id, { 'status': 'expired' })
@@ -510,6 +508,104 @@ const sendExpiredEventNotification = () => {
 };
 
 
+
+const get_booked_guest_list = async (req, res) => {
+  var seller_id = req.query.seller_id;
+  var event_id = req.query.event_id;
+  var payment_mode = req.query.payment_mode;
+
+  if (!seller_id && event_id) {
+    res.status(400).json({
+      status: false,
+      message: "seller id and event id are required in the request body",
+    });
+  } else {
+    var sellerData = await SellerModel.findOne({ user_id: seller_id });
+    var sellerDistrict = sellerData.district;
+    console.log("sellerDistrict", sellerDistrict);
+
+    try {
+      const bookingPipeline = [
+        {
+          $lookup: {
+            from: "events",
+            localField: "event_id",
+            foreignField: "_id",
+            as: "event_data",
+          },
+        },
+        {
+          $lookup: {
+            from: "guests",
+            localField: "guest_id",
+            foreignField: "user_id",
+            as: "guest_data",
+          },
+        },
+       
+        {
+          $sort: { createdAt: -1 }, // Sort by createdAt in descending order
+        },
+      ];
+
+      // Match based on payment mode
+      if (payment_mode) {
+        bookingPipeline.unshift({
+          $match: { payment_mode: payment_mode },
+        });
+      }
+
+      Booking.aggregate(bookingPipeline)
+        .then((result) => {
+          if (result && result.length > 0) {
+            var booking_data = [];
+            console.log("result", result);
+
+            for (const booking of result) {
+              const response = {
+                ... booking.guest_data[0],
+                event_data:
+                  booking.event_data && booking.event_data.length > 0
+                    ? {
+                        ...booking.event_data[0],
+                        // Constructing image URL
+                        image: constructImageUrl(
+                          req,
+                          booking.event_data[0].image
+                        ),
+                      }
+                    : null,
+              };
+              booking_data.push(response);
+            }
+            res.status(200).json({
+              status: true,
+              message: "Data found",
+              data: booking_data,
+            });
+          } else {
+            res.status(404).json({ status: false, message: "No guests found", data: [] });
+          }
+        })
+        .catch((error) => {
+          console.log("error", error);
+          res.status(500).json({
+            status: false,
+            message: error.toString() || "Internal Server Error",
+          });
+        });
+    } catch (error) {
+      console.log("error", error);
+      res.status(500).json({
+        status: false,
+        message: error.toString() || "Internal Server Error",
+      });
+    }
+  }
+};
+
+
+
 module.exports = {
   sendEventNotification,
   sendExpiredEventNotification,
@@ -517,7 +613,7 @@ module.exports = {
   get_bookings,
   book,
   get_bookings_by_payment_mode,
-  get_booking_detail
+  get_booking_detail,
+  get_booked_guest_list
 
 }; 
-  

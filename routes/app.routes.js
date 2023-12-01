@@ -205,7 +205,7 @@ router.get("/get-unread-notifications-count", auth, notificationController.get_u
 router.post("/create-seller-upi-id",auth,  upiController.create_seller_upi_id);
 
 // get seller upi id api
-router.get("/get-seller-upi-id",auth,  upiController.get_seller_upi_id);
+router.get("/get-seller-upi-id",  upiController.get_seller_upi_id);
 
 // update seller upi id api
 router.put("/update-seller-upi-id",auth,  upiController.update_seller_upi_id);
@@ -261,13 +261,17 @@ router.get("/get-seller-events",auth, eventController.get_seller_events);
 
 
 // Add event validator API
-router.post("/add-event-validator",auth, validatorEventController.add_event_validator);
+router.post("/add-event-validator", validatorEventController.add_event_validator);
 
 // get guest banner list API
 router.get("/get-guest-banner-list",auth, bannerController.get_guest_banner_list);
 
 // get seller validator list API
 router.get("/get-seller-validator-list",auth, validatorController.get_seller_validator_list);
+
+
+// get event validator list API
+router.get("/get-validator-event-list", validatorEventController.get_validator_event_list);
 
 
 cron.schedule("* * * * *", function () {

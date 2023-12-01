@@ -1,5 +1,7 @@
 const ValidatorEvent = require("../models/validator_event.model");
 const EventValidator = require("../models/event_validator.model");
+const Validator = require("../models/validator.model");
+const SellerModel = require("../models/seller.model");
 const mongoose = require("mongoose");
 const { baseStatus, userStatus } = require("../utils/enumerator");
 
@@ -297,7 +299,7 @@ exports.manage_validator_event_status = (req, res, next) => {
   }
 };
 
-exports.add_event_validator = (req, res, next) => {
+exports.add_event_validator = async(req, res, next) => {
   if (!req.body) {
     res.status(400).send({
       status: false,
@@ -305,30 +307,158 @@ exports.add_event_validator = (req, res, next) => {
     });
   } else {
     try {
+
+     // Check if a validator with the same role already exists in same event
+     const existingRoleInEventValidator = await EventValidator.findOne({ role: req.body.role , validator_id: req.body.validator_id , event_id: req.body.event_id });
+
+     if (existingRoleInEventValidator) {
+       // Category with the same name already exists
+       return res.status(409).send({
+         status: false,
+         message: "Validator with same role is already added to event",
+         data:null
+       });
+     }
+
+
       EventValidator(req.body)
         .save()
         .then((result) => {
           if (result) {
             res
               .status(201)
-              .send({ status: true, message: "validator is succesfully added to event", data: result });
+              .send({ status: true, message: "Validator is succesfully added to event", data: result });
           } else {
-            res.status(404).send({ status: false, message: "Not created" });
+            res.status(404).send({ status: false, message: "Not created",data:null });
           }
         })
         .catch((error) => {
           res.send({
             status: false,
             message: error.toString() ?? "Error",
+            data:null
           });
         });
     } catch (error) {
+      console.log("error",error)
       res.status(500).send({
         status: false,
-        message: "failure",
-        error: error ?? "Internal Server Error",
+        message: error ?? "Internal Server Error",
+        data:null
       });
     }
   }
 };
+
+
+exports.get_validator_event_list = async (req, res) => {
+  const seller_id = req.query.seller_id;
+  const event_id = req.query.event_id;
+
+  try {
+    const seller = await SellerModel.findOne({ user_id: seller_id });
+    if (!seller) {
+      return res.status(404).send({
+        status: false,
+        message: "Seller not found",
+        data: null,
+      });
+    }
+
+    const event_validators = await Validator.aggregate([
+      {
+        $sort: { createdAt: -1 }, // Sort by createdAt in descending order
+      },
+      {
+        $lookup: {
+          from: "eventvalidators",
+          localField: "validator_id",
+          foreignField: "user_id",
+          as: "validator_event_data",
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          user_id: 1,
+          full_name: 1,
+          district: 1,
+          state: 1,
+          country: 1,
+          status: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          __v: 1,
+          role: 1,
+          validator_event_data: {
+            $filter: {
+              input: "$validator_event_data",
+              as: "eventData",
+              cond: {
+                $eq: ["$$eventData.validator_id", "$_id"],
+              },
+            },
+          },
+        },
+      },
+    ]);
+
+    if (event_validators && event_validators.length > 0) {
+      const filtered_event_validator_data = event_validators
+        .map((validator) => ({
+          _id: validator._id,
+          user_id: validator.user_id,
+          full_name: validator.full_name,
+          district: validator.district,
+          state: validator.state,
+          country: validator.country,
+          status: validator.status,
+          createdAt: validator.createdAt,
+          updatedAt: validator.updatedAt,
+          __v: validator.__v,
+          validator_event_data: validator.validator_event_data.map((eventData) => ({
+          //  _id: eventData._id,
+           // validator_id: eventData.validator_id,
+           // seller_id: eventData.seller_id,
+            event_id: eventData.event_id,
+            role: eventData.role,
+           // createdAt: eventData.createdAt,
+           // updatedAt: eventData.updatedAt,
+           // __v: eventData.__v,
+          })),
+          
+        }))
+        .filter((validator) => validator.validator_event_data.some((event) => event.event_id == event_id));
+
+      if (filtered_event_validator_data.length > 0) {
+        res.status(200).send({
+          status: true,
+          message: "Data found",
+          data: filtered_event_validator_data,
+        });
+      } else {
+        res.status(200).send({
+          status: true,
+          message: "No validators found for the specified event_id",
+          data: filtered_event_validator_data,
+        });
+      }
+    } else {
+      res.status(200).send({
+        status: true,
+        message: "No validators found",
+        data: [],
+      });
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).send({
+      status: false,
+      message: error.toString() || "Internal Server Error",
+      data: null,
+    });
+  }
+};
+
+
 

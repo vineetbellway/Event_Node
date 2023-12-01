@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const mongoosePaginate = require("mongoose-paginate-v2");
 var aggregatePaginate = require("mongoose-aggregate-paginate-v2");
-const { baseStatus } = require("../utils/enumerator");
+const { validatorRoles } = require("../utils/enumerator");
 
 const schema = new mongoose.Schema(
   {
@@ -22,6 +22,7 @@ const schema = new mongoose.Schema(
     },
     role: {
       type: String,
+      enum: ['cashier', 'bar_attender', 'booker'], // Add your allowed roles
       required: true,
     },
   },

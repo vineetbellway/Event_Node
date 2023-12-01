@@ -305,8 +305,6 @@ exports.get_seller_validator_list = async (req, res) => {
 
     const sellerCity = seller.district;
 
-    console.log("sellerCity", sellerCity);
-
     const validators = await Validator.aggregate([
       {
         $sort: { createdAt: -1 }, // Sort by createdAt in descending order

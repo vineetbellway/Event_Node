@@ -2,6 +2,7 @@ const ValidatorEvent = require("../models/validator_event.model");
 const EventValidator = require("../models/event_validator.model");
 const Validator = require("../models/validator.model");
 const SellerModel = require("../models/seller.model");
+const EventModel = require("../models/event.model");
 const mongoose = require("mongoose");
 const { baseStatus, userStatus } = require("../utils/enumerator");
 
@@ -351,7 +352,7 @@ exports.add_event_validator = async(req, res, next) => {
 };
 
 
-exports.get_validator_event_list = async (req, res) => {
+exports.get_event_validators_list = async (req, res) => {
   const seller_id = req.query.seller_id;
   const event_id = req.query.event_id;
 
@@ -361,6 +362,15 @@ exports.get_validator_event_list = async (req, res) => {
       return res.status(404).send({
         status: false,
         message: "Seller not found",
+        data: null,
+      });
+    }
+
+    const event = await EventModel.findById(event_id);
+    if (!event) {
+      return res.status(404).send({
+        status: false,
+        message: "Event not found",
         data: null,
       });
     }
@@ -405,30 +415,25 @@ exports.get_validator_event_list = async (req, res) => {
 
     if (event_validators && event_validators.length > 0) {
       const filtered_event_validator_data = event_validators
-        .map((validator) => ({
-          _id: validator._id,
-          user_id: validator.user_id,
-          full_name: validator.full_name,
-          district: validator.district,
-          state: validator.state,
-          country: validator.country,
-          status: validator.status,
-          createdAt: validator.createdAt,
-          updatedAt: validator.updatedAt,
-          __v: validator.__v,
-          validator_event_data: validator.validator_event_data.map((eventData) => ({
-          //  _id: eventData._id,
-           // validator_id: eventData.validator_id,
-           // seller_id: eventData.seller_id,
-            event_id: eventData.event_id,
-            role: eventData.role,
-           // createdAt: eventData.createdAt,
-           // updatedAt: eventData.updatedAt,
-           // __v: eventData.__v,
-          })),
-          
-        }))
-        .filter((validator) => validator.validator_event_data.some((event) => event.event_id == event_id));
+          .map((validator) => ({
+            _id: validator._id,
+            user_id: validator.user_id,
+            full_name: validator.full_name,
+            district: validator.district,
+            state: validator.state,
+            country: validator.country,
+            status: validator.status,
+            createdAt: validator.createdAt,
+            updatedAt: validator.updatedAt,
+            __v: validator.__v,
+            role: validator.validator_event_data.length > 0 ? validator.validator_event_data[0].role : null,
+          }))
+          .filter((validator) => {
+            if (validator.validator_event_data && Array.isArray(validator.validator_event_data)) {
+              return validator.validator_event_data.some((event) => event.event_id == event_id);
+            }
+            return false; // Return false if validator.validator_event_data is not an array or undefined
+          });
 
       if (filtered_event_validator_data.length > 0) {
         res.status(200).send({
@@ -437,14 +442,14 @@ exports.get_validator_event_list = async (req, res) => {
           data: filtered_event_validator_data,
         });
       } else {
-        res.status(200).send({
+        res.status(404).send({
           status: true,
-          message: "No validators found for the specified event_id",
+          message: "No validators found for the specified event id",
           data: filtered_event_validator_data,
         });
       }
     } else {
-      res.status(200).send({
+      res.status(404).send({
         status: true,
         message: "No validators found",
         data: [],
@@ -461,4 +466,86 @@ exports.get_validator_event_list = async (req, res) => {
 };
 
 
+exports.get_event_validators_list = async (req, res) => {
+  const seller_id = new mongoose.Types.ObjectId(req.query.seller_id);
+  const event_id = new mongoose.Types.ObjectId(req.query.event_id);
 
+  try {
+    const eventValidators = await Validator.aggregate([
+      {
+        $match: { user_id: seller_id }
+      },
+      {
+        $lookup: {
+          from: "eventvalidators",
+          let: { validator_id: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$validator_id", "$$validator_id"] },
+                    { $eq: ["$event_id", event_id] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "validator_event_data"
+        }
+      },
+      {
+        $addFields: {
+          validator_event_data: {
+            $map: {
+              input: "$validator_event_data",
+              in: {
+                _id: "$$this._id",
+                validator_id: "$$this.validator_id",
+                seller_id: "$$this.seller_id",
+                event_id: "$$this.event_id",
+                role: "$$this.role"
+              }
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          user_id: 1,
+          full_name: 1,
+          district: 1,
+          state: 1,
+          country: 1,
+          status: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          __v: 1,
+          validator_event_data: 1
+        }
+      }
+    ]);
+
+    if (eventValidators.length > 0) {
+      res.status(200).send({
+        status: true,
+        message: "Data found",
+        data: eventValidators
+      });
+    } else {
+      res.status(200).send({
+        status: true,
+        message: "No validators found for the specified event_id",
+        data: []
+      });
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).send({
+      status: false,
+      message: error.toString() || "Internal Server Error",
+      data: null
+    });
+  }
+};

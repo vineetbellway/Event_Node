@@ -270,8 +270,12 @@ router.get("/get-guest-banner-list",auth, bannerController.get_guest_banner_list
 router.get("/get-seller-validator-list",auth, validatorController.get_seller_validator_list);
 
 
-// get event validator list API
-router.get("/get-validator-event-list", validatorEventController.get_validator_event_list);
+// get event validators list API
+router.get("/get-event-validators-list", validatorEventController.get_event_validators_list);
+
+
+// get booked guest list API
+router.get("/get-booked-guest-list", bookingController.get_booked_guest_list);
 
 
 cron.schedule("* * * * *", function () {

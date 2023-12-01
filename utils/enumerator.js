@@ -27,8 +27,15 @@ const sellerStatus = {
   deleted: "deleted",
 };
 
+const validatorRoles = {
+  cashier: "cashier",
+  bar_attender: "bar_attender",
+  booker: "booker"
+};
+
 module.exports = {
   userStatus,
   userTypes,
   baseStatus,
+  validatorRoles,
 };

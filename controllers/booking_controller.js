@@ -501,7 +501,7 @@ const sendExpiredEventNotification = () => {
           }
         }
       } else {
-        console.log("No bookings found");
+       // console.log("No bookings found");
       }
     })
     .catch((error) => {

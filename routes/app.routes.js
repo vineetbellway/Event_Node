@@ -273,6 +273,9 @@ router.get("/get-seller-validator-list",auth, validatorController.get_seller_val
 // get event validators list API
 router.get("/get-event-validators-list", validatorEventController.get_event_validators_list);
 
+// get not expired event validators list  API
+router.get("/get-not-expired-event-validators-list", validatorEventController.get_not_expired_event_validators_list);
+
 
 // get booked guest list API
 router.get("/get-booked-guest-list", bookingController.get_booked_guest_list);

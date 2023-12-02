@@ -4,6 +4,7 @@ const Validator = require("../models/validator.model");
 const SellerModel = require("../models/seller.model");
 const EventModel = require("../models/event.model");
 const mongoose = require("mongoose");
+const moment = require("moment");
 const { baseStatus, userStatus } = require("../utils/enumerator");
 
 exports.create_validator_event = (req, res, next) => {
@@ -364,7 +365,7 @@ exports.get_event_validators_list = async (req, res) => {
         message: "Seller not found",
         data: null,
       });
-    }
+    }    
 
     const event = await EventModel.findById(event_id);
     if (!event) {
@@ -373,7 +374,19 @@ exports.get_event_validators_list = async (req, res) => {
         message: "Event not found",
         data: null,
       });
+    } 
+    var current_date_time = moment().format("YYYY-MM-DDTHH:mm:ss.SSSZ");
+    var event_end_time = moment(event.end_time).format("YYYY-MM-DDTHH:mm:ss.SSSZ");
+
+
+    var is_validator_present_in_event = false;
+
+    if(current_date_time < event_end_time){
+      is_validator_present_in_event = true;
     }
+
+
+    var seller_district = seller.district;
 
     const event_validators = await Validator.aggregate([
       {
@@ -415,39 +428,62 @@ exports.get_event_validators_list = async (req, res) => {
 
     if (event_validators && event_validators.length > 0) {
       const filtered_event_validator_data = event_validators
-          .map((validator) => ({
-            _id: validator._id,
-            user_id: validator.user_id,
-            full_name: validator.full_name,
-            district: validator.district,
-            state: validator.state,
-            country: validator.country,
-            status: validator.status,
-            createdAt: validator.createdAt,
-            updatedAt: validator.updatedAt,
-            __v: validator.__v,
-            role: validator.validator_event_data.length > 0 ? validator.validator_event_data[0].role : null,
-          }))
-          .filter((validator) => {
-            if (validator.validator_event_data && Array.isArray(validator.validator_event_data)) {
-              return validator.validator_event_data.some((event) => event.event_id == event_id);
-            }
-            return false; // Return false if validator.validator_event_data is not an array or undefined
-          });
+        .map((validator) => ({
+          _id: validator._id,
+          user_id: validator.user_id,
+          full_name: validator.full_name,
+          district: validator.district,
+          state: validator.state,
+          country: validator.country,
+          status: validator.status,
+          createdAt: validator.createdAt,
+          updatedAt: validator.updatedAt,
+          __v: validator.__v,
+          validator_event_data: validator.validator_event_data.map((eventData) => ({
+            _id: eventData._id,
+            validator_id: eventData.validator_id,
+            seller_id: eventData.seller_id,
+            event_id: eventData.event_id,
+            role: eventData.role,
+            createdAt: eventData.createdAt,
+            updatedAt: eventData.updatedAt,
+            __v: eventData.__v,
+          })),
+        }))
+        .filter((validator) => validator.validator_event_data.some((event) => event.event_id == event_id));
+          var all_validator_list = [];
+        if (filtered_event_validator_data.length > 0) {    
+          filtered_event_validator_data.forEach((val, k) => {
+            if(seller_district == val.district){
+              all_validator_list.push({
+                _id: val._id,
+                user_id: val.user_id,
+                full_name: val.full_name,
+                district: val.district,
+                state: val.state,
+                country: val.country,
+                status: val.status,
+                createdAt: val.createdAt,
+                updatedAt: val.updatedAt,
+                __v: val.__v,
+                role : val.validator_event_data[0].role,
+                is_validator_present_in_event:is_validator_present_in_event
+              });
 
-      if (filtered_event_validator_data.length > 0) {
-        res.status(200).send({
-          status: true,
-          message: "Data found",
-          data: filtered_event_validator_data,
-        });
-      } else {
-        res.status(404).send({
-          status: true,
-          message: "No validators found for the specified event id",
-          data: filtered_event_validator_data,
-        });
-      }
+            }
+          });
+          res.status(200).send({
+            status: true,
+            message: "Data found",
+            data: all_validator_list,
+          });
+        } else {
+          res.status(404).send({
+            status: true,
+            message: "No validators found for the specified event id",
+            data: filtered_event_validator_data,
+          });
+        }
     } else {
       res.status(404).send({
         status: true,
@@ -466,49 +502,62 @@ exports.get_event_validators_list = async (req, res) => {
 };
 
 
-exports.get_event_validators_list = async (req, res) => {
-  const seller_id = new mongoose.Types.ObjectId(req.query.seller_id);
-  const event_id = new mongoose.Types.ObjectId(req.query.event_id);
+exports.get_not_expired_event_validators_list = async (req, res) => {
+  const seller_id = req.query.seller_id;
+  const event_id = req.query.event_id;
 
   try {
-    const eventValidators = await Validator.aggregate([
+    const seller = await SellerModel.findOne({ user_id: seller_id });
+    if (!seller) {
+      return res.status(404).send({
+        status: false,
+        message: "Seller not found",
+        data: null,
+      });
+    }    
+
+    const event = await EventModel.findById(event_id);
+    if (!event) {
+      return res.status(404).send({
+        status: false,
+        message: "Event not found",
+        data: null,
+      });
+    } 
+
+  
+    var current_date_time = moment().format("YYYY-MM-DDTHH:mm:ss.SSSZ");
+    var event_end_time = moment(event.end_time).format("YYYY-MM-DDTHH:mm:ss.SSSZ");
+    var event_status = event.status;
+
+    if(event_status == "expiired"){
+      return  res.status(404).send({
+        status: true,
+        message: "No validators found for the specified event id",
+        data: [],
+      });
+    }
+
+    var is_validator_present_in_event = false;
+
+    if(current_date_time < event_end_time){
+      is_validator_present_in_event = true;
+    }
+
+
+    var seller_district = seller.district;
+
+    const event_validators = await Validator.aggregate([
       {
-        $match: { user_id: seller_id }
+        $sort: { createdAt: -1 }, // Sort by createdAt in descending order
       },
       {
         $lookup: {
           from: "eventvalidators",
-          let: { validator_id: "$_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$validator_id", "$$validator_id"] },
-                    { $eq: ["$event_id", event_id] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "validator_event_data"
-        }
-      },
-      {
-        $addFields: {
-          validator_event_data: {
-            $map: {
-              input: "$validator_event_data",
-              in: {
-                _id: "$$this._id",
-                validator_id: "$$this.validator_id",
-                seller_id: "$$this.seller_id",
-                event_id: "$$this.event_id",
-                role: "$$this.role"
-              }
-            }
-          }
-        }
+          localField: "validator_id",
+          foreignField: "user_id",
+          as: "validator_event_data",
+        },
       },
       {
         $project: {
@@ -522,22 +571,83 @@ exports.get_event_validators_list = async (req, res) => {
           createdAt: 1,
           updatedAt: 1,
           __v: 1,
-          validator_event_data: 1
-        }
-      }
+          role: 1,
+          validator_event_data: {
+            $filter: {
+              input: "$validator_event_data",
+              as: "eventData",
+              cond: {
+                $eq: ["$$eventData.validator_id", "$_id"],
+              },
+            },
+          },
+        },
+      },
     ]);
 
-    if (eventValidators.length > 0) {
-      res.status(200).send({
-        status: true,
-        message: "Data found",
-        data: eventValidators
-      });
+    if (event_validators && event_validators.length > 0) {
+      const filtered_event_validator_data = event_validators
+        .map((validator) => ({
+          _id: validator._id,
+          user_id: validator.user_id,
+          full_name: validator.full_name,
+          district: validator.district,
+          state: validator.state,
+          country: validator.country,
+          status: validator.status,
+          createdAt: validator.createdAt,
+          updatedAt: validator.updatedAt,
+          __v: validator.__v,
+          validator_event_data: validator.validator_event_data.map((eventData) => ({
+            _id: eventData._id,
+            validator_id: eventData.validator_id,
+            seller_id: eventData.seller_id,
+            event_id: eventData.event_id,
+            role: eventData.role,
+            createdAt: eventData.createdAt,
+            updatedAt: eventData.updatedAt,
+            __v: eventData.__v,
+          })),
+        }))
+        .filter((validator) => validator.validator_event_data.some((event) => event.event_id == event_id));
+          var all_validator_list = [];
+        if (filtered_event_validator_data.length > 0) {    
+          filtered_event_validator_data.forEach((val, k) => {
+            if(seller_district == val.district){
+              all_validator_list.push({
+                _id: val._id,
+                user_id: val.user_id,
+                full_name: val.full_name,
+                district: val.district,
+                state: val.state,
+                country: val.country,
+                status: val.status,
+                createdAt: val.createdAt,
+                updatedAt: val.updatedAt,
+                __v: val.__v,
+                role : val.validator_event_data[0].role,
+                is_validator_present_in_event:is_validator_present_in_event
+              });
+
+            }
+          });
+          res.status(200).send({
+            status: true,
+            message: "Data found",
+            data: all_validator_list,
+          });
+        } else {
+          res.status(404).send({
+            status: true,
+            message: "No validators found for the specified event id",
+            data: filtered_event_validator_data,
+          });
+        }
     } else {
-      res.status(200).send({
+      res.status(404).send({
         status: true,
-        message: "No validators found for the specified event_id",
-        data: []
+        message: "No validators found",
+        data: [],
       });
     }
   } catch (error) {
@@ -545,7 +655,8 @@ exports.get_event_validators_list = async (req, res) => {
     res.status(500).send({
       status: false,
       message: error.toString() || "Internal Server Error",
-      data: null
+      data: null,
     });
   }
 };
+

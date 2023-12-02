@@ -5,6 +5,7 @@ const moment = require("moment");
 const { addNotification } = require('../helpers/notification_helper');
 const { sendPushNotification } = require('../config/firebase.config'); // Update with the correct path to your module.
 const SellerModel = require("../models/seller.model");
+const EventModel = require("../models/event.model");
 
 // It will book event by guest
 
@@ -521,8 +522,31 @@ const get_booked_guest_list = async (req, res) => {
     });
   } else {
     var sellerData = await SellerModel.findOne({ user_id: seller_id });
+
+    if (!sellerData) {
+      return res.status(404).send({
+        status: false,
+        message: "Seller not found",
+        data: null,
+      });
+    }    
+
+    const event = await EventModel.findById(event_id);
+    if (!event) {
+      return res.status(404).send({
+        status: false,
+        message: "Event not found",
+        data: null,
+      });
+    } 
+
+
+
+
+
+
     var sellerDistrict = sellerData.district;
-    console.log("sellerDistrict", sellerDistrict);
+    
 
     try {
       const bookingPipeline = [
@@ -558,30 +582,32 @@ const get_booked_guest_list = async (req, res) => {
       Booking.aggregate(bookingPipeline)
         .then((result) => {
           if (result && result.length > 0) {
-            var booking_data = [];
-            console.log("result", result);
+            var booked_guest_data = [];          
 
             for (const booking of result) {
-              const response = {
-                ... booking.guest_data[0],
-                event_data:
-                  booking.event_data && booking.event_data.length > 0
-                    ? {
-                        ...booking.event_data[0],
-                        // Constructing image URL
-                        image: constructImageUrl(
-                          req,
-                          booking.event_data[0].image
-                        ),
-                      }
-                    : null,
-              };
-              booking_data.push(response);
+              if(sellerDistrict == booking.guest_data[0].district){
+                const response = {
+                  ... booking.guest_data[0],
+                  event_data:
+                    booking.event_data && booking.event_data.length > 0
+                      ? {
+                          ...booking.event_data[0],
+                          // Constructing image URL
+                          image: constructImageUrl(
+                            req,
+                            booking.event_data[0].image
+                          ),
+                        }
+                      : null,
+                };
+                booked_guest_data.push(response);
+
+              }             
             }
             res.status(200).json({
               status: true,
               message: "Data found",
-              data: booking_data,
+              data: booked_guest_data,
             });
           } else {
             res.status(404).json({ status: false, message: "No guests found", data: [] });

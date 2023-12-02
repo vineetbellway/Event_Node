@@ -455,6 +455,20 @@ exports.get_event_validators_list = async (req, res) => {
         if (filtered_event_validator_data.length > 0) {    
           filtered_event_validator_data.forEach((val, k) => {
             if(seller_district == val.district){
+
+              var event_end_time = moment(event.end_time).format("YYYY-MM-DDTHH:mm:ss.SSSZ");
+
+              var validator_event_create_date_time  = moment(val.validator_event_data[0].createdAt).format("YYYY-MM-DDTHH:mm:ss.SSSZ");
+              var is_validator_present_in_event = false;
+
+              console.log('validator_event_create_date_time',validator_event_create_date_time)
+
+              console.log('event_end_time',event_end_time)
+
+              if(event_end_time > validator_event_create_date_time){
+                is_validator_present_in_event = true;
+              }
+
               all_validator_list.push({
                 _id: val._id,
                 user_id: val.user_id,
@@ -538,11 +552,7 @@ exports.get_not_expired_event_validators_list = async (req, res) => {
       });
     }
 
-    var is_validator_present_in_event = false;
-
-    if(current_date_time < event_end_time){
-      is_validator_present_in_event = true;
-    }
+ 
 
 
     var seller_district = seller.district;
@@ -612,8 +622,22 @@ exports.get_not_expired_event_validators_list = async (req, res) => {
         .filter((validator) => validator.validator_event_data.some((event) => event.event_id == event_id));
           var all_validator_list = [];
         if (filtered_event_validator_data.length > 0) {    
+          var event_end_time = moment(event.end_time).format("YYYY-MM-DDTHH:mm:ss.SSSZ");
+
+        
           filtered_event_validator_data.forEach((val, k) => {
             if(seller_district == val.district){
+
+              var validator_event_create_date_time  = moment(val.validator_event_data[0].createdAt).format("YYYY-MM-DDTHH:mm:ss.SSSZ");
+              var is_validator_present_in_event = false;
+    
+              console.log('validator_event_create_date_time',validator_event_create_date_time)
+    
+              console.log('event_end_time',event_end_time)
+    
+              if(event_end_time > validator_event_create_date_time){
+                is_validator_present_in_event = true;
+              }
               all_validator_list.push({
                 _id: val._id,
                 user_id: val.user_id,

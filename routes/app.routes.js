@@ -257,7 +257,7 @@ router.put("/update-banner",auth,banner_upload.single('image'),  bannerControlle
 router.delete("/delete-banner",auth,bannerController.delete_banner);
 
 // Get seller events API
-router.get("/get-seller-events",eventController.get_seller_events);
+router.get("/get-seller-events", auth,eventController.get_seller_events);
 
 
 // Add event validator API

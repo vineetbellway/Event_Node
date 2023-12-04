@@ -91,10 +91,10 @@ router.post("/event",auth, upload.single('image'), eventController.create_event)
 router.put("/event/:id",auth, upload.single('image'),eventController.update_event);
 router.get("/event",auth, eventController.get_events);
 router.get("/search_event/:keyword",auth, eventController.search_events);
-router.get("/event_by_seller_id/:id", auth, eventController.event_by_seller_id);
+router.get("/event_by_seller_id/:id", eventController.event_by_seller_id);
 router.get("/event/:id",auth, eventController.get_event);
 router.delete("/event/:id", auth, eventController.delete_event);
-router.delete("/event", auth, eventController.delete_events);
+router.delete("/event", auth, eventController.delete_events);http://62.72.57.179:3000
 
 router.post("/menu", auth, menuController.create_menu);
 router.put("/menu/:id", auth, menuController.update_menu);
@@ -256,8 +256,8 @@ router.put("/update-banner",auth,banner_upload.single('image'),  bannerControlle
 // Delete banner API
 router.delete("/delete-banner",auth,bannerController.delete_banner);
 
-// Get seller event API
-router.get("/get-seller-events",auth, eventController.get_seller_events);
+// Get seller events API
+router.get("/get-seller-events",eventController.get_seller_events);
 
 
 // Add event validator API
@@ -270,15 +270,19 @@ router.get("/get-guest-banner-list",auth, bannerController.get_guest_banner_list
 router.get("/get-seller-validator-list",auth, validatorController.get_seller_validator_list);
 
 
-// get event validators list API
-router.get("/get-event-validators-list", validatorEventController.get_event_validators_list);
+// get validators'event list API
+router.get("/get-event-validators-list",auth, validatorEventController.get_event_validators_list);
 
 // get not expired event validators list  API
-router.get("/get-not-expired-event-validators-list", validatorEventController.get_not_expired_event_validators_list);
+router.get("/get-not-expired-event-validators-list",auth, validatorEventController.get_not_expired_event_validators_list);
+
+
+// get not expired event list API
+//router.get("/get-not-expired-event-list",auth, eventController.get_not_expired_event_list);
 
 
 // get booked guest list API
-router.get("/get-booked-guest-list", bookingController.get_booked_guest_list);
+router.get("/get-booked-guest-list",auth, bookingController.get_booked_guest_list);
 
 
 cron.schedule("* * * * *", function () {

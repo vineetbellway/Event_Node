@@ -334,15 +334,14 @@ exports.event_by_seller_id = async (req, res) => {
 
 
 exports.get_seller_events = async (req, res) => {
-  const seller_id = req.query.seller_id;
-  console.log("seller_id",seller_id)
+  const sellerId = req.query.seller_id;
 
   try {
-    const events = await EventModel.find({ seller_id: new mongoose.Types.ObjectId(seller_id), 'status': 'active' });
+    const events = await EventModel.find({ seller_id: new mongoose.Types.ObjectId(sellerId), 'status': 'active' });
 
     if (events.length > 0) {
       const currentDateTime = moment();
-      const eventsWithImageUrl = [];
+      const allEvents = [];
 
       for (const event of events) {
         // Get the host (domain and port)
@@ -352,21 +351,25 @@ exports.get_seller_events = async (req, res) => {
         // Combine protocol, host, and any other parts of the base URL you need
         const baseURL = `${protocol}://${host}`;
         const image = event.image ? `${baseURL}/uploads/events/${event.image}` : null;
-        const end_time = moment(event.end_time);
+        const eventEndDateTime = moment(event.end_time);
+        const eventStartDateTime = moment(event.start_time);
 
-        if (end_time >= currentDateTime) {
-          eventsWithImageUrl.push({
+    
+
+        if (eventStartDateTime >= currentDateTime) {
+              console.log("eventStartDateTime",eventStartDateTime)
+          allEvents.push({
             ...event.toObject(),
             image: image,
           });
         }
       }
 
-      if (eventsWithImageUrl.length > 0) {
+      if (allEvents.length > 0) {
         res.status(200).send({
           status: true,
           message: "Success",
-          data: eventsWithImageUrl,
+          data: allEvents,
         });
       } else {
         res.status(200).send({

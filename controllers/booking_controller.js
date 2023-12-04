@@ -593,6 +593,7 @@ const get_booked_guest_list = async (req, res) => {
               if(sellerDistrict == booking.guest_data[0].district){
                 const response = {
                   ... booking.guest_data[0],
+                  booking_status:booking.event_data[0].status,
                   event_data:
                     booking.event_data && booking.event_data.length > 0
                       ? {

@@ -570,6 +570,9 @@ const get_booked_guest_list = async (req, res) => {
         {
           $sort: { createdAt: -1 }, // Sort by createdAt in descending order
         },
+        {
+          $match: { "event_data._id": new mongoose.Types.ObjectId(event_id) },
+        },
       ];
 
       // Match based on payment mode
@@ -578,6 +581,8 @@ const get_booked_guest_list = async (req, res) => {
           $match: { payment_mode: payment_mode },
         });
       }
+
+
 
       Booking.aggregate(bookingPipeline)
         .then((result) => {

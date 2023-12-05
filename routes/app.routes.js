@@ -263,7 +263,7 @@ router.get("/get-seller-events", auth,eventController.get_seller_events);
 
 
 // Add event validator API
-router.post("/add-event-validator", validatorEventController.add_event_validator);
+router.post("/add-event-validator",auth, validatorEventController.add_event_validator);
 
 // get guest banner list API
 router.get("/get-guest-banner-list",auth, bannerController.get_guest_banner_list);
@@ -273,10 +273,10 @@ router.get("/get-seller-validator-list",auth, validatorController.get_seller_val
 
 
 // get validators'event list API
-router.get("/get-event-validators-list", validatorEventController.get_event_validators_list);
+router.get("/get-event-validators-list",auth, validatorEventController.get_event_validators_list);
 
 // get not expired event validators list  API
-router.get("/get-not-expired-event-validators-list", validatorEventController.get_not_expired_event_validators_list);
+router.get("/get-not-expired-event-validators-list",auth, validatorEventController.get_not_expired_event_validators_list);
 
 
 // get not expired event list API
@@ -302,6 +302,9 @@ router.get("/number-of-guests-for-event", auth, reportController.get_number_of_g
 
 // get repeated guests for seller attending events API
 router.get("/repated-guests-for-seller",auth,reportController.get_repeated_guests_for_seller_attending_events);
+
+// get the number of guests attending events by a specific seller
+router.get("/number-guests-for-seller",auth,reportController.get_number_of_guests_for_seller);
 
 cron.schedule("* * * * *", function () {
   //  console.log("Cron job is running");

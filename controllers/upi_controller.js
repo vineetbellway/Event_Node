@@ -67,10 +67,10 @@ const get_seller_upi_id = async (req, res) => {
                     data: result[0],
                   });
                 } else {
-                  res.status(404).send({
+                  res.status(200).send({
                     status: true,
                     message: "No data found",
-                    data: result,
+                    data: null,
                   });
                 }
               })

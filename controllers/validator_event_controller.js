@@ -359,11 +359,11 @@ exports.add_event_validator = async(req, res, next) => {
 
 
 exports.get_event_validators_list = async (req, res) => {
-  const seller_id = req.query.seller_id;
-  const event_id = req.query.event_id;
-
   try {
-    var seller = await User.findById(seller_id);
+    const sellerId = req.query.seller_id;
+    const eventId = req.query.event_id;
+
+    var seller = await User.findById(sellerId);
     if (!seller) {
       return res.status(200).send({
         status: false,
@@ -371,12 +371,12 @@ exports.get_event_validators_list = async (req, res) => {
         data: null,
       });
     }    
-    var sellerData = await SellerModel.findOne({ user_id: seller_id });
+    var sellerData = await SellerModel.findOne({ user_id: sellerId });
     
 
 
 
-    const event = await EventModel.findById(event_id);
+    const event = await EventModel.findById(eventId);
     if (!event) {
       return res.status(200).send({
         status: false,
@@ -385,127 +385,57 @@ exports.get_event_validators_list = async (req, res) => {
       });
     } 
 
+    const sellerDistrict = sellerData.district;
 
-    var current_date_time = moment().format("YYYY-MM-DDTHH:mm:ss.SSSZ");
-    var event_end_time = moment(event.end_time).format("YYYY-MM-DDTHH:mm:ss.SSSZ");
-    var seller_district = sellerData.district;
-
-    const event_validators = await User.aggregate([
-      {
-        $sort: { createdAt: -1 }, // Sort by createdAt in descending order
-      },
+    const eventValidators = await EventValidator.aggregate([
       {
         $lookup: {
-          from: "eventvalidators",
-          localField: "_id",
-          foreignField: "validator_id",
-          as: "validator_event_data",
-        },
-      },
-      {
-        $lookup: {
-          from: "validators", // Assuming the name of your "validator" model
-          localField: "_id", // The field in the "User" model
-          foreignField: "user_id", // The corresponding field in the "validator" model
+          from: "validators",
+          localField: "validator_id",
+          foreignField: "user_id",
           as: "validator_data",
         },
       },
       {
-        $addFields: {
-          type: {
-            $ifNull: [{ $arrayElemAt: ["$validator_event_data.type", 0] }, 'validator'],
-          },
-          validator_data: { $arrayElemAt: ["$validator_data", 0] },
+        $lookup: {
+          from: "eventmodels",
+          localField: "event_id",
+          foreignField: "_id",
+          as: "event_data",
         },
       },
       {
         $match: {
-          "validator_event_data": { $ne: [] } // Filter out documents where validator_event_data is an empty array
+          event_id: new mongoose.Types.ObjectId(eventId),
+          seller_id: new mongoose.Types.ObjectId(sellerId),
         },
       },
     ]);
-    
-  
+    console.log("allValidatorList",eventValidators)
+    const allValidatorList = eventValidators
+      .filter((val) => sellerDistrict === val.validator_data[0].district)
+      .map((val) => ({
+        _id: val.validator_data[0]._id,
+        user_id: val.validator_data[0].user_id, // Assuming this is the user_id from the 'validators' collection
+        full_name: val.validator_data[0].full_name, // Assuming this is the full_name from the 'validators' collection
+        district: val.validator_data[0].district,
+        state: val.validator_data[0].state,
+        country: val.validator_data[0].country,
+        status: val.validator_data[0].status,
+        createdAt: val.createdAt,
+        updatedAt: val.updatedAt,
+        role: val.role,
+        validator_status: val.status,
+      }));
 
-
-    if (event_validators && event_validators.length > 0) {
-   
-      const filtered_event_validator_data = event_validators
-        .map((validator) => ({
-
-
-         _id: validator.validator_data._id,
-          user_id: validator.validator_data.user_id,
-          full_name: validator.validator_data.full_name,
-          district: validator.validator_data.district,
-          state: validator.validator_data.state,
-          country: validator.validator_data.country,
-          status: validator.validator_data.status,
-          createdAt: validator.validator_data.createdAt,
-          updatedAt: validator.validator_data.updatedAt,
-          __v: validator.validator_data.__v,
-          validator_event_data: validator.validator_event_data.map((validatorEventData) => ({
-            _id: validatorEventData._id,
-            validator_id: validatorEventData.validator_id,
-            seller_id: validatorEventData.seller_id,
-            event_id: validatorEventData.event_id,
-            role: validatorEventData.role,
-            createdAt: validatorEventData.createdAt,
-            updatedAt: validatorEventData.updatedAt,
-            __v: validatorEventData.__v,
-            validator_status : validatorEventData.status
-          })),
-        }));
-          var all_validator_list = [];
-    
-        if (filtered_event_validator_data.length > 0) {    
-          filtered_event_validator_data.forEach((val, k) => {
-
-            if(seller_district == val.district){
-
-             var validator_status =  val.validator_event_data[0].validator_status;
-
-           validator_status =  (validator_status!="pending") ? validator_status+"ed" : '';
-             
-                all_validator_list.push({
-                  _id: val._id,
-                  user_id: val.user_id,
-                  full_name: val.full_name,
-                  district: val.district,
-                  state: val.state,
-                  country: val.country,
-                  status: val.status,
-                  createdAt: val.createdAt,
-                  updatedAt: val.updatedAt,
-                  __v: val.__v,
-                  role : val.validator_event_data[0].role,
-                  validator_status:validator_status
-                });
-            }
-          });
-          if(all_validator_list.length >0){
-            res.status(200).send({
-              status: true,
-              message: "Data found",
-              data: all_validator_list,
-            });
-          } else {
-            res.status(404).send({
-              status: true,
-              message: "No validators found",
-              data: [],
-            });
-          }
-          
-        } else {
-          res.status(404).send({
-            status: true,
-            message: "No validators found",
-            data: filtered_event_validator_data,
-          });
-        }
+    if (allValidatorList.length > 0) {
+      res.status(200).send({
+        status: true,
+        message: "Data found",
+        data: allValidatorList,
+      });
     } else {
-      res.status(404).send({
+      res.status(200).send({
         status: true,
         message: "No validators found",
         data: [],
@@ -523,11 +453,11 @@ exports.get_event_validators_list = async (req, res) => {
 
 
 exports.get_not_expired_event_validators_list = async (req, res) => {
-  const seller_id = req.query.seller_id;
-  const event_id = req.query.event_id;
-
   try {
-    var seller = await User.findById(seller_id);
+    const sellerId = req.query.seller_id;
+    const eventId = req.query.event_id;
+
+    var seller = await User.findById(sellerId);
     if (!seller) {
       return res.status(200).send({
         status: false,
@@ -535,12 +465,12 @@ exports.get_not_expired_event_validators_list = async (req, res) => {
         data: null,
       });
     }    
-    var sellerData = await SellerModel.findOne({ user_id: seller_id });
+    var sellerData = await SellerModel.findOne({ user_id: sellerId });
     
 
 
 
-    const event = await EventModel.findById(event_id);
+    const event = await EventModel.findById(eventId);
     if (!event) {
       return res.status(200).send({
         status: false,
@@ -551,133 +481,63 @@ exports.get_not_expired_event_validators_list = async (req, res) => {
 
     var event_status = event.status;
 
-    if(event_status == "expiired"){
+    if(event_status == "expired"){
       return  res.status(200).send({
         status: true,
-        message: "No validators found for the specified event id",
+        message: "No validators found",
         data: [],
       });
     }
 
+    const sellerDistrict = sellerData.district;
 
-    var current_date_time = moment().format("YYYY-MM-DDTHH:mm:ss.SSSZ");
-    var event_end_time = moment(event.end_time).format("YYYY-MM-DDTHH:mm:ss.SSSZ");
-    var seller_district = sellerData.district;
-
-    const event_validators = await User.aggregate([
-      {
-        $sort: { createdAt: -1 }, // Sort by createdAt in descending order
-      },
+    const eventValidators = await EventValidator.aggregate([
       {
         $lookup: {
-          from: "eventvalidators",
-          localField: "_id",
-          foreignField: "validator_id",
-          as: "validator_event_data",
-        },
-      },
-      {
-        $lookup: {
-          from: "validators", // Assuming the name of your "validator" model
-          localField: "_id", // The field in the "User" model
-          foreignField: "user_id", // The corresponding field in the "validator" model
+          from: "validators",
+          localField: "validator_id",
+          foreignField: "user_id",
           as: "validator_data",
         },
       },
       {
-        $addFields: {
-          type: {
-            $ifNull: [{ $arrayElemAt: ["$validator_event_data.type", 0] }, 'validator'],
-          },
-          validator_data: { $arrayElemAt: ["$validator_data", 0] },
+        $lookup: {
+          from: "eventmodels",
+          localField: "event_id",
+          foreignField: "_id",
+          as: "event_data",
         },
       },
       {
         $match: {
-          "validator_event_data": { $ne: [] } // Filter out documents where validator_event_data is an empty array
+          event_id: new mongoose.Types.ObjectId(eventId),
+          seller_id: new mongoose.Types.ObjectId(sellerId),
         },
       },
     ]);
-    
-  
 
+    const allValidatorList = eventValidators
+      .filter((val) => sellerDistrict === val.validator_data[0].district)
+      .map((val) => ({
+        _id: val.validator_data[0]._id,
+        user_id: val.validator_data[0].user_id, // Assuming this is the user_id from the 'validators' collection
+        full_name: val.validator_data[0].full_name, // Assuming this is the full_name from the 'validators' collection
+        district: val.validator_data[0].district,
+        state: val.validator_data[0].state,
+        country: val.validator_data[0].country,
+        status: val.validator_data[0].status,
+        createdAt: val.createdAt,
+        updatedAt: val.updatedAt,
+        role: val.role,
+        validator_status: val.status,
+      }));
 
-    if (event_validators && event_validators.length > 0) {
-   
-      const filtered_event_validator_data = event_validators
-        .map((validator) => ({
-
-
-         _id: validator.validator_data._id,
-          user_id: validator.validator_data.user_id,
-          full_name: validator.validator_data.full_name,
-          district: validator.validator_data.district,
-          state: validator.validator_data.state,
-          country: validator.validator_data.country,
-          status: validator.validator_data.status,
-          createdAt: validator.validator_data.createdAt,
-          updatedAt: validator.validator_data.updatedAt,
-          __v: validator.validator_data.__v,
-          validator_event_data: validator.validator_event_data.map((validatorEventData) => ({
-            _id: validatorEventData._id,
-            validator_id: validatorEventData.validator_id,
-            seller_id: validatorEventData.seller_id,
-            event_id: validatorEventData.event_id,
-            role: validatorEventData.role,
-            createdAt: validatorEventData.createdAt,
-            updatedAt: validatorEventData.updatedAt,
-            __v: validatorEventData.__v,
-            validator_status : validatorEventData.status
-          })),
-        }));
-          var all_validator_list = [];
-    
-        if (filtered_event_validator_data.length > 0) {    
-          filtered_event_validator_data.forEach((val, k) => {
-
-            if(seller_district == val.district){
-
-             var validator_status =  val.validator_event_data[0].validator_status;
-
-           validator_status =  (validator_status!="pending") ? validator_status+"ed" : '';
-             
-                all_validator_list.push({
-                  _id: val._id,
-                  user_id: val.user_id,
-                  full_name: val.full_name,
-                  district: val.district,
-                  state: val.state,
-                  country: val.country,
-                  status: val.status,
-                  createdAt: val.createdAt,
-                  updatedAt: val.updatedAt,
-                  __v: val.__v,
-                  role : val.validator_event_data[0].role,
-                  validator_status:validator_status
-                });
-            }
-          });
-          if(all_validator_list.length >0){
-            res.status(200).send({
-              status: true,
-              message: "Data found",
-              data: all_validator_list,
-            });
-          } else {
-            res.status(200).send({
-              status: true,
-              message: "No validators found",
-              data: [],
-            });
-          }
-          
-        } else {
-          res.status(200).send({
-            status: true,
-            message: "No validators found",
-            data: filtered_event_validator_data,
-          });
-        }
+    if (allValidatorList.length > 0) {
+      res.status(200).send({
+        status: true,
+        message: "Data found",
+        data: allValidatorList,
+      });
     } else {
       res.status(200).send({
         status: true,
@@ -771,9 +631,10 @@ exports.get_validator_events_list = async (req, res) => {
   const validator_id = req.query.validator_id;
   const status = req.query.status;
 
+
   try {
     const validator = await User.findById(validator_id);
-
+    console.log("validator_id",validator)
     if (!validator) {
       return res.status(200).send({
         status: false,

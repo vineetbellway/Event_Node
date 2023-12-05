@@ -411,7 +411,8 @@ exports.get_event_validators_list = async (req, res) => {
         },
       },
     ]);
-    console.log("allValidatorList",eventValidators)
+    console.log("allValidatorList",eventValidators);
+    return false;
     const allValidatorList = eventValidators
       .filter((val) => sellerDistrict === val.validator_data[0].district)
       .map((val) => ({

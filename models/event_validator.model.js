@@ -7,12 +7,12 @@ const schema = new mongoose.Schema(
   {
     validator_id: {
       type: mongoose.Schema.Types.ObjectID,
-      ref: "Validator",
+      ref: "User",
       required: true,
     },
     seller_id: {
       type: mongoose.Schema.Types.ObjectID,
-      ref: "Seller",
+      ref: "User",
       required: true,
     },
     event_id: {
@@ -24,6 +24,11 @@ const schema = new mongoose.Schema(
       type: String,
       enum: ['cashier', 'bar_attender', 'booker'], // Add your allowed roles
       required: true,
+    },
+    status: {
+      type: String,
+      enum: ['pending','accept', 'reject'], // Add your allowed roles
+      default: 'pending',
     },
   },
   {

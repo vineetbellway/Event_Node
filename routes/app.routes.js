@@ -166,7 +166,7 @@ router.put("/update-facility",auth,  facilityController.update_facility);
 router.get("/facilities",auth,  facilityController.get_facilities);
 
 // manage validator event status
-router.put("/manage-validator-event-status/:id", validatorEventController.manage_validator_event_status);
+//router.put("/manage-validator-event-status/:id", validatorEventController.manage_validator_event_status);
 
 // create loyalty order item
 router.post("/create-loyalty-order-item", loyalityController.create_loyalty_order_items);
@@ -205,7 +205,7 @@ router.get("/get-unread-notifications-count", auth, notificationController.get_u
 router.post("/create-seller-upi-id",auth,  upiController.create_seller_upi_id);
 
 // get seller upi id api
-router.get("/get-seller-upi-id",  upiController.get_seller_upi_id);
+router.get("/get-seller-upi-id",auth,  upiController.get_seller_upi_id);
 
 // update seller upi id api
 router.put("/update-seller-upi-id",auth,  upiController.update_seller_upi_id);
@@ -283,6 +283,14 @@ router.get("/get-not-expired-event-validators-list",auth, validatorEventControll
 
 // get booked guest list API
 router.get("/get-booked-guest-list",auth, bookingController.get_booked_guest_list);
+
+
+// manage event's validator status API
+router.put("/manage-event-validator-status",auth, validatorEventController.manage_event_validator_status);
+
+// get validator's events list status API
+router.get("/get-validator-events-list",auth, validatorEventController.get_validator_events_list);
+
 
 
 cron.schedule("* * * * *", function () {

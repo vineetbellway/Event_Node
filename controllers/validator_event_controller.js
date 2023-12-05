@@ -365,7 +365,7 @@ exports.get_event_validators_list = async (req, res) => {
   try {
     var seller = await User.findById(seller_id);
     if (!seller) {
-      return res.status(404).send({
+      return res.status(200).send({
         status: false,
         message: "Seller not found",
         data: null,
@@ -378,7 +378,7 @@ exports.get_event_validators_list = async (req, res) => {
 
     const event = await EventModel.findById(event_id);
     if (!event) {
-      return res.status(404).send({
+      return res.status(200).send({
         status: false,
         message: "Event not found",
         data: null,

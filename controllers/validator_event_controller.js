@@ -642,7 +642,7 @@ exports.get_validator_events_list = async (req, res) => {
         data: null,
       });
     }
-    auth
+  
     const validator_events = await EventValidator.find({ validator_id, status: { $eq: status } });
 
 

@@ -53,6 +53,8 @@ const upiController = require("../controllers/upi_controller");
 const categoryController = require("../controllers/category_controller");
 const uomController = require("../controllers/uom_controller");
 const bannerController = require("../controllers/banner_controller");
+const reportController = require("../controllers/report_controller");
+
 
 
 router.post("/user", auth,userController.login);
@@ -271,7 +273,7 @@ router.get("/get-seller-validator-list",auth, validatorController.get_seller_val
 
 
 // get validators'event list API
-router.get("/get-event-validators-list",auth, validatorEventController.get_event_validators_list);
+router.get("/get-event-validators-list", validatorEventController.get_event_validators_list);
 
 // get not expired event validators list  API
 router.get("/get-not-expired-event-validators-list", validatorEventController.get_not_expired_event_validators_list);
@@ -289,9 +291,17 @@ router.get("/get-booked-guest-list",auth, bookingController.get_booked_guest_lis
 router.put("/manage-event-validator-status",auth, validatorEventController.manage_event_validator_status);
 
 // get validator's events list status API
-router.get("/get-validator-events-list",auth, validatorEventController.get_validator_events_list);
+router.get("/get-validator-events-list",auth,  validatorEventController.get_validator_events_list);
+
+// get item sales report API
+router.get("/item-sales-report",auth,  reportController.get_item_sales_report);
+
+// get number of guests for event API
+router.get("/number-of-guests-for-event", auth, reportController.get_number_of_guests_for_event);
 
 
+// get repeated guests for seller attending events API
+router.get("/repated-guests-for-seller",auth,reportController.get_repeated_guests_for_seller_attending_events);
 
 cron.schedule("* * * * *", function () {
   //  console.log("Cron job is running");

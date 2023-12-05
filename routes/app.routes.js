@@ -273,7 +273,7 @@ router.get("/get-seller-validator-list",auth, validatorController.get_seller_val
 
 
 // get validators'event list API
-router.get("/get-event-validators-list", validatorEventController.get_event_validators_list);
+router.get("/get-event-validators-list",auth, validatorEventController.get_event_validators_list);
 
 // get not expired event validators list  API
 router.get("/get-not-expired-event-validators-list",auth, validatorEventController.get_not_expired_event_validators_list);

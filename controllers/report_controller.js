@@ -2,7 +2,7 @@
 const OrderItem = require("../models/order_item.model");
 const mongoose = require("mongoose");
 const EventModel = require("../models/event.model");
-
+const Seller = require("../models/seller.model");
 
 
 
@@ -68,8 +68,6 @@ exports.get_item_sales_report = async (req, res) => {
       }
 };
 
-
-
 exports.get_number_of_guests_for_event = async (req, res) => {
     try {
         const eventId = req.query.event_id;
@@ -124,7 +122,7 @@ exports.get_repeated_guests_for_seller_attending_events = async (req, res) => {
         const sellerEvents = await EventModel.find({ seller_id: sellerId }, '_id');
     
         if (sellerEvents.length === 0) {
-          return res.json({ success: true, message: 'No events found for the seller' });
+          return res.json({ success: true, message: 'No events found for the seller',data:[] });
         }
     
         // Get event IDs associated with the seller's events
@@ -153,8 +151,63 @@ exports.get_repeated_guests_for_seller_attending_events = async (req, res) => {
             }
           }
         ]);
+        if(repeatedGuests.length > 0){
+            res.json({ success: true, message: 'Data found', repeatedGuests });
+        } else {
+            res.json({ success: true, message: 'No data found', repeatedGuests });
+        }
+        
+      } catch (err) {
+        res.status(500).send({
+            status: false,
+            message: err.toString() || "Internal Server Error",
+            data: null,
+        });
+      }
+};
+
+exports.get_number_of_guests_for_seller = async (req, res) => {
+    try {
+        const sellerId = req.query.seller_id;
     
-        res.json({ success: true, repeatedGuests });
+        // Find the seller by sellerId
+        const seller = await Seller.findById({ user_id: sellerId });
+    
+        if (!seller) {
+          return res.status(200).json({ success: false, message: 'Seller not found',data: null });
+        }
+    
+        // Find all events created by the seller
+        const sellerEvents = await EventModel.find({ seller_id: sellerId });
+    
+        if (sellerEvents.length === 0) {
+          return res.json({ success: true,message: 'Seller events not found', data :[{seller: seller.company_name, numberOfGuests: 0}] });
+        }
+    
+        // Get event IDs associated with the seller's events
+        const eventIds = sellerEvents.map(event => event._id);
+    
+        // Calculate the number of guests attending all events by the seller
+        const numberOfGuests = await OrderItem.aggregate([
+          {
+            $match: { event_id: { $in: eventIds } }
+          },
+          {
+            $group: {
+              _id: '$guest_id'
+            }
+          },
+          {
+            $group: {
+              _id: null,
+              totalGuests: { $sum: 1 }
+            }
+          }
+        ]);
+    
+        const totalGuests = numberOfGuests.length > 0 ? numberOfGuests[0].totalGuests : 0;
+    
+        res.json({ success: true,message: 'No data found', data : [{seller: seller.company_name, numberOfGuests: totalGuests}] });
       } catch (err) {
         res.status(500).json({ success: false, error: err.message });
       }

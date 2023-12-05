@@ -314,13 +314,13 @@ exports.add_event_validator = async(req, res, next) => {
     try {
 
      // Check if a validator with the same role already exists in same event
-     const existingRoleInEventValidator = await EventValidator.findOne({ role: req.body.role , validator_id: req.body.validator_id , event_id: req.body.event_id });
+     const existingRoleInEventValidator = await EventValidator.findOne({validator_id: req.body.validator_id , event_id: req.body.event_id });
 
      if (existingRoleInEventValidator) {
        // Category with the same name already exists
        return res.status(409).send({
          status: false,
-         message: "Validator with same role is already added to event",
+         message: "Validator is already added to event",
          data:null
        });
      }
@@ -642,7 +642,7 @@ exports.get_validator_events_list = async (req, res) => {
         data: null,
       });
     }
-
+    auth
     const validator_events = await EventValidator.find({ validator_id, status: { $eq: status } });
 
 

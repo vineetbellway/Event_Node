@@ -558,7 +558,7 @@ exports.get_not_expired_event_validators_list = async (req, res) => {
 exports.manage_event_validator_status = async (req, res) => {
   try {
     const { event_id, status, validator_id } = req.body;
-
+    console.log("here")
     if (!event_id || !status || !validator_id) {
       return res.status(400).json({ status: false, message: "event id, validator id, and status are required in the request body" });
     }
@@ -585,7 +585,7 @@ exports.manage_event_validator_status = async (req, res) => {
     const message = `Validator has ${updatedStatus} the event`;
 
     const seller_id = result.seller_id;
-d;
+
     
     var sellerUserData = await User.findById(seller_id);
    
@@ -622,6 +622,7 @@ d;
     res.status(500).json({
       status: false,
       message: error.toString() || "Internal Server Error",
+      data :null
     });
   }
 };

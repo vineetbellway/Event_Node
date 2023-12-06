@@ -410,7 +410,7 @@ exports.get_event_validators_list = async (req, res) => {
         },
       },
     ]);
- 
+    console.log("eventValidators",eventValidators)
     const allValidatorList = eventValidators
       .filter((val) => sellerDistrict === val.validator_data[0].district)
       .map((val) => ({
@@ -425,6 +425,7 @@ exports.get_event_validators_list = async (req, res) => {
         updatedAt: val.updatedAt,
         role: val.role,
         validator_status: val.status,
+        //...eventValidators
       }));
 
     if (allValidatorList.length > 0) {
@@ -730,14 +731,17 @@ exports.get_validator_events_list = async (req, res) => {
 
 exports.get_event_validator_detail = async (req, res) => {
 
-  const eventValidatorId = req.query.event_validator_id;
+  const eventId = req.query.event_id;
+  const validatorId = req.query.validator_id;
 
-  if (!eventValidatorId) {
-    res.status(400).send({ status: false, message: "event validator id missing", data:null });
+
+  if (!eventId && !validatorId) {
+    res.status(400).send({ status: false, message: "event and validator id missing", data:null });
   } else {
     try {
 
-      const eventValidatorData = await EventValidator.findById(eventValidatorId);   
+      const eventValidatorData = await EventValidator.findOne({'event_id' : eventId,'validator_id' : validatorId});   
+
       if (eventValidatorData) {
 
         var validatorData = await Validator.findOne({'user_id' : eventValidatorData.validator_id});
@@ -776,13 +780,19 @@ exports.get_event_validator_detail = async (req, res) => {
 exports.update_event_validator= async (req, res, next) => {
   try {
 
-    var eventValidatorId = req.query.event_validator_id;
+   
+
     var validatorId = req.query.validator_id;
     var eventId = req.query.event_id;
     var role = req.query.role;
 
-    if (!eventValidatorId) {
-      return res.status(400).send({ status: false, message: "Event validator id missing", data:null });
+    const eventValidatorData = await EventValidator.findOne({'event_id' : eventId,'validator_id' : validatorId});  
+    var eventValidatorId = eventValidatorData._id;
+   
+
+
+    if (!eventId && !validatorId) {
+      res.status(400).send({ status: false, message: "event and validator id missing", data:null });
     }
 
     // Check if a validator already exists in the same event
@@ -793,7 +803,6 @@ exports.update_event_validator= async (req, res, next) => {
       });
 
     if (existingRoleInEventValidator) {
-      // Category with the same name already exists
       return res.status(409).send({
         status: false,
         message: "Validator is already added to event",
@@ -801,11 +810,11 @@ exports.update_event_validator= async (req, res, next) => {
       });
     }
 
-    var eventValidatorData = {'role' : role, 'validator_id' : validatorId};
+    var eventValidatorUpdateData = {'role' : role, 'validator_id' : validatorId};
 
     const result = await EventValidator.findByIdAndUpdate(
       { _id: eventValidatorId },
-      eventValidatorData,
+      eventValidatorUpdateData,
       { new: true }
     );
      if (result) {
@@ -830,11 +839,18 @@ exports.update_event_validator= async (req, res, next) => {
 
 
 exports.delete_event_validator = async (req, res) => {
-  const eventValidatorId = req.query.event_validator_id;
 
-  if (!eventValidatorId) {
-    return res.status(400).send({ status: false, message: "Event validator id missing", data:null });
+  var validatorId = req.query.validator_id;
+  var eventId = req.query.event_id;
+
+
+  if (!eventId && !validatorId) {
+    res.status(400).send({ status: false, message: "event and validator id missing", data:null });
   }
+
+  const eventValidatorData = await EventValidator.findOne({'event_id' : eventId,'validator_id' : validatorId});  
+  var eventValidatorId = eventValidatorData._id;
+
 
   try {
     const eventValidatorData = await EventValidator.findById(eventValidatorId);   

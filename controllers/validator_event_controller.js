@@ -313,11 +313,10 @@ exports.add_event_validator = async(req, res, next) => {
   } else {
     try {
 
-     // Check if a validator with the same role already exists in same event
+     // Check if a validator already exists in same event
      const existingRoleInEventValidator = await EventValidator.findOne({validator_id: req.body.validator_id , event_id: req.body.event_id });
 
      if (existingRoleInEventValidator) {
-       // Category with the same name already exists
        return res.status(409).send({
          status: false,
          message: "Validator is already added to event",
@@ -724,6 +723,138 @@ exports.get_validator_events_list = async (req, res) => {
       status: false,
       message: error.toString() || "Internal Server Error",
       data: null,
+    });
+  }
+};
+
+
+exports.get_event_validator_detail = async (req, res) => {
+
+  const eventValidatorId = req.query.event_validator_id;
+
+  if (!eventValidatorId) {
+    res.status(400).send({ status: false, message: "event validator id missing", data:null });
+  } else {
+    try {
+
+      const eventValidatorData = await EventValidator.findById(eventValidatorId);   
+      if (eventValidatorData) {
+
+        var validatorData = await Validator.findOne({'user_id' : eventValidatorData.validator_id});
+        var validatorName = validatorData.full_name;
+
+        const data = {
+          _id: eventValidatorData._id,
+          validator_id: eventValidatorData.validator_id,
+          seller_id: eventValidatorData.seller_id,
+          event_id: eventValidatorData.event_id,
+          role: eventValidatorData.role,
+          createdAt: eventValidatorData.createdAt,
+          updatedAt: eventValidatorData.updatedAt,
+          __v: eventValidatorData.__v,
+          validator_name:validatorName
+        };
+        res.status(200).send({
+          status: true,
+          message: "Data found",
+          data: data,
+        });
+      } else {
+        res.status(200).send({ status: false, message: "Event validator not found", data:null });
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      res.status(500).send({
+        status: false,
+        message: error.toString() || "Internal Server Error",
+        data:null
+      });
+    }
+  }
+};
+
+exports.update_event_validator= async (req, res, next) => {
+  try {
+
+    var eventValidatorId = req.query.event_validator_id;
+    var validatorId = req.query.validator_id;
+    var eventId = req.query.event_id;
+    var role = req.query.role;
+
+    if (!eventValidatorId) {
+      return res.status(400).send({ status: false, message: "Event validator id missing", data:null });
+    }
+
+    // Check if a validator already exists in the same event
+      const existingRoleInEventValidator = await EventValidator.findOne({
+        validator_id: validatorId,
+        event_id: eventId,
+        _id: { $ne: eventValidatorId } // Exclude the current eventValidatorId
+      });
+
+    if (existingRoleInEventValidator) {
+      // Category with the same name already exists
+      return res.status(409).send({
+        status: false,
+        message: "Validator is already added to event",
+        data:null
+      });
+    }
+
+    var eventValidatorData = {'role' : role, 'validator_id' : validatorId};
+
+    const result = await EventValidator.findByIdAndUpdate(
+      { _id: eventValidatorId },
+      eventValidatorData,
+      { new: true }
+    );
+     if (result) {
+        res.status(200).send({
+          status: true,
+          message: 'Event validator updated successfully',
+          data: result,
+        });
+    } else {
+      res.status(500).send({ status: false, message: "Failed ! Please try again", data:null });
+    }
+
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).send({
+      status: false,
+      message: 'Failure',
+      error: error ?? 'Internal Server Error',
+    });
+  }
+};
+
+
+exports.delete_event_validator = async (req, res) => {
+  const eventValidatorId = req.query.event_validator_id;
+
+  if (!eventValidatorId) {
+    return res.status(400).send({ status: false, message: "Event validator id missing", data:null });
+  }
+
+  try {
+    const eventValidatorData = await EventValidator.findById(eventValidatorId);   
+
+    if (!eventValidatorData) {
+      return res.status(200).send({ status: false, message: "Event validator not found", data: null });
+    }
+
+    const result = await EventValidator.findByIdAndDelete(eventValidatorId);
+
+    if (result) {
+      return res.status(200).send({ status: true, message: "Event validator deleted", data: null });
+    } else {
+      return res.status(500).send({ status: false, message: "Failed ! please try again", data: null });
+    }
+  } catch (error) {
+    return res.status(500).send({
+      status: false,
+      message: error.toString() || "Internal Server Error",
+      data: null
     });
   }
 };

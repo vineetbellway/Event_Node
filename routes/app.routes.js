@@ -306,6 +306,17 @@ router.get("/repated-guests-for-seller",auth,reportController.get_repeated_guest
 // get the number of guests attending events by a specific seller
 router.get("/number-guests-for-seller",auth,reportController.get_number_of_guests_for_seller);
 
+
+// get event validator detail API
+router.get("/get-event-validator-detail",validatorEventController.get_event_validator_detail);
+
+// update event validator API
+router.put("/update-event-validator",validatorEventController.update_event_validator);
+
+
+// delete event validator API
+router.delete("/delete-event-validator",validatorEventController.delete_event_validator);
+
 cron.schedule("* * * * *", function () {
   //  console.log("Cron job is running");
     // bookingController.disableSellerServices();

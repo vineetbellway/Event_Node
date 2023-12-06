@@ -96,7 +96,7 @@ router.get("/search_event/:keyword",auth, eventController.search_events);
 router.get("/event_by_seller_id/:id", eventController.event_by_seller_id);
 router.get("/event/:id",auth, eventController.get_event);
 router.delete("/event/:id", auth, eventController.delete_event);
-router.delete("/event", auth, eventController.delete_events);http://62.72.57.179:3000
+router.delete("/event", auth, eventController.delete_events);
 
 router.post("/menu", auth, menuController.create_menu);
 router.put("/menu/:id", auth, menuController.update_menu);

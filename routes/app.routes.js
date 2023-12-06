@@ -308,14 +308,14 @@ router.get("/number-guests-for-seller",auth,reportController.get_number_of_guest
 
 
 // get event validator detail API
-router.get("/get-event-validator-detail",validatorEventController.get_event_validator_detail);
+router.get("/get-event-validator-detail",auth,validatorEventController.get_event_validator_detail);
 
 // update event validator API
-router.put("/update-event-validator",validatorEventController.update_event_validator);
+router.put("/update-event-validator",auth,validatorEventController.update_event_validator);
 
 
 // delete event validator API
-router.delete("/delete-event-validator",validatorEventController.delete_event_validator);
+router.delete("/delete-event-validator",auth,validatorEventController.delete_event_validator);
 
 cron.schedule("* * * * *", function () {
   //  console.log("Cron job is running");

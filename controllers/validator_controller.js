@@ -292,7 +292,7 @@ exports.update_validator = (req, res, next) => {
 
 exports.get_seller_validator_list = async (req, res) => {
   const seller_id = req.query.seller_id;
-
+  const search_key = req.query.search_key;
   try {
     const seller = await SellerModel.findOne({ user_id: seller_id });
     if (!seller) {
@@ -304,6 +304,9 @@ exports.get_seller_validator_list = async (req, res) => {
     }
 
     const sellerCity = seller.district;
+
+    // Define the regex pattern for the search_key
+    const regexPattern = new RegExp(search_key, 'i');
 
     const validators = await Validator.aggregate([
       {
@@ -317,16 +320,28 @@ exports.get_seller_validator_list = async (req, res) => {
           as: "validator_event_data",
         },
       },
+      {
+        $match: {
+          $or: [
+            { full_name: { $regex: regexPattern } },
+            { contact_number: { $regex: regexPattern } },
+          ],
+        },
+      },
     ]);
 
     if (validators && validators.length > 0) {
+      console.log("validators",validators)
       const validator_data = validators
         .filter((validator) => validator.district === sellerCity)
         .map((validator) => ({
+
+         
           _id: validator._id,
           user_id: validator.user_id,
-          full_name: validator.full_name,
+          full_name: (validator.full_name) ?? '',
           district: validator.district,
+          contact_number: (validator.contact_number) ?? '',
           state: validator.state,
           country: validator.country,
           status: validator.status,
@@ -365,6 +380,7 @@ exports.get_seller_validator_list = async (req, res) => {
     });
   }
 };
+
 
 
 

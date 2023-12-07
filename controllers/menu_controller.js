@@ -125,7 +125,8 @@ exports.get_menus = async (req, res) => {
           uom_id:1,
           category_id:1,
           total_stock:1,
-          stock_left:1,
+          cost_price:1,
+          selling_price:1,
           uom: "$uom_data.name",
           category: "$category_data.name",
           status:1,
@@ -213,7 +214,8 @@ exports.get_menu = async (req, res) => {
             uom_id:1,
             category_id:1,
             total_stock:1,
-            stock_left:1,
+            cost_price:1,
+            selling_price:1,
             uom: "$uom_data.name",
             category: "$category_data.name",
             status:1,
@@ -296,7 +298,8 @@ exports.get_menu_by_event_id = async (req, res) => {
           uom_id:1,
           category_id:1,
           total_stock:1,
-          stock_left:1,
+          cost_price:1,
+          selling_price:1,
           uom: "$uom_data.name",
           category: "$category_data.name",
           status:1,
@@ -327,12 +330,14 @@ exports.get_menu_by_event_id = async (req, res) => {
         res.status(500).send({
           status: false,
           message: error.toString() ?? "Error",
+          data:null
         });
       });
   } catch (error) {
     res.status(500).send({
       status: false,
       message: error.toString() ?? "Internal Server Error",
+      data:null
     });
   }
 };
@@ -441,13 +446,14 @@ exports.update_menu = async (req, res, next) => {
               data: result,
             });
           } else {
-            res.status(404).send({ status: false, message: "Not updated" });
+            res.status(500).send({ status: false, message: "Not updated",data:null });
           }
         })
         .catch((error) => {
           res.send({
             status: false,
             message: error.toString() ?? "Error",
+            data:null
           });
         });
     } catch (error) {
@@ -455,6 +461,7 @@ exports.update_menu = async (req, res, next) => {
         status: false,
         message: "failure",
         error: error ?? "Internal Server Error",
+        data:null
       });
     }
   }

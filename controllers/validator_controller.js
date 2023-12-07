@@ -332,7 +332,7 @@ exports.get_seller_validator_list = async (req, res) => {
         $match: {
           $or: [
             { full_name: { $regex: regexPattern } },
-            { "user_data.phone": { $regex: regexPattern } }
+            { "user_data.code_phone": { $regex: regexPattern } }
           ],
         },
       },

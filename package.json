@@ -14,7 +14,8 @@
     "node-cron": "^3.0.3",
     "nodemailer": "^6.9.7",
     "nodemon": "^3.0.1",
-    "pdfkit-table": "^0.1.99"
+    "pdfkit-table": "^0.1.99",
+    "pm2": "^5.3.0"
   },
   "devDependencies": {
     "@types/express-handlebars": "^6.0.0",

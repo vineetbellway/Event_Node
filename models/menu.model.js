@@ -27,7 +27,10 @@ const schema = new mongoose.Schema(
     total_stock: {
       type: Number,
     },
-    stock_left: {
+    cost_price: {
+      type: Number,
+    },
+    selling_price: {
       type: Number,
     },
     is_limited: {

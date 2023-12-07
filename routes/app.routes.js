@@ -98,11 +98,11 @@ router.get("/event/:id",auth, eventController.get_event);
 router.delete("/event/:id", auth, eventController.delete_event);
 router.delete("/event", auth, eventController.delete_events);
 
-router.post("/menu", auth, menuController.create_menu);
+router.post("/menu", auth,menuController.create_menu);
 router.put("/menu/:id", auth, menuController.update_menu);
-router.get("/menu", auth, menuController.get_menus);
-router.get("/menu_by_event_id/:id", auth, menuController.get_menu_by_event_id);
-router.get("/menu/:id", auth, menuController.get_menu);
+router.get("/menu", auth,menuController.get_menus);
+router.get("/menu_by_event_id/:id", auth,menuController.get_menu_by_event_id);
+router.get("/menu/:id", auth,menuController.get_menu);
 router.delete("/menu/:id", auth, menuController.delete_menu);
 router.delete("/menu", auth, menuController.delete_menus);
 
@@ -304,7 +304,7 @@ router.get("/number-of-guests-for-event", auth, reportController.get_number_of_g
 router.get("/repated-guests-for-seller",auth,reportController.get_repeated_guests_for_seller_attending_events);
 
 // get the number of guests attending events by a specific seller
-router.get("/number-guests-for-seller",auth,reportController.get_number_of_guests_for_seller);
+router.get("/number-guests-for-seller",reportController.get_number_of_guests_for_seller);
 
 
 // get event validator detail API

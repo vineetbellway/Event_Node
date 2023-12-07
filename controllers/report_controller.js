@@ -171,21 +171,24 @@ exports.get_number_of_guests_for_seller = async (req, res) => {
         const sellerId = req.query.seller_id;
     
         // Find the seller by sellerId
-        const seller = await Seller.findById({ user_id: sellerId });
+        const seller = await Seller.findOne({ user_id: sellerId });
     
         if (!seller) {
           return res.status(200).json({ success: false, message: 'Seller not found',data: null });
         }
-    
+        
         // Find all events created by the seller
         const sellerEvents = await EventModel.find({ seller_id: sellerId });
+      
     
-        if (sellerEvents.length === 0) {
+        if (sellerEvents.length == 0) {
           return res.json({ success: true,message: 'Seller events not found', data :[{seller: seller.company_name, numberOfGuests: 0}] });
         }
     
         // Get event IDs associated with the seller's events
         const eventIds = sellerEvents.map(event => event._id);
+
+        console.log("eventIds",eventIds)
     
         // Calculate the number of guests attending all events by the seller
         const numberOfGuests = await OrderItem.aggregate([

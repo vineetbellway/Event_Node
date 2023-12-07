@@ -309,6 +309,7 @@ exports.add_event_validator = async(req, res, next) => {
     res.status(400).send({
       status: false,
       message: "body missing",
+      data:null
     });
   } else {
     try {
@@ -333,7 +334,7 @@ exports.add_event_validator = async(req, res, next) => {
               .status(201)
               .send({ status: true, message: "Validator is succesfully added to event", data: result });
           } else {
-            res.status(404).send({ status: false, message: "Not created",data:null });
+            res.status(500).send({ status: false, message: "Not created",data:null });
           }
         })
         .catch((error) => {

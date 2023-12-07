@@ -13,11 +13,13 @@ const schema = new mongoose.Schema(
     name: {
       type: String,
     },
-    uom: {
-      type: String, // ml, litre, piece, full, half, quarter
+    uom_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "UOM",
     },
-    category: {
-      type: String, // food, liquor, beverage
+    category_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
     },
     amount: {
       type: Number,
@@ -26,6 +28,14 @@ const schema = new mongoose.Schema(
       type: Number,
     },
     stock_left: {
+      type: Number,
+    },
+    is_limited: {
+      type: String,
+      enum: ['yes','no'],
+      required : true
+    },
+    limited_count:{
       type: Number,
     },
     status: {

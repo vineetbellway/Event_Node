@@ -303,10 +303,22 @@ exports.get_seller_validator_list = async (req, res) => {
       });
     }
 
-    const sellerCity = seller.district;
+   
 
     // Define the regex pattern for the search_key
-    const regexPattern = new RegExp(search_key, 'i');
+    const sanitizedSearchKey = search_key.trim(); 
+
+    const filter = {
+      $or: [
+        { full_name: { $regex: new RegExp(sanitizedSearchKey, 'i') } },
+        { "user_data.code_phone": { $regex: new RegExp(sanitizedSearchKey, 'i') } },
+        {
+          "user_data.code_phone": {
+            $regex: new RegExp(`^(\\+${sanitizedSearchKey}|0?${sanitizedSearchKey})$`, 'i')
+          }
+        },
+      ],
+    };
 
     const validators = await Validator.aggregate([
       {
@@ -329,18 +341,13 @@ exports.get_seller_validator_list = async (req, res) => {
         },
       },
       {
-        $match: {
-          $or: [
-            { full_name: { $regex: regexPattern } },
-            { "user_data.code_phone": { $regex: regexPattern } }
-          ],
-        },
+        $match: filter,
       },
     ]);
 
     if (validators && validators.length > 0) {
+      console.log("validators",validators[0].user_data[0])
       const validator_data = validators
-        .filter((validator) => validator.district === sellerCity)
         .map((validator) => ({
 
          

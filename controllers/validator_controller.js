@@ -321,17 +321,24 @@ exports.get_seller_validator_list = async (req, res) => {
         },
       },
       {
+        $lookup: {
+          from: "users",
+          localField: "user_id", // Assuming this is the field in Validator that corresponds to the _id in Users
+          foreignField: "_id", // Assuming this is the field in Users that corresponds to the _id in Validator
+          as: "user_data",
+        },
+      },
+      {
         $match: {
           $or: [
             { full_name: { $regex: regexPattern } },
-            { contact_number: { $regex: regexPattern } },
+            { "user_data.phone": { $regex: regexPattern } }
           ],
         },
       },
     ]);
 
     if (validators && validators.length > 0) {
-      console.log("validators",validators)
       const validator_data = validators
         .filter((validator) => validator.district === sellerCity)
         .map((validator) => ({
@@ -341,7 +348,7 @@ exports.get_seller_validator_list = async (req, res) => {
           user_id: validator.user_id,
           full_name: (validator.full_name) ?? '',
           district: validator.district,
-          contact_number: (validator.contact_number) ?? '',
+          phone: (validators[0].user_data[0].code_phone) ?? '',
           state: validator.state,
           country: validator.country,
           status: validator.status,

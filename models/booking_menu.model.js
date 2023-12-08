@@ -5,31 +5,19 @@ const { baseStatus } = require("../utils/enumerator");
 
 const schema = new mongoose.Schema(
   {
-    event_id: {
+    booking_id: {
       type: mongoose.Schema.Types.ObjectID,
-      ref: "EventModel",
+      ref: "Booking",
       required: true,
     },
-    guest_id: {
-      type: mongoose.Schema.Types.ObjectID,
-      ref: "Guest",
+    menu_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Menu",
       required: true,
     },
-    managed_by: {
-      type: mongoose.Schema.Types.ObjectID,
-      ref: "Validator",
+    quantity: {
+      type: Number,
     },
-    payment_mode: {
-      type: String,
-      required: true,
-    },
-    status: {
-      type: String,
-      default: baseStatus.pending,
-    },
-    transaction_id:{
-        type: String,
-    }
   },
   {
     timestamps: true,
@@ -39,4 +27,4 @@ const schema = new mongoose.Schema(
 schema.plugin(mongoosePaginate);
 schema.plugin(aggregatePaginate);
 
-module.exports = mongoose.model("Booking", schema);
+module.exports = mongoose.model("BookingMenu", schema);

@@ -1,4 +1,5 @@
 const Booking = require("../models/booking.model");
+const BookingMenu = require("../models/booking_menu.model");
 const User = require("../models/user.model");
 const mongoose = require("mongoose");
 const moment = require("moment");
@@ -9,7 +10,7 @@ const EventModel = require("../models/event.model");
 
 // It will book event by guest
 
-const book = (req, res, next) => {
+const book = async (req, res, next) => {
   if (!req.body) {
     res.status(400).send({
       status: false,
@@ -17,54 +18,79 @@ const book = (req, res, next) => {
     });
   } else {
     try {
-        Booking(req.body)
-              .save()
-              .then((result) => {
-                if (result) {  
-                  
-                  const fcm_token = req.body.fcm_token;
-                  const notification = {
-                    title: 'Event booked',
-                    body: 'New event is booked!',
-                  };
-                  const data = {
-                    // Additional data to send with the notification, if needed.
-                  };
+      const guest_id = req.body.guest_id;
+      const payment_mode = req.body.payment_mode;
+      const transaction_id = req.body.transaction_id;
+      const fcm_token = req.body.fcm_token;
+      const event_id = req.body.event_id;
 
-                  var message = 'New event is booked!';
-                  var type = 'push';
-  
-                  addNotification(req.body.guest_id,req.body.guest_id,'Event booked',message,type);
-                  
-                  sendPushNotification(fcm_token, notification, data)
-                    .then(() => {
-                      console.log('Push notification sent successfully.');
-                    })
-                    .catch((error) => {
-                      console.error('Error sending push notification:', error);
-                    });                  
-                    res.status(201).send({ status: true, message: "success", data: result });
-                } else {
-                    res.status(404).send({ status: false, message: "Not created" });
-                }
-                })
-                
-                .catch((error) => {
-                console.log("error",error)
-                res.send({
-                    status: false,
-                    message: error.toString() ?? "Error",
-                });
-                });
+      var bookingData = {
+        'event_id': event_id,
+        'guest_id': guest_id,
+        'payment_mode': payment_mode,
+        'transaction_id': transaction_id,
+        'fcm_token': fcm_token
+      };
+
+      const result = await Booking(bookingData).save();
+
+      if (result) {
+        
+        var bookingMenu = req.body.menu_list;
+
+        // Save booking menu data
+        for (const item of bookingMenu) {
+          var bookingMenuData = {
+            "booking_id": result._id,
+            "menu_id": item.menu_id,
+            "quantity": item.quantity,
+          };
+          console.log("bookingMenuData",bookingMenuData);
+       
+      
+
+          await BookingMenu(bookingMenuData).save();
+        }
+
+        const notification = {
+          title: 'Event booked',
+          body: 'New event is booked!',
+        };
+        const data = {
+          // Additional data to send with the notification, if needed.
+        };
+
+        var message = 'New event is booked!';
+        var type = 'push';
+
+        addNotification(req.body.guest_id, req.body.guest_id, 'Event booked', message, type);
+
+        sendPushNotification(fcm_token, notification, data)
+          .then(() => {
+            console.log('Push notification sent successfully.');
+          })
+          .catch((error) => {
+            console.error('Error sending push notification:', error);
+          });
+
+        res.status(201).send({ status: true, message: "success", data: result });
+      } else {
+        res.status(404).send({ status: false, message: "Not created" });
+      }
     } catch (error) {
+      console.log("error", error);
       res.status(500).send({
         status: false,
         message: "failure",
-        error: error ?? "Internal Server Error",
+        error: error.toString() ?? "Internal Server Error",
       });
     }
   }
 };
+
+
+
+
 
 
 const get_bookings = async (req, res) => {

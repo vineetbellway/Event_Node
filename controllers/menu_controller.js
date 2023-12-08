@@ -474,15 +474,19 @@ exports.manage_menu_item = async (req, res, next) => {
     res.status(400).send({ status: false, message: "Invalid request body", data: null });
   } else {
     try {
+
+      var menuRecord = await Menu.findById(req.body.menu_id);
+      var event_id = menuRecord.event_id;
+
+
       const { menu_id, guest_id, quantity } = req.body;
-      console.log("quantity",quantity)
       if(quantity < 1){
         res.status(200).send({ status: false, message: "Quantity should be greter than 1", data: null });
       }
 
       // Assuming MenuItem is a mongoose model
       const menuItem = await MenuItem.findOneAndUpdate(
-        { menu_id, guest_id },
+        { menu_id, guest_id  , event_id },
         { quantity:  quantity  }, // Increment quantity by the specified value
         { new: true, upsert: true } // This option returns the updated document and creates a new one if not found
       );

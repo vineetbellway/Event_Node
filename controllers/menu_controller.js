@@ -1,4 +1,5 @@
 const Menu = require("../models/menu.model");
+const MenuItem = require("../models/menu_item.model");
 const mongoose = require("mongoose");
 const { baseStatus, userStatus } = require("../utils/enumerator");
 
@@ -66,6 +67,7 @@ exports.create_menu = async (req, res, next) => {
     }
   }
 };
+
 
 exports.get_menus = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
@@ -467,3 +469,73 @@ exports.update_menu = async (req, res, next) => {
   }
 };
 
+exports.manage_menu_item = async (req, res, next) => {
+  if (!req.body || !req.body.menu_id || !req.body.guest_id || req.body.quantity === undefined) {
+    res.status(400).send({ status: false, message: "Invalid request body", data: null });
+  } else {
+    try {
+      const { menu_id, guest_id, quantity } = req.body;
+
+      // Assuming MenuItem is a mongoose model
+      const menuItem = await MenuItem.findOneAndUpdate(
+        { menu_id, guest_id },
+        {  quantity: quantity  },
+        { new: true } // This option returns the updated document
+      );
+
+      if (!menuItem) {
+        res.status(404).send({ status: false, message: "Menu item not found", data: null });
+        return;
+      }
+
+      res.status(200).send({ status: true, message: "Quantity updated successfully", data: menuItem });
+    } catch (error) {
+      res.status(500).send({ status: false, message: error.toString() ?? "Internal Server Error", data: null });
+    }
+  }
+};
+
+
+
+
+
+exports.get_menu_items = async (req, res) => {
+  try {
+    var guest_id = req.query.guest_id;
+    await MenuItem.aggregate([
+      {
+        $match: {
+          guest_id: new mongoose.Types.ObjectId(guest_id),
+        },
+      },
+    ])
+      .then((result) => {
+        if (result.length > 0) {
+          res.status(200).send({
+            status: true,
+            message: "Data found",
+            data: result,
+          });
+        } else {
+          res.status(200).send({
+            status: true,
+            message: "No data found",
+            data: [],
+          });
+        }
+      })
+      .catch((error) => {
+        res.status(500).send({
+          status: false,
+          message: error.toString() ?? "Error",
+          data:null
+        });
+      });
+  } catch (error) {
+    res.status(500).send({
+      status: false,
+      message: error.toString() ?? "Internal Server Error",
+      data:null
+    });
+  }
+};

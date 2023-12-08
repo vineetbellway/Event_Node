@@ -16,10 +16,12 @@ const schema = new mongoose.Schema(
     uom_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "UOM",
+      required: true,
     },
     category_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
+      required: true,
     },
     amount: {
       type: Number,

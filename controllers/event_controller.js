@@ -558,3 +558,48 @@ exports.update_event = async (req, res, next) => {
     }
   }
 };
+
+exports.close_event_counter = async (req, res, next) => {
+  const event_id = req.query.event_id;
+
+  if (!event_id) {
+    return res.status(400).json({
+      status: false,
+      message: "Event ID missing",
+      data: null
+    });
+  }
+
+  try {
+    const data = {
+      is_closed: "yes",
+    };
+
+    const updatedEvent = await EventModel.findByIdAndUpdate(
+      event_id,
+      data,
+      { new: true }
+    );
+
+    if (updatedEvent) {
+      return res.status(200).json({
+        status: true,
+        message: 'Event closed successfully',
+        data: updatedEvent,
+      });
+    } else {
+      return res.status(500).json({
+        status: false,
+        message: "Failed! Please try again",
+        data: null
+      });
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Internal Server Error",
+      data: null
+    });
+  }
+};

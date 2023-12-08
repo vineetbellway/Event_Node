@@ -325,6 +325,13 @@ router.put("/close-event-counter",auth,eventController.close_event_counter);
 // add guest consumptions of menu item API
 router.post("/add-guest-menu-item-consumptions",auth,menuConsumptionController.add_guest_consumption_of_menu_item);
 
+
+// manage menu item API
+router.post("/manage-menu-item",auth,menuController.manage_menu_item);
+
+// get menu item API
+router.get("/get-menu-items",auth,menuController.get_menu_items);
+
 cron.schedule("* * * * *", function () {
   //  console.log("Cron job is running");
     // bookingController.disableSellerServices();

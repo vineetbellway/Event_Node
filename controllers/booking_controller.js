@@ -117,6 +117,14 @@ const get_bookings = async (req, res) => {
           },
         },
         {
+          $lookup: {
+            from: 'bookingmenus',
+            localField: '_id',
+            foreignField: 'booking_id',
+            as: 'booked_menu_data',
+          },
+        },
+        {
           $sort: { createdAt: -1 }, // Sort by createdAt in descending order
         },
       ])
@@ -140,6 +148,7 @@ const get_bookings = async (req, res) => {
                 // Constructing image URL
                 image: constructImageUrl(req, booking.event_data[0].image),
               } : null,
+              booked_menu_data:booking.booked_menu_data
             };
             booking_data.push(response);
           }

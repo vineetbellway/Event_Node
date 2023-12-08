@@ -332,6 +332,9 @@ router.post("/manage-menu-item",auth,menuController.manage_menu_item);
 // get menu item API
 router.get("/get-menu-items",auth,menuController.get_menu_items);
 
+// get guest coupon API
+router.get("/get-guest-coupon-balance",bookingController.get_guest_coupon_balance);
+
 cron.schedule("* * * * *", function () {
   //  console.log("Cron job is running");
     // bookingController.disableSellerServices();

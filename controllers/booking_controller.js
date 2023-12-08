@@ -671,7 +671,83 @@ const get_booked_guest_list = async (req, res) => {
   }
 };
 
+const get_guest_coupon_balance = async (req, res) => {
+  var guest_id = req.query.guest_id;
 
+
+  if (!guest_id) {
+    res.status(400).json({ status: false, message: "Guest ID are required in the request body" });
+  } else {
+    try {
+      Booking.aggregate([
+        {
+          $match: {
+            guest_id: new mongoose.Types.ObjectId(guest_id),
+          },
+        },
+        {
+          $lookup: {
+            from: 'bookingmenus',
+            localField: 'booking_id',
+            foreignField: '_id',
+            as: 'booked_menu_data',
+          },
+        },
+        {
+          $sort: { createdAt: -1 }, // Sort by createdAt in descending order
+        },
+      ])
+      .then((result) => {
+        if (result && result.length > 0) {
+          var booking_data = [];
+       
+
+          for(const booking of result){
+              const response = {
+                _id: booking._id,
+                event_id: booking.event_id,
+                guest_id: booking.guest_id,
+                payment_mode: booking.payment_mode,
+                status: booking.status,
+                transaction_id: booking.transaction_id,
+               // booking_date: booking.booking_date,
+                createdAt: booking.createdAt,
+                updatedAt: booking.updatedAt,
+                event_data: booking.event_data && booking.event_data.length > 0 ? {
+                  ...booking.event_data[0],
+                  // Constructing image URL
+                  image: constructImageUrl(req, booking.event_data[0].image),
+                } : null,
+
+              };
+              booking_data.push(response)
+
+          }
+          res.status(200).json({
+            status: true,
+            message: "Data found",
+            data: booking_data,
+          });
+        } else {
+          res.status(404).json({ status: false, message: "No bookings found" });
+        }
+      })
+      .catch((error) => {
+        console.log("error", error);
+        res.status(500).json({
+          status: false,
+          message: error.toString() || "Internal Server Error",
+        });
+      });
+    } catch (error) {
+      console.log("error", error);
+      res.status(500).json({
+        status: false,
+        message: error.toString() || "Internal Server Error",
+      });
+    }
+  }
+};
 
 
 
@@ -683,6 +759,7 @@ module.exports = {
   book,
   get_bookings_by_payment_mode,
   get_booking_detail,
-  get_booked_guest_list
+  get_booked_guest_list,
+  get_guest_coupon_balance
 
 }; 

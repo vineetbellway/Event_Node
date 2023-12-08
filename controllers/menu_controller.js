@@ -502,10 +502,12 @@ exports.manage_menu_item = async (req, res, next) => {
 exports.get_menu_items = async (req, res) => {
   try {
     var guest_id = req.query.guest_id;
+    var event_id = req.query.event_id;
     await MenuItem.aggregate([
       {
         $match: {
           guest_id: new mongoose.Types.ObjectId(guest_id),
+          event_id: new mongoose.Types.ObjectId(event_id),
         },
       },
     ])

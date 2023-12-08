@@ -80,6 +80,10 @@ const schema = new mongoose.Schema(
       type: String,
       default: baseStatus.pending,
     },
+    is_closed: {
+      type: String,
+      default: "no",
+    },
   },
   {
     timestamps: true,

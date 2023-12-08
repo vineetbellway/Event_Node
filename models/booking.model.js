@@ -29,10 +29,15 @@ const schema = new mongoose.Schema(
     },
     transaction_id:{
         type: String,
-    }
-    /*booking_date: {
-        type: String,
-    },*/
+    },
+    menu_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Menu",
+      required: true,
+    },
+    quantity: {
+      type: Number,
+  },
   },
   {
     timestamps: true,

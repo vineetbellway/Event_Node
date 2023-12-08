@@ -54,6 +54,7 @@ const categoryController = require("../controllers/category_controller");
 const uomController = require("../controllers/uom_controller");
 const bannerController = require("../controllers/banner_controller");
 const reportController = require("../controllers/report_controller");
+const menuConsumptionController = require("../controllers/menu_consumption_controller");
 
 
 
@@ -183,7 +184,7 @@ router.post("/book",auth, bookingController.book);
 
 // get bookings by payment mode
 
-router.get("/get-bookings-by-payment-mode",bookingController.get_bookings_by_payment_mode);
+router.get("/get-bookings-by-payment-mode",,auth, bookingController.get_bookings_by_payment_mode);
 
 // get bookings
 router.get("/get-bookings",auth,  bookingController.get_bookings);
@@ -316,6 +317,13 @@ router.put("/update-event-validator",auth,validatorEventController.update_event_
 
 // delete event validator API
 router.delete("/delete-event-validator",auth,validatorEventController.delete_event_validator);
+
+// close event counter API
+router.put("/close-event-counter",auth,eventController.close_event_counter);
+
+
+// add guest consumptions of menu item API
+router.post("/add-guest-menu-item-consumptions",auth,menuConsumptionController.add_guest_consumption_of_menu_item);
 
 cron.schedule("* * * * *", function () {
   //  console.log("Cron job is running");

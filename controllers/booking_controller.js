@@ -674,9 +674,8 @@ const get_booked_guest_list = async (req, res) => {
 const get_guest_coupon_balance = async (req, res) => {
   var guest_id = req.query.guest_id;
 
-
   if (!guest_id) {
-    res.status(400).json({ status: false, message: "Guest ID are required in the request body" });
+    res.status(400).json({ status: false, message: "Guest ID is required in the request body" });
   } else {
     try {
       Booking.aggregate([
@@ -696,37 +695,40 @@ const get_guest_coupon_balance = async (req, res) => {
         {
           $sort: { createdAt: -1 }, // Sort by createdAt in descending order
         },
+        {
+          $group: {
+            _id: "$guest_id",
+            total_coupon_balance: { $sum: "$booked_menu_data.coupon_balance" },
+            bookings: { $push: "$$ROOT" }, // Save the original booking documents for reference
+          },
+        },
       ])
       .then((result) => {
         if (result && result.length > 0) {
-          var booking_data = [];
-       
-
-          for(const booking of result){
-              const response = {
-                _id: booking._id,
-                event_id: booking.event_id,
-                guest_id: booking.guest_id,
-                payment_mode: booking.payment_mode,
-                status: booking.status,
-                transaction_id: booking.transaction_id,
-               // booking_date: booking.booking_date,
-                createdAt: booking.createdAt,
-                updatedAt: booking.updatedAt,
-                event_data: booking.event_data && booking.event_data.length > 0 ? {
-                  ...booking.event_data[0],
-                  // Constructing image URL
-                  image: constructImageUrl(req, booking.event_data[0].image),
-                } : null,
-
-              };
-              booking_data.push(response)
-
-          }
+          const guest_data = result[0];
           res.status(200).json({
             status: true,
             message: "Data found",
-            data: booking_data,
+            data: {
+              total_coupon_balance: guest_data.total_coupon_balance,
+              bookings: guest_data.bookings.map(booking => {
+                // Transform the booking data as needed
+                return {
+                  _id: booking._id,
+                  event_id: booking.event_id,
+                  guest_id: booking.guest_id,
+                  payment_mode: booking.payment_mode,
+                  status: booking.status,
+                  transaction_id: booking.transaction_id,
+                  createdAt: booking.createdAt,
+                  updatedAt: booking.updatedAt,
+                  event_data: booking.event_data && booking.event_data.length > 0 ? {
+                    ...booking.event_data[0],
+                    image: constructImageUrl(req, booking.event_data[0].image),
+                  } : null,
+                };
+              }),
+            },
           });
         } else {
           res.status(404).json({ status: false, message: "No bookings found" });
@@ -748,6 +750,7 @@ const get_guest_coupon_balance = async (req, res) => {
     }
   }
 };
+
 
 
 

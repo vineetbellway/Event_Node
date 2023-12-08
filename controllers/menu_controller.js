@@ -475,25 +475,26 @@ exports.manage_menu_item = async (req, res, next) => {
   } else {
     try {
       const { menu_id, guest_id, quantity } = req.body;
+      console.log("quantity",quantity)
+      if(quantity < 1){
+        res.status(200).send({ status: false, message: "Quantity should be greter than 1", data: null });
+      }
 
       // Assuming MenuItem is a mongoose model
       const menuItem = await MenuItem.findOneAndUpdate(
         { menu_id, guest_id },
-        {  quantity: quantity  },
-        { new: true } // This option returns the updated document
+        { quantity:  quantity  }, // Increment quantity by the specified value
+        { new: true, upsert: true } // This option returns the updated document and creates a new one if not found
       );
-
-      if (!menuItem) {
-        res.status(404).send({ status: false, message: "Menu item not found", data: null });
-        return;
-      }
 
       res.status(200).send({ status: true, message: "Quantity updated successfully", data: menuItem });
     } catch (error) {
-      res.status(500).send({ status: false, message: error.toString() ?? "Internal Server Error", data: null });
+      console.log("error", error);
+      res.status(500).send({ status: false, message: error.toString() || "Internal Server Error", data: null });
     }
   }
 };
+
 
 
 

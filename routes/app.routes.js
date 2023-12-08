@@ -187,7 +187,7 @@ router.post("/book",auth, bookingController.book);
 router.get("/get-bookings-by-payment-mode",auth, bookingController.get_bookings_by_payment_mode);
 
 // get bookings
-router.get("/get-bookings",auth,  bookingController.get_bookings);
+router.get("/get-bookings",  bookingController.get_bookings);
 
 // get booking detail
 router.get("/get-booking-detail",auth,  bookingController.get_booking_detail);

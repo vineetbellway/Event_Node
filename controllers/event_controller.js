@@ -12,7 +12,7 @@ exports.create_event = (req, res, next) => {
     const primary_number = req.body.primary_number.trim();
     const secondary_number = req.body.secondary_number.trim();
     const type = req.body.type.trim();
-    const image = req.file ? req.file.filename : undefined
+    const image = req.file ? req.file.filename : undefined;
     const name = req.body.name.trim();
     const venue = req.body.venue.trim();
     const country = req.body.country.trim();
@@ -31,6 +31,7 @@ exports.create_event = (req, res, next) => {
     const commision_charge = req.body.commision_charge.trim();
     const others = req.body.others.trim();
     const status = req.body.status.trim();
+    const banner_id = req.body.banner_id.trim();
 
     const eventData = {
       seller_id: new ObjectId(seller_id),
@@ -56,15 +57,27 @@ exports.create_event = (req, res, next) => {
       commision_charge,
       others,
       status,
+      banner_id
     };
 
     EventModel(eventData)
       .save()
       .then((result) => {
         if (result) {
-          res.status(201).send({ status: true, message: 'Success', data: result });
+          // Get the host (domain and port)
+          const protocol = req.protocol;
+          const host = req.get('host');
+
+          // Combine protocol, host, and any other parts of the base URL you need
+          const baseURL = `${protocol}://${host}`;
+          const imageUrl = baseURL + '/uploads/events/' + result.image;
+          console.log("result",result)
+          res.status(201).send({ status: true, message: 'Event created',  data: {
+            ...result.toObject(),
+            image: imageUrl,
+          }, });
         } else {
-          res.status(404).send({ status: false, message: 'Not created' });
+          res.status(500).send({ status: false, message: 'Not created' ,data :null });
         }
       })
       .catch((error) => {
@@ -461,9 +474,8 @@ exports.update_event = async (req, res, next) => {
   } else {
     try {
 
-        console.log("body",req.body)
 
-        // Trim values to remove extra spaces
+    // Trim values to remove extra spaces
     const seller_id = req.body.seller_id !== undefined && req.body.seller_id !== null ? req.body.seller_id.toString().trim() : null;
     const primary_number = req.body.primary_number.trim();
     const secondary_number = req.body.secondary_number.trim();
@@ -487,6 +499,7 @@ exports.update_event = async (req, res, next) => {
     const commision_charge = req.body.commision_charge.trim();
     const others = req.body.others.trim();
     const status = req.body.status.trim();
+    const banner_id = req.body.banner_id.trim();
 
     const eventData = {
       seller_id: new ObjectId(seller_id),
@@ -511,6 +524,7 @@ exports.update_event = async (req, res, next) => {
       commision_charge,
       others,
       status,
+      banner_id
     }; 
 
       // Check if image is not undefined
@@ -543,7 +557,7 @@ exports.update_event = async (req, res, next) => {
           },
         });
     } else {
-      res.status(404).send({ status: false, message: "Banner not found", data:null });
+      res.status(500).send({ status: false, message: "Banner not found", data:null });
     }
       
       
@@ -552,8 +566,7 @@ exports.update_event = async (req, res, next) => {
       console.log("error",error)
       res.status(500).send({
         status: false,
-        message: "failure",
-        error: error ?? "Internal Server Error",
+        message: error ?? "Internal Server Error",
       });
     }
   }

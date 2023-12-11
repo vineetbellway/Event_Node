@@ -84,6 +84,10 @@ const schema = new mongoose.Schema(
       type: String,
       default: "no",
     },
+    banner_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Banner",
+    },
   },
   {
     timestamps: true,

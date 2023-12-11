@@ -314,6 +314,18 @@ exports.add_event_validator = async(req, res, next) => {
   } else {
     try {
 
+      var eventRecord = await EventModel.findById(req.body.event_id);
+      if(eventRecord.is_closed == "yes"){
+         res.status(200).send({
+          status: false,
+          message: "Event is closed",
+          data:null
+        });
+      }
+
+
+   
+
      // Check if a validator already exists in same event
      const existingRoleInEventValidator = await EventValidator.findOne({validator_id: req.body.validator_id , event_id: req.body.event_id });
 

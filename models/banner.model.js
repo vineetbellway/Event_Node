@@ -16,8 +16,19 @@ const schema = new mongoose.Schema(
     },
     banner_type: {
       type: String,
+      enum: ['event','birthday','anniversary'],
       required:true
     },   
+    date: {
+      type: String,
+    },
+    guest_id: {
+      type: String,
+      ref: "User",
+    },
+    description: {
+      type: String,
+    },
   },
   {
     timestamps: true,

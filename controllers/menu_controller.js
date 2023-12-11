@@ -508,41 +508,50 @@ exports.get_menu_items = async (req, res) => {
   try {
     var guest_id = req.query.guest_id;
     var event_id = req.query.event_id;
-    await MenuItem.aggregate([
+    const result = await MenuItem.aggregate([
       {
         $match: {
           guest_id: new mongoose.Types.ObjectId(guest_id),
           event_id: new mongoose.Types.ObjectId(event_id),
         },
       },
-    ])
-      .then((result) => {
-        if (result.length > 0) {
-          res.status(200).send({
-            status: true,
-            message: "Data found",
-            data: result,
-          });
-        } else {
-          res.status(200).send({
-            status: true,
-            message: "No data found",
-            data: [],
-          });
-        }
-      })
-      .catch((error) => {
-        res.status(500).send({
-          status: false,
-          message: error.toString() ?? "Error",
-          data:null
-        });
+    ]);
+
+    if (result.length > 0) {
+      let sum = 0;
+      const menuPromises = result.map(async (item) => {
+        var menu_id = item.menu_id;
+        var menu_record = await Menu.findById(menu_id);
+        var new_price = menu_record.selling_price * item.quantity;
+        sum += new_price;
+        return new_price; // Return new_price for Promise.all
       });
+
+      const new_prices = await Promise.all(menuPromises);
+
+
+      res.status(200).send({
+        status: true,
+        message: "Data found",
+        data: {
+          menu_list: result,
+          total_selling_price: sum, // Calculate sum after promises are resolved
+        },
+      });
+    } else {
+      res.status(200).send({
+        status: true,
+        message: "No data found",
+        data: [],
+      });
+    }
   } catch (error) {
     res.status(500).send({
       status: false,
-      message: error.toString() ?? "Internal Server Error",
-      data:null
+      message: error.toString() || "Internal Server Error",
+      data: null,
     });
   }
 };
+
+

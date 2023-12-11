@@ -1,69 +1,82 @@
 const BannerModel = require("../models/banner.model");
 const GuestModel = require("../models/guest.model");
 const SellerModel = require("../models/seller.model");
+const RelativeModel = require("../models/relative.model");
 const mongoose = require("mongoose");
 const { ObjectId } = require('mongoose').Types;
 const fs = require('fs');
 const path = require('path');
 
 
-exports.create_banner = (req, res, next) => {
+exports.create_banner = async (req, res, next) => {
   try {
     // Trim values to remove extra spaces
     const seller_id = req.body.seller_id !== undefined && req.body.seller_id !== null ? req.body.seller_id.toString().trim() : null;
-    const event_id  = req.body.event_id !== undefined && req.body.event_id !== null ? req.body.event_id.toString().trim() : null;
+    const description = req.body.description !== undefined && req.body.description !== null ? req.body.description.toString().trim() : null;
     const image = req.file ? req.file.filename : undefined;
-    var banner_type = req.body.banner_type;
-    
-    const bannerData = {
-      seller_id: new ObjectId(seller_id),
-      event_id: new ObjectId(event_id),
-      image,
-      banner_type
+    const banner_type = req.body.banner_type;
+    const date = req.body.date !== undefined && req.body.date !== null ? req.body.date.toString().trim() : null;
 
-    };
+    const guest_ids = req.body.guest_ids || [];
+    const banners = [];
 
-    BannerModel(bannerData)
-      .save()
-      .then((result) => {
-        if (result) {
-             // Get the host (domain and port)
-            const protocol = req.protocol;
-            const host = req.get('host');
+    if (banner_type == "birthday" || banner_type == "anniversary") {
+      if (!req.body.date || !req.body.guest_ids || !req.body.description) {
+        return res.status(400).json({ status: false, message: "date, Guest IDs, description are required in the request body" });
+      }
+    }
 
-             // Combine protocol, host, and any other parts of the base URL you need
-            const baseURL = `${protocol}://${host}`;
-            const imageUrl = baseURL + '/uploads/banners/' + result.image;
+    if (guest_ids.length > 0) {
+      console.log("guest_ids",guest_ids)
+      for (const guest_id of guest_ids) {
+        console.log("guest_id",new ObjectId(guest_id))
+        const bannerData = {
+          seller_id: new ObjectId(seller_id),
+          guest_id: new ObjectId(guest_id),
+          image,
+          banner_type,
+          date,
+          description,
+        };
 
-           res.status(201).send({
-             status: true,
-             message: 'Success',
-             data: {
-               ...result.toObject(),
-               image: imageUrl,
-             },
-           });
-          
-        } else {
-          res.status(500).send({ status: false, message: 'Not created' ,data :null });
-        }
-      })
-      .catch((error) => {
-        res.send({
-          status: false,
-          message: error.toString() ?? 'Error',
-          data :null 
+        const result = await BannerModel(bannerData).save();
+        banners.push({
+          ...result.toObject(),
+          image: `${req.protocol}://${req.get('host')}/uploads/banners/${result.image}`,
         });
+      }
+    } else {
+      const bannerData = {
+        seller_id: new ObjectId(seller_id),
+        banner_type,
+        image,
+      };
+
+      const result = await BannerModel(bannerData).save();
+      banners.push({
+        ...result.toObject(),
+        image: `${req.protocol}://${req.get('host')}/uploads/banners/${result.image}`,
       });
+    }
+
+    res.status(201).send({
+      status: true,
+      message: 'Success',
+      data: banners,
+    });
   } catch (error) {
     console.error('Error:', error);
     res.status(500).send({
       status: false,
-      message: error ?? 'Internal Server Error',
-      data :null 
+      message: error.toString() || 'Internal Server Error',
+      data: null,
     });
   }
 };
+
+
+
+
 
 
 exports.get_all_banners = async (req, res) => {
@@ -345,5 +358,100 @@ exports.get_all_banners = async (req, res) => {
   };
   
 
-
+  exports.get_guest_list_for_banner = async (req, res) => {
+    const seller_id = req.query.seller_id;
+    const banner_type = req.query.banner_type;
+    const date = req.query.date;
+  
+    try {
+      const seller = await SellerModel.findOne({ user_id: seller_id });
+      if (!seller) {
+        return res.status(404).send({
+          status: false,
+          message: "Seller not found",
+          data: null,
+        });
+      }
+  
+      const sellerDistrict = seller.district;
+      let filter;
+  
+      if (banner_type == 'birthday') {
+        filter = {
+          $match: {
+            $expr: {
+              $eq: [
+                { $dateToString: { format: "%Y-%m-%d", date: "$dob" } },
+                date,
+              ],
+            },
+            'guest_data.district': sellerDistrict, // Matching seller's district with guest's district
+          },
+        };
+      } else {
+        filter = {
+          $match: {
+            $expr: {
+              $eq: [
+                { $dateToString: { format: "%Y-%m-%d", date: "$dom" } },
+                date,
+              ],
+            },
+            'guest_data.district': sellerDistrict, // Matching seller's district with guest's district
+          },
+        };
+      }
+  
+      const guest_list = await RelativeModel.aggregate([
+        {
+          $sort: { createdAt: -1 }, // Sort by createdAt in descending order
+        },
+        {
+          $lookup: {
+            from: 'guests',
+            localField: 'guest_id',
+            foreignField: 'user_id',
+            as: 'guest_data',
+          },
+        },
+        filter, // Applying the match condition
+        {
+          $replaceRoot: {
+            newRoot: {
+              $arrayElemAt: ['$guest_data', 0], // Get the first element of the 'guest_data' array
+            },
+          },
+        },
+      ]);
+  
+      console.log("guest_list", guest_list);
+  
+      if (guest_list && guest_list.length > 0) {
+        res.status(200).send({
+          status: true,
+          message: "Data found",
+          data: guest_list,
+        });
+      } else {
+        res.status(200).send({
+          status: true,
+          message: "No guests found",
+          data: [],
+        });
+      }
+    } catch (error) {
+      res.status(500).send({
+        status: false,
+        message: error.toString() || "Internal Server Error",
+        data: null,
+      });
+    }
+  };
+  
+  
+  
+  
+  
+  
+  
 

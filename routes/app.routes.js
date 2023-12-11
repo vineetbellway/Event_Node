@@ -245,7 +245,7 @@ router.delete("/delete-uom",auth,  uomController.delete_uom);
 
 
 // Create banner API
-router.post("/create-banner",auth,banner_upload.single('image'), bannerController.create_banner);
+router.post("/create-banner",banner_upload.single('image'), bannerController.create_banner);
 
 // Get all banners API
 router.get("/get-all-banners", auth, bannerController.get_all_banners);

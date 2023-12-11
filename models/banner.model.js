@@ -14,13 +14,10 @@ const schema = new mongoose.Schema(
       type: String,
       required:true
     },
-    event_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Event",
+    banner_type: {
+      type: String,
       required:true
-    }, 
-    
-    
+    },   
   },
   {
     timestamps: true,

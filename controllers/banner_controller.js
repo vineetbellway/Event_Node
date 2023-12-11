@@ -13,15 +13,17 @@ exports.create_banner = (req, res, next) => {
     const seller_id = req.body.seller_id !== undefined && req.body.seller_id !== null ? req.body.seller_id.toString().trim() : null;
     const event_id  = req.body.event_id !== undefined && req.body.event_id !== null ? req.body.event_id.toString().trim() : null;
     const image = req.file ? req.file.filename : undefined;
+    var banner_type = req.body.banner_type;
     
-    const eventData = {
+    const bannerData = {
       seller_id: new ObjectId(seller_id),
       event_id: new ObjectId(event_id),
       image,
+      banner_type
 
     };
 
-    BannerModel(eventData)
+    BannerModel(bannerData)
       .save()
       .then((result) => {
         if (result) {
@@ -43,21 +45,22 @@ exports.create_banner = (req, res, next) => {
            });
           
         } else {
-          res.status(404).send({ status: false, message: 'Not created' });
+          res.status(500).send({ status: false, message: 'Not created' ,data :null });
         }
       })
       .catch((error) => {
         res.send({
           status: false,
           message: error.toString() ?? 'Error',
+          data :null 
         });
       });
   } catch (error) {
     console.error('Error:', error);
     res.status(500).send({
       status: false,
-      message: 'Failure',
-      error: error ?? 'Internal Server Error',
+      message: error ?? 'Internal Server Error',
+      data :null 
     });
   }
 };
@@ -173,15 +176,13 @@ exports.get_all_banners = async (req, res) => {
       // Trim values to remove extra spaces
       const banner_id = req.body.banner_id.trim();
       const image = req.file ? req.file.filename : undefined;
+      var banner_type = req.body.banner_type;
   
-       var bannerData = {};
+       var bannerData = { 'banner_type' : banner_type};
       // Check if image is not undefined
         if (image !== undefined) {
           bannerData.image = image;
         }
-     
-  
-      console.log("bannerData",bannerData)
   
       const updatedBanner = await BannerModel.findByIdAndUpdate(
         { _id: banner_id },

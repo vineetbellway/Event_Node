@@ -120,6 +120,14 @@ exports.get_events = async (req, res) => {
   try {
     var myAggregate = EventModel.aggregate([
       {
+        $lookup: {
+          from: 'banners',
+          localField: 'banner_id',
+          foreignField: '_id',
+          as: 'banner_data',
+        },
+      },
+      {
         $match: {
           status: baseStatus.active,
         },
@@ -128,25 +136,36 @@ exports.get_events = async (req, res) => {
     await EventModel.aggregatePaginate(myAggregate, options)
       .then((result) => {
         if (result) {
-          // Get the host (domain and port)
-          const protocol = req.protocol;
-          const host = req.get('host');
+                const baseURL = `${req.protocol}://${req.get('host')}`;
+            
+            // Update the image URL for the event
+            const eventImageUrl = baseURL + '/uploads/events/' + result[0].image;
+            
+            // Include the image URL in the "banner_data" field for the banner
+            const bannerImageUrl = baseURL + '/uploads/banners/' + result[0].banner_data[0].image;
 
-          // Combine protocol, host, and any other parts of the base URL you need
-          const baseURL = `${protocol}://${host}`;
-          //console.log("result",result)
-          // Modify each event to include the image upload path
-          if(result.data.length > 0){
-            result.data.forEach((event) => {
-              event.image = baseURL + '/uploads/events/' + event.image;
+            // Update the event response
+            const updatedResult = {
+              ...result[0],
+              image: eventImageUrl,
+              banner_data: {
+                ...result[0].banner_data[0], // Assuming there's only one banner
+                image: bannerImageUrl,
+              },
+            };
+
+            res.status(200).send({
+              status: true,
+              message: "success",
+              data: updatedResult,
             });
-          }        
-
+        } else {
           res.status(200).send({
-            status: true,
-            message: "success",
-            data: result,
+            status: false,
+            message: "No Events found",
+            data:null
           });
+
         }
       })
       .catch((error) => {
@@ -163,54 +182,73 @@ exports.get_events = async (req, res) => {
   }
 };
 
-
 exports.get_event = async (req, res) => {
-  var id = req.params.id;
+  const id = req.params.id;
+
   if (!id) {
     res.status(400).send({ status: false, message: "id missing" });
-  } else {
-    try {
-      await EventModel.aggregate([
-        {
-          $match: {
-            _id: new mongoose.Types.ObjectId(id),
-          },
+    return;
+  }
+
+  try {
+    const result = await EventModel.aggregate([
+      {
+        $lookup: {
+          from: 'banners',
+          localField: 'banner_id',
+          foreignField: '_id',
+          as: 'banner_data',
         },
-      ])
-        .then((result) => {
-          if (result && result.length > 0) {
-            const baseURL = `${req.protocol}://${req.get('host')}`;
-            const imageUrl =  baseURL + '/uploads/events/' + result[0].image;
-            console.log("result",result[0]);
-            res.status(200).send({
-              status: true,
-              message: "success",
-              data: {
-                ...result[0],  // Use the properties directly without toObject
-                image: imageUrl,
-              },
-            });
-          } else {
-            res.status(404).send({
-              status: false,
-              message: "Event not found",
-            });
-          }
-        })
-        .catch((error) => {
-          res.send({
-            status: false,
-            message: error.toString() ?? "Error",
-          });
-        });
-    } catch (error) {
-      res.status(500).send({
+      },
+      {
+        $match: {
+          _id: new mongoose.Types.ObjectId(id),
+        },
+      },
+    ]);
+
+    if (result && result.length > 0) {
+      const baseURL = `${req.protocol}://${req.get('host')}`;
+      
+      // Update the image URL for the event
+      const eventImageUrl = baseURL + '/uploads/events/' + result[0].image;
+      
+      // Include the image URL in the "banner_data" field for the banner
+      const bannerImageUrl = baseURL + '/uploads/banners/' + result[0].banner_data[0].image;
+
+      // Update the event response
+      const updatedResult = {
+        ...result[0],
+        image: eventImageUrl,
+        banner_data: {
+          ...result[0].banner_data[0], // Assuming there's only one banner
+          image: bannerImageUrl,
+        },
+      };
+
+      res.status(200).send({
+        status: true,
+        message: "success",
+        data: updatedResult,
+      });
+    } else {
+      res.status(200).send({
         status: false,
-        message: error.toString() ?? "Internal Server Error",
+        message: "Event not found",
+        data:null
       });
     }
+  } catch (error) {
+    res.status(500).send({
+      status: false,
+      message: error.toString() || "Internal Server Error",
+    });
   }
 };
+
+
+
+
 
 
 exports.search_events = async (req, res) => {
@@ -238,6 +276,14 @@ exports.search_events = async (req, res) => {
     let regex = new RegExp(keyword, "i");
     var myAggregate = EventModel.aggregate([
       {
+        $lookup: {
+          from: 'banners',
+          localField: 'banner_id',
+          foreignField: '_id',
+          as: 'banner_data',
+        },
+      },
+      {
         $match: {
           $or: [{ name: regex }, { coupon_name: regex }],
         },
@@ -246,23 +292,28 @@ exports.search_events = async (req, res) => {
     await EventModel.aggregatePaginate(myAggregate, options)
       .then((result) => {
         if (result) {
-            // Get the host (domain and port)
-            const protocol = req.protocol;
-            const host = req.get('host');
-  
-            // Combine protocol, host, and any other parts of the base URL you need
-            const baseURL = `${protocol}://${host}`;
-            //console.log("result",result)
-            // Modify each event to include the image upload path
-            if(result.data.length > 0){
-              result.data.forEach((event) => {
-                event.image = baseURL + '/uploads/events/' + event.image;
-              });
-            }     
+          const baseURL = `${req.protocol}://${req.get('host')}`;
+      
+          // Update the image URL for the event
+          const eventImageUrl = baseURL + '/uploads/events/' + result[0].image;
+          
+          // Include the image URL in the "banner_data" field for the banner
+          const bannerImageUrl = baseURL + '/uploads/banners/' + result[0].banner_data[0].image;
+    
+          // Update the event response
+          const updatedResult = {
+            ...result[0],
+            image: eventImageUrl,
+            banner_data: {
+              ...result[0].banner_data[0], // Assuming there's only one banner
+              image: bannerImageUrl,
+            },
+          };
+    
           res.status(200).send({
             status: true,
             message: "success",
-            data: result,
+            data: updatedResult,
           });
         }
       })
@@ -305,29 +356,42 @@ exports.event_by_seller_id = async (req, res) => {
   try {
     var myAggregate = EventModel.aggregate([
       {
+        $lookup: {
+          from: 'banners',
+          localField: 'banner_id',
+          foreignField: '_id',
+          as: 'banner_data',
+        },
+      },
+      {
         $match: { seller_id: new mongoose.Types.ObjectId(id) },
       },
     ]);
     await EventModel.aggregatePaginate(myAggregate, options)
       .then((result) => {
         if (result) {
-          // Get the host (domain and port)
-          const protocol = req.protocol;
-          const host = req.get('host');
+          const baseURL = `${req.protocol}://${req.get('host')}`;
+      
+          // Update the image URL for the event
+          const eventImageUrl = baseURL + '/uploads/events/' + result[0].image;
+          
+          // Include the image URL in the "banner_data" field for the banner
+          const bannerImageUrl = baseURL + '/uploads/banners/' + result[0].banner_data[0].image;
 
-          // Combine protocol, host, and any other parts of the base URL you need
-          const baseURL = `${protocol}://${host}`;
-          //console.log("result",result)
-          // Modify each event to include the image upload path
-          if(result.data.length > 0){
-            result.data.forEach((event) => {
-              event.image = baseURL + '/uploads/events/' + event.image;
-            });
-          } 
+          // Update the event response
+          const updatedResult = {
+            ...result[0],
+            image: eventImageUrl,
+            banner_data: {
+              ...result[0].banner_data[0], // Assuming there's only one banner
+              image: bannerImageUrl,
+            },
+          };
+
           res.status(200).send({
             status: true,
             message: "success",
-            data: result,
+            data: updatedResult,
           });
         }
       })
@@ -346,6 +410,7 @@ exports.event_by_seller_id = async (req, res) => {
 };
 
 
+
 exports.get_seller_events = async (req, res) => {
   const sellerId = req.query.seller_id;
 
@@ -355,33 +420,40 @@ exports.get_seller_events = async (req, res) => {
     if (events.length > 0) {
       const currentDateTime = moment();
       const allEvents = [];
-
+      
       for (const event of events) {
-        // Get the host (domain and port)
         const protocol = req.protocol;
         const host = req.get('host');
-
-        // Combine protocol, host, and any other parts of the base URL you need
         const baseURL = `${protocol}://${host}`;
         const image = event.image ? `${baseURL}/uploads/events/${event.image}` : null;
         const eventEndDateTime = moment(event.end_time);
         const eventStartDateTime = moment(event.start_time);
 
-    
-
         if (eventStartDateTime >= currentDateTime) {
-              console.log("eventStartDateTime",eventStartDateTime)
-          allEvents.push({
-            ...event.toObject(),
-            image: image,
-          });
+          // Update the image URL for the event
+          const eventImageUrl = baseURL + '/uploads/events/' + event.image;
+
+          // Include the image URL in the "banner_data" field for the banner (assuming it's a separate model)
+          const bannerImageUrl = baseURL + '/uploads/banners/' + event.banner_data.image;
+
+          // Update the event response
+          const updatedResult = {
+            ...event.toObject(), // Use toObject if needed
+            image: eventImageUrl,
+            banner_data: {
+              ...event.banner_data.toObject(), // Use toObject if needed
+              image: bannerImageUrl,
+            },
+          };
+
+          allEvents.push(updatedResult);
         }
       }
 
       if (allEvents.length > 0) {
         res.status(200).send({
           status: true,
-          message: "Success",
+          message: "success",
           data: allEvents,
         });
       } else {
@@ -405,7 +477,6 @@ exports.get_seller_events = async (req, res) => {
     });
   }
 };
-
 
 
 

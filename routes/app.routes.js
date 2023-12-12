@@ -92,12 +92,12 @@ router.delete("/validator", auth, validatorController.delete_validators);
 
 router.post("/event",auth, upload.single('image'), eventController.create_event);
 router.put("/event/:id",auth, upload.single('image'),eventController.update_event);
-router.get("/event",auth, eventController.get_events);
-router.get("/search_event/:keyword",auth, eventController.search_events);
-router.get("/event_by_seller_id/:id", eventController.event_by_seller_id);
-router.get("/event/:id",auth, eventController.get_event);
-router.delete("/event/:id", auth, eventController.delete_event);
-router.delete("/event", auth, eventController.delete_events);
+router.get("/event", eventController.get_events);
+router.get("/search_event/:keyword",auth,  eventController.search_events);
+router.get("/event_by_seller_id/:id",auth,  eventController.event_by_seller_id);
+router.get("/event/:id",auth,  eventController.get_event);
+router.delete("/event/:id",auth,  eventController.delete_event);
+router.delete("/event",auth,  eventController.delete_events);
 
 router.post("/menu", auth,menuController.create_menu);
 router.put("/menu/:id", auth, menuController.update_menu);
@@ -251,7 +251,7 @@ router.post("/create-banner",banner_upload.single('image'), bannerController.cre
 router.get("/get-all-banners", auth, bannerController.get_all_banners);
 
 // Get banner detail API
-router.get("/get-banner-detail", auth, bannerController.get_banner);
+router.get("/get-banner-detail",auth, bannerController.get_banner);
 
 // Update banner API
 router.put("/update-banner",auth,banner_upload.single('image'),  bannerController.update_banner);

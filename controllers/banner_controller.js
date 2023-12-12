@@ -2,10 +2,16 @@ const BannerModel = require("../models/banner.model");
 const GuestModel = require("../models/guest.model");
 const SellerModel = require("../models/seller.model");
 const RelativeModel = require("../models/relative.model");
-const mongoose = require("mongoose");
+const GuestBannerModel = require("../models/guest_banner.model");
+const User = require("../models/user.model");
 const { ObjectId } = require('mongoose').Types;
 const fs = require('fs');
 const path = require('path');
+const mongoose = require('mongoose');
+const { sendPushNotification } = require('../config/firebase.config'); // Update with the correct path to your module.
+
+
+
 
 
 exports.create_banner = async (req, res, next) => {
@@ -17,34 +23,77 @@ exports.create_banner = async (req, res, next) => {
     const banner_type = req.body.banner_type;
     const date = req.body.date !== undefined && req.body.date !== null ? req.body.date.toString().trim() : null;
 
-    const guest_ids = req.body.guest_ids || [];
+    let guest_ids = req.body.guest_ids || [];
+    
+    if (!Array.isArray(guest_ids)) {
+      // If it's not an array, make it an array
+      guest_ids = [guest_ids];
+    }
+
     const banners = [];
 
     if (banner_type == "birthday" || banner_type == "anniversary") {
-      if (!req.body.date || !req.body.guest_ids || !req.body.description) {
+      if (!req.body.date || !guest_ids.length || !req.body.description) {
         return res.status(400).json({ status: false, message: "date, Guest IDs, description are required in the request body" });
       }
     }
 
     if (guest_ids.length > 0) {
-      console.log("guest_ids",guest_ids)
+      const bannerData = {
+        seller_id: new mongoose.Types.ObjectId(seller_id),
+        image,
+        banner_type,
+        date,
+        description,
+      };
+
+      const bannerResult = await BannerModel(bannerData).save();
+      const banner_id = bannerResult._id;
+
       for (const guest_id of guest_ids) {
-        console.log("guest_id",new ObjectId(guest_id))
-        const bannerData = {
-          seller_id: new ObjectId(seller_id),
-          guest_id: new ObjectId(guest_id),
-          image,
-          banner_type,
-          date,
-          description,
+        const guestBannerData = {
+          banner_id: new mongoose.Types.ObjectId(banner_id),
+          guest_id: new mongoose.Types.ObjectId(guest_id),
         };
 
-        const result = await BannerModel(bannerData).save();
-        banners.push({
-          ...result.toObject(),
-          image: `${req.protocol}://${req.get('host')}/uploads/banners/${result.image}`,
+        const user_data = await User.findById(guest_id);
+
+        var fcm_token = user_data.fcm_token;
+
+        
+
+        var guest_data = await GuestModel.findOne({'user_id':guest_id});
+        console.log("guest_data",guest_data);
+        var guest_name = guest_data.full_name;
+
+        const notification = {
+          title: banner_type + ' banner added',
+          body: 'Hi,' + " " +guest_name + " " + description,
+        };
+
+        var data = {
+          
+        };
+
+        sendPushNotification(fcm_token, notification, data)
+        .then(() => {
+          console.log('Push notification sent successfully.');
+        })
+        .catch((error) => {
+          console.error('Error sending push notification:', error);
         });
+
+
+        await GuestBannerModel(guestBannerData).save();
       }
+
+      const bannerGuestData = await GuestBannerModel.find({ banner_id }); // Fetch guest banner data
+
+      banners.push({
+        ...bannerResult.toObject(),
+        image: `${req.protocol}://${req.get('host')}/uploads/banners/${bannerResult.image}`,
+        guest_banner_data: bannerGuestData,
+      });
     } else {
       const bannerData = {
         seller_id: new ObjectId(seller_id),
@@ -73,6 +122,8 @@ exports.create_banner = async (req, res, next) => {
     });
   }
 };
+
+
 
 
 
@@ -163,6 +214,7 @@ exports.get_all_banners = async (req, res) => {
             images: imageUrl,
             createdAt: result.createdAt,
             updatedAt: result.updatedAt,
+            guest_banner_data : await GuestBannerModel.find({ banner_id })
           };
           res.status(200).send({
             status: true,

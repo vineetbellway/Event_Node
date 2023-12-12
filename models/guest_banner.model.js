@@ -5,25 +5,14 @@ const { baseStatus } = require("../utils/enumerator");
 
 const schema = new mongoose.Schema(
   {
-    seller_id: {
+    banner_id: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Seller",
+      ref: "Banner",
       required:true
     }, 
-    image: {
-      type: String,
-      required:true
-    },
-    banner_type: {
-      type: String,
-      enum: ['event','birthday','anniversary'],
-      required:true
-    },   
-    date: {
-      type: String,
-    },
-    description: {
-      type: String,
+    guest_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
   },
   {
@@ -34,4 +23,4 @@ const schema = new mongoose.Schema(
 schema.plugin(mongoosePaginate);
 schema.plugin(aggregatePaginate);
 
-module.exports = mongoose.model("Banner", schema);
+module.exports = mongoose.model("GuestBanner", schema);

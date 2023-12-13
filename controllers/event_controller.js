@@ -31,7 +31,8 @@ exports.create_event = (req, res, next) => {
     const cover_charge = req.body.cover_charge.trim();
     const others = req.body.others.trim();
     const status = req.body.status.trim();
-    const banner_id = req.body.banner_id.trim();
+    const banner_id = req.body.banner_id ? req.body.banner_id.trim() : null;
+
 
     const eventData = {
       seller_id: new ObjectId(seller_id),
@@ -608,7 +609,7 @@ exports.update_event = async (req, res, next) => {
     const is_cover_charge_added = req.body.is_cover_charge_added.trim();
     const cover_charge = req.body.cover_charge.trim();
     const status = req.body.status.trim();
-    const banner_id = req.body.banner_id.trim();
+    const banner_id = req.body.banner_id ? req.body.banner_id.trim() : null;
 
     const eventData = {
       seller_id: new ObjectId(seller_id),

@@ -88,6 +88,7 @@ const schema = new mongoose.Schema(
     banner_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Banner",
+      required: false,  
     },
   },
   {

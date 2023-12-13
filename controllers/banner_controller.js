@@ -14,7 +14,7 @@ const { sendPushNotification } = require('../config/firebase.config'); // Update
 
 
 
-exports.create_banner = async (req, res, next) => {
+exports.create_banner_old = async (req, res, next) => {
   try {
     // Trim values to remove extra spaces
     const seller_id = req.body.seller_id !== undefined && req.body.seller_id !== null ? req.body.seller_id.toString().trim() : null;
@@ -25,10 +25,10 @@ exports.create_banner = async (req, res, next) => {
 
     let guest_ids = req.body.guest_ids || [];
     
-    if (!Array.isArray(guest_ids)) {
+    /*if (!Array.isArray(guest_ids)) {
       // If it's not an array, make it an array
       guest_ids = [guest_ids];
-    }
+    }*/
 
     const banners = [];
 
@@ -49,12 +49,25 @@ exports.create_banner = async (req, res, next) => {
 
       const bannerResult = await BannerModel(bannerData).save();
       const banner_id = bannerResult._id;
+      var t = guest_ids.toString();
+      console.log("t",t)
+
+      // Parse the JSON string to get an array
+const outputArray = JSON.parse(t);
+
+console.log(outputArray);
+
+
 
       for (const guest_id of guest_ids) {
         const guestBannerData = {
           banner_id: new mongoose.Types.ObjectId(banner_id),
           guest_id: new mongoose.Types.ObjectId(guest_id),
         };
+
+        console.log("guestBannerData",guestBannerData);
+
+        return false;
 
         const user_data = await User.findById(guest_id);
 
@@ -80,12 +93,14 @@ exports.create_banner = async (req, res, next) => {
         .catch((error) => {
           console.error('Error sending push notification:', error);
         });
-        console.log("guestBannerData",guestBannerData)
+      
+
+        await GuestBannerModel(guestBannerData).save();
 
         
       }
 
-      await GuestBannerModel(guestBannerData).save();
+  
 
       const bannerGuestData = await GuestBannerModel.find({ banner_id }); // Fetch guest banner data
 
@@ -113,6 +128,121 @@ exports.create_banner = async (req, res, next) => {
       message: 'Success',
       data: banners[0],
     });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).send({
+      status: false,
+      message: error.toString() || 'Internal Server Error',
+      data: null,
+    });
+  }
+};
+
+exports.create_banner = async (req, res, next) => {
+  try {
+    // ... (other code remains unchanged)
+
+        // Trim values to remove extra spaces
+        const seller_id = req.body.seller_id !== undefined && req.body.seller_id !== null ? req.body.seller_id.toString().trim() : null;
+        const description = req.body.description !== undefined && req.body.description !== null ? req.body.description.toString().trim() : null;
+        const image = req.file ? req.file.filename : undefined;
+        const banner_type = req.body.banner_type;
+        const date = req.body.date !== undefined && req.body.date !== null ? req.body.date.toString().trim() : null;
+    
+        var guest_ids = req.body.guest_ids || [];
+
+
+
+    const banners = [];
+
+    if (banner_type == "birthday" || banner_type == "anniversary") {
+      if (!req.body.date || !guest_ids.length || !req.body.description) {
+        return res.status(400).json({ status: false, message: "date, Guest IDs, description are required in the request body" });
+      }
+    }
+
+    if (guest_ids.length > 0) {
+      const bannerData = {
+        seller_id: new mongoose.Types.ObjectId(seller_id),
+        image,
+        banner_type,
+        date,
+        description,
+      };
+
+      const bannerResult = await BannerModel(bannerData).save();
+      const banner_id = bannerResult._id;
+
+      banners.push({
+        ...bannerResult.toObject(),
+        image: `${req.protocol}://${req.get('host')}/uploads/banners/${bannerResult.image}`,
+      });
+
+      guest_ids = JSON.parse(guest_ids);
+    
+      // Iterate over guest_ids directly (no need for toString())
+      for (const guest_id of guest_ids) {
+   
+        const guestBannerData = {
+          banner_id: new mongoose.Types.ObjectId(banner_id),
+          guest_id: new mongoose.Types.ObjectId(guest_id),
+        };
+
+
+        const user_data = await User.findById(guest_id);
+
+        var fcm_token = user_data.fcm_token;       
+  
+        var guest_data = await GuestModel.findOne({'user_id':guest_id});
+    
+        var guest_name = guest_data.full_name;
+  
+        const notification = {
+          title: banner_type + ' banner added',
+          body: 'Hi,' + " " +guest_name + " " + description,
+        };
+  
+        var data = {
+          
+        };
+  
+        sendPushNotification(fcm_token, notification, data)
+        .then(() => {
+          console.log('Push notification sent successfully.');
+        })
+        .catch((error) => {
+          console.error('Error sending push notification:', error);
+        });
+      
+  
+        await GuestBannerModel(guestBannerData).save();
+      }
+
+      res.status(201).send({
+        status: true,
+        message: 'Success',
+        data: banners[0],
+      });
+    } else {
+      const bannerData = {
+        seller_id: new ObjectId(seller_id),
+        banner_type,
+        image,
+      };
+
+      const result = await BannerModel(bannerData).save();
+      banners.push({
+        ...result.toObject(),
+        image: `${req.protocol}://${req.get('host')}/uploads/banners/${result.image}`,
+      });
+      res.status(201).send({
+        status: true,
+        message: 'Success',
+        data: banners[0],
+      });
+    }
+
+    
   } catch (error) {
     console.error('Error:', error);
     res.status(500).send({

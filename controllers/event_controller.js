@@ -29,6 +29,8 @@ exports.create_event = (req, res, next) => {
     const hire_charge = req.body.hire_charge.trim();
     const labour_charge = req.body.labour_charge.trim();
     const commision_charge = req.body.commision_charge.trim();
+    const is_cover_charge_added = req.body.is_cover_charge_added.trim();
+    const cover_charge = req.body.cover_charge.trim();
     const others = req.body.others.trim();
     const status = req.body.status.trim();
     const banner_id = req.body.banner_id.trim();
@@ -56,6 +58,8 @@ exports.create_event = (req, res, next) => {
       labour_charge,
       commision_charge,
       others,
+      is_cover_charge_added,
+      cover_charge,
       status,
       banner_id
     };
@@ -247,10 +251,6 @@ exports.get_event = async (req, res) => {
 };
 
 
-
-
-
-
 exports.search_events = async (req, res) => {
   var keyword = req.params.keyword;
   const page = parseInt(req.query.page) || 1;
@@ -408,7 +408,6 @@ exports.event_by_seller_id = async (req, res) => {
     });
   }
 };
-
 
 
 exports.get_seller_events = async (req, res) => {
@@ -569,6 +568,8 @@ exports.update_event = async (req, res, next) => {
     const labour_charge = req.body.labour_charge.trim();
     const commision_charge = req.body.commision_charge.trim();
     const others = req.body.others.trim();
+    const is_cover_charge_added = req.body.is_cover_charge_added.trim();
+    const cover_charge = req.body.cover_charge.trim();
     const status = req.body.status.trim();
     const banner_id = req.body.banner_id.trim();
 
@@ -594,6 +595,8 @@ exports.update_event = async (req, res, next) => {
       labour_charge,
       commision_charge,
       others,
+      is_cover_charge_added,
+      cover_charge,
       status,
       banner_id
     }; 

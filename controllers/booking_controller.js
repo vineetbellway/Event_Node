@@ -728,6 +728,7 @@ const get_guest_coupon_balance = async (req, res) => {
         },
       ])
       .then((result) => {
+        console.log("result",result)
         if (result && result.length > 0) {
           res.status(200).json({
             status: true,

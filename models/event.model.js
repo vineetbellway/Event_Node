@@ -17,7 +17,7 @@ const schema = new mongoose.Schema(
     },
     type: {
       type: String,
-      default: "entry_event", //entry_event, food_event, entry_food_event, loyalty
+      default: "entry_event", //entry_event, food_event, entry_food_event(banquet), loyalty
     },
     image: {
       type: String,
@@ -62,20 +62,27 @@ const schema = new mongoose.Schema(
       type: String,
     },
     transportation_charge: {
-      type: String,
+      type: Number,
     },
     hire_charge: {
-      type: String,
+      type: Number,
     },
     labour_charge: {
-      type: String,
+      type: Number,
     },
     commision_charge: {
-      type: String,
+      type: Number,
     },
     others: {
-      type: String,
+      type: Number,
     },
+    is_cover_charge_added: {
+      type: String,
+      enum: ['yes','no'],
+    },
+    cover_charge: {
+      type: Number,
+    },    
     status: {
       type: String,
       default: baseStatus.pending,

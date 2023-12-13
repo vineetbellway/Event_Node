@@ -80,10 +80,12 @@ exports.create_banner = async (req, res, next) => {
         .catch((error) => {
           console.error('Error sending push notification:', error);
         });
+        console.log("guestBannerData",guestBannerData)
 
-
-        await GuestBannerModel(guestBannerData).save();
+        
       }
+
+      await GuestBannerModel(guestBannerData).save();
 
       const bannerGuestData = await GuestBannerModel.find({ banner_id }); // Fetch guest banner data
 
@@ -466,8 +468,16 @@ exports.get_all_banners = async (req, res) => {
         {
           $replaceRoot: {
             newRoot: {
-              $arrayElemAt: ['$guest_data', 0], // Get the first element of the 'guest_data' array
+              $mergeObjects: [
+                { $arrayElemAt: ['$guest_data', 0] }, // Get the first element of the 'guest_data' array
+                { relative_name: '$full_name' }, // Add the relative full name to the result
+              ],
             },
+          },
+        },
+        {
+          $project: {
+            'guest_data': 0, // Exclude the 'guest_data' field from the final result
           },
         },
       ]);
@@ -495,6 +505,7 @@ exports.get_all_banners = async (req, res) => {
       });
     }
   };
+  
   
   
   

@@ -136,30 +136,37 @@ exports.get_events = async (req, res) => {
     await EventModel.aggregatePaginate(myAggregate, options)
       .then((result) => {
         if (result) {
-            console.log("result",result.data)
-                const baseURL = `${req.protocol}://${req.get('host')}`;
+            const baseURL = `${req.protocol}://${req.get('host')}`;
 
-                   // Update image URLs for each event in the data array
-      result.data = result.data.map(event => {
-        const eventImageUrl = baseURL + '/uploads/events/' + event.image;
-      //  const bannerImageUrl = baseURL + '/uploads/banners/' + event.banner_data[0].image;
-
-        return {
-          ...event,
-          image: eventImageUrl,
-          banner_data: {
-            ...event.banner_data[0], // Assuming there's only one banner
-         //   image: bannerImageUrl,
-          },
-        };
-      });
-
-          
+              // Update image URLs for each event in the data array
+              result.data = result.data.map(event => {
+              const eventImageUrl = baseURL + '/uploads/events/' + event.image;
+              var banner_data =   event.banner_data[0];
+              var bannerImageUrl = '';
+              if(banner_data){
+                var bannerImageUrl = baseURL + '/uploads/banners/' + banner_data.image;
+                return {
+                  ...event,
+                  image: eventImageUrl,
+                  banner_data: {
+                    ...banner_data,
+                    image:bannerImageUrl
+  
+                  },
+                };
+              } else {
+                return {
+                  ...event,
+                  image: eventImageUrl,
+                  banner_data: {},
+                };
+              }            
+            });         
 
             res.status(200).send({
               status: true,
               message: "success",
-              data: result.data,
+              data: result,
             });
         } else {
           res.status(200).send({
@@ -291,30 +298,39 @@ exports.search_events = async (req, res) => {
       .then((result) => {
         console.log("result",result)
         if (result) {
-         
           const baseURL = `${req.protocol}://${req.get('host')}`;
-      
-          // Update the image URL for the event
-          const eventImageUrl = baseURL + '/uploads/events/' + result[0].image;
+
+          // Update image URLs for each event in the data array
+          result.data = result.data.map(event => {
+          const eventImageUrl = baseURL + '/uploads/events/' + event.image;
+          var banner_data =   event.banner_data[0];
+          var bannerImageUrl = '';
+          if(banner_data){
+            var bannerImageUrl = baseURL + '/uploads/banners/' + banner_data.image;
+            return {
+              ...event,
+              image: eventImageUrl,
+              banner_data: {
+                ...banner_data,
+                image:bannerImageUrl
+
+              },
+            };
+          } else {
+            return {
+              ...event,
+              image: eventImageUrl,
+              banner_data: {},
+            };
+          }            
+        });         
+
+        res.status(200).send({
+          status: true,
+          message: "success",
+          data: result,
+        });
           
-          // Include the image URL in the "banner_data" field for the banner
-          const bannerImageUrl = baseURL + '/uploads/banners/' + result[0].banner_data[0].image;
-    
-          // Update the event response
-          const updatedResult = {
-            ...result[0],
-            image: eventImageUrl,
-            banner_data: {
-              ...result[0].banner_data[0], // Assuming there's only one banner
-              image: bannerImageUrl,
-            },
-          };
-    
-          res.status(200).send({
-            status: true,
-            message: "success",
-            data: updatedResult,
-          });
         }
       })
       .catch((error) => {
@@ -372,28 +388,37 @@ exports.event_by_seller_id = async (req, res) => {
       .then((result) => {
         if (result) {
           const baseURL = `${req.protocol}://${req.get('host')}`;
-      
-          // Update the image URL for the event
-          const eventImageUrl = baseURL + '/uploads/events/' + result[0].image;
-          
-          // Include the image URL in the "banner_data" field for the banner
-          const bannerImageUrl = baseURL + '/uploads/banners/' + result[0].banner_data[0].image;
 
-          // Update the event response
-          const updatedResult = {
-            ...result[0],
-            image: eventImageUrl,
-            banner_data: {
-              ...result[0].banner_data[0], // Assuming there's only one banner
-              image: bannerImageUrl,
-            },
-          };
+          // Update image URLs for each event in the data array
+          result.data = result.data.map(event => {
+          const eventImageUrl = baseURL + '/uploads/events/' + event.image;
+          var banner_data =   event.banner_data[0];
+          var bannerImageUrl = '';
+          if(banner_data){
+            var bannerImageUrl = baseURL + '/uploads/banners/' + banner_data.image;
+            return {
+              ...event,
+              image: eventImageUrl,
+              banner_data: {
+                ...banner_data,
+                image:bannerImageUrl
 
-          res.status(200).send({
-            status: true,
-            message: "success",
-            data: updatedResult,
-          });
+              },
+            };
+          } else {
+            return {
+              ...event,
+              image: eventImageUrl,
+              banner_data: {},
+            };
+          }            
+        });         
+
+        res.status(200).send({
+          status: true,
+          message: "success",
+          data: result,
+        });
         }
       })
       .catch((error) => {
@@ -415,46 +440,55 @@ exports.get_seller_events = async (req, res) => {
   const sellerId = req.query.seller_id;
 
   try {
-    const events = await EventModel.find({ seller_id: new mongoose.Types.ObjectId(sellerId), 'status': 'active' });
+    const myAggregate = EventModel.aggregate([
+      {
+        $lookup: {
+          from: 'banners',
+          localField: 'banner_id',
+          foreignField: '_id',
+          as: 'banner_data',
+        },
+      },
+      {
+        $match: { seller_id: new mongoose.Types.ObjectId(sellerId), 'status': 'active' },
+      },
+    ]);
 
-    if (events.length > 0) {
+    const result = await myAggregate.exec();
+
+    if (result.length > 0) {
       const currentDateTime = moment();
-      const allEvents = [];
-      
-      for (const event of events) {
-        const protocol = req.protocol;
-        const host = req.get('host');
-        const baseURL = `${protocol}://${host}`;
-        const image = event.image ? `${baseURL}/uploads/events/${event.image}` : null;
-        const eventEndDateTime = moment(event.end_time);
+      const baseURL = `${req.protocol}://${req.get('host')}`;
+
+      // Update image URLs for each event in the data array
+      const events = result.map(event => {
         const eventStartDateTime = moment(event.start_time);
+        const eventImageUrl = baseURL + '/uploads/events/' + event.image;
+        const banner_data = event.banner_data[0];
+        let bannerImageUrl = '';
 
         if (eventStartDateTime >= currentDateTime) {
-          // Update the image URL for the event
-          const eventImageUrl = baseURL + '/uploads/events/' + event.image;
+          if (banner_data) {
+            bannerImageUrl = baseURL + '/uploads/banners/' + banner_data.image;
+          }
 
-          // Include the image URL in the "banner_data" field for the banner (assuming it's a separate model)
-          const bannerImageUrl = baseURL + '/uploads/banners/' + event.banner_data.image;
-
-          // Update the event response
-          const updatedResult = {
-            ...event.toObject(), // Use toObject if needed
+          return {
+            ...event,
             image: eventImageUrl,
-            banner_data: {
-              ...event.banner_data.toObject(), // Use toObject if needed
-              image: bannerImageUrl,
-            },
+            banner_data: banner_data
+              ? { ...banner_data, image: bannerImageUrl }
+              : {},
           };
-
-          allEvents.push(updatedResult);
         }
-      }
+      });
 
-      if (allEvents.length > 0) {
+      const filteredEvents = events.filter(event => event); // Remove undefined values
+
+      if (filteredEvents.length > 0) {
         res.status(200).send({
           status: true,
           message: "success",
-          data: allEvents,
+          data: filteredEvents,
         });
       } else {
         res.status(200).send({
@@ -481,6 +515,8 @@ exports.get_seller_events = async (req, res) => {
 
 
 
+
+
 exports.delete_event = async (req, res) => {
   var id = req.params.id;
   if (!id) {
@@ -495,6 +531,8 @@ exports.delete_event = async (req, res) => {
               message: "deleted",
               data: result,
             });
+          } else {
+            
           }
         })
         .catch((error) => {

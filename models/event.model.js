@@ -74,7 +74,7 @@ const schema = new mongoose.Schema(
       type: Number,
     },
     others: {
-      type: Number,
+      type: String,
     },
     is_cover_charge_added: {
       type: String,

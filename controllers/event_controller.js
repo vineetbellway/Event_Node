@@ -21,8 +21,6 @@ exports.create_event = (req, res, next) => {
     const start_time = req.body.start_time.trim();
     const end_time = req.body.end_time.trim();
     const coupon_name = req.body.coupon_name.trim();
-    const tax_name = req.body.tax_name.trim();
-    const tax_percent = req.body.tax_percent.trim();
     const amount = req.body.amount.trim();
     const instructions = req.body.instructions.trim();
     const transportation_charge = req.body.transportation_charge.trim();
@@ -49,8 +47,6 @@ exports.create_event = (req, res, next) => {
       start_time,
       end_time,
       coupon_name,
-      tax_name,
-      tax_percent,
       amount,
       instructions,
       transportation_charge,
@@ -140,28 +136,30 @@ exports.get_events = async (req, res) => {
     await EventModel.aggregatePaginate(myAggregate, options)
       .then((result) => {
         if (result) {
+            console.log("result",result.data)
                 const baseURL = `${req.protocol}://${req.get('host')}`;
-            
-            // Update the image URL for the event
-            const eventImageUrl = baseURL + '/uploads/events/' + result[0].image;
-            
-            // Include the image URL in the "banner_data" field for the banner
-            const bannerImageUrl = baseURL + '/uploads/banners/' + result[0].banner_data[0].image;
 
-            // Update the event response
-            const updatedResult = {
-              ...result[0],
-              image: eventImageUrl,
-              banner_data: {
-                ...result[0].banner_data[0], // Assuming there's only one banner
-                image: bannerImageUrl,
-              },
-            };
+                   // Update image URLs for each event in the data array
+      result.data = result.data.map(event => {
+        const eventImageUrl = baseURL + '/uploads/events/' + event.image;
+      //  const bannerImageUrl = baseURL + '/uploads/banners/' + event.banner_data[0].image;
+
+        return {
+          ...event,
+          image: eventImageUrl,
+          banner_data: {
+            ...event.banner_data[0], // Assuming there's only one banner
+         //   image: bannerImageUrl,
+          },
+        };
+      });
+
+          
 
             res.status(200).send({
               status: true,
               message: "success",
-              data: updatedResult,
+              data: result.data,
             });
         } else {
           res.status(200).send({
@@ -291,7 +289,9 @@ exports.search_events = async (req, res) => {
     ]);
     await EventModel.aggregatePaginate(myAggregate, options)
       .then((result) => {
+        console.log("result",result)
         if (result) {
+         
           const baseURL = `${req.protocol}://${req.get('host')}`;
       
           // Update the image URL for the event
@@ -318,6 +318,7 @@ exports.search_events = async (req, res) => {
         }
       })
       .catch((error) => {
+        console.log("error",error)
         res.send({
           status: false,
           message: error.toString() ?? "Error",
@@ -559,8 +560,6 @@ exports.update_event = async (req, res, next) => {
     const start_time = req.body.start_time.trim();
     const end_time = req.body.end_time.trim();
     const coupon_name = req.body.coupon_name.trim();
-    const tax_name = req.body.tax_name.trim();
-    const tax_percent = req.body.tax_percent.trim();
     const amount = req.body.amount.trim();
     const instructions = req.body.instructions.trim();
     const transportation_charge = req.body.transportation_charge.trim();
@@ -586,8 +585,6 @@ exports.update_event = async (req, res, next) => {
       start_time,
       end_time,
       coupon_name,
-      tax_name,
-      tax_percent,
       amount,
       instructions,
       transportation_charge,

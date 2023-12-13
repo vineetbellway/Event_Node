@@ -92,8 +92,8 @@ router.delete("/validator", auth, validatorController.delete_validators);
 
 router.post("/event",auth, upload.single('image'), eventController.create_event);
 router.put("/event/:id",auth, upload.single('image'),eventController.update_event);
-router.get("/event", eventController.get_events);
-router.get("/search_event/:keyword",auth,  eventController.search_events);
+router.get("/event", auth,eventController.get_events);
+router.get("/search_event/:keyword", auth, eventController.search_events);
 router.get("/event_by_seller_id/:id",auth,  eventController.event_by_seller_id);
 router.get("/event/:id",auth,  eventController.get_event);
 router.delete("/event/:id",auth,  eventController.delete_event);
@@ -333,7 +333,7 @@ router.post("/manage-menu-item",auth,menuController.manage_menu_item);
 router.get("/get-menu-items",auth,menuController.get_menu_items);
 
 // get guest coupon balance API
-router.get("/get-guest-coupon-balance",bookingController.get_guest_coupon_balance);
+router.get("/get-guest-coupon-balance",auth,bookingController.get_guest_coupon_balance);
 
 // get guest list API
 router.get("/get-guest-list-for-banner",auth, bannerController.get_guest_list_for_banner);

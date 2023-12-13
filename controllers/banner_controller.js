@@ -426,31 +426,29 @@ exports.get_all_banners = async (req, res) => {
       const sellerDistrict = seller.district;
       let filter;
   
-      if (banner_type == 'birthday') {
-        filter = {
-          $match: {
-            $expr: {
-              $eq: [
-                { $dateToString: { format: "%Y-%m-%d", date: "$dob" } },
-                date,
-              ],
-            },
-            'guest_data.district': sellerDistrict, // Matching seller's district with guest's district
+      const dateField = banner_type === 'birthday' ? '$dob' : '$dom';
+  
+      filter = {
+        $match: {
+          $expr: {
+            $and: [
+              {
+                $gte: [
+                  { $substr: [dateField, 5, 5] },
+                  date.substring(5),
+                ],
+              },
+              {
+                $lt: [
+                  { $substr: [dateField, 5, 5] },
+                  date.substring(5) + '-01',
+                ],
+              },
+            ],
           },
-        };
-      } else {
-        filter = {
-          $match: {
-            $expr: {
-              $eq: [
-                { $dateToString: { format: "%Y-%m-%d", date: "$dom" } },
-                date,
-              ],
-            },
-            'guest_data.district': sellerDistrict, // Matching seller's district with guest's district
-          },
-        };
-      }
+          'guest_data.district': sellerDistrict, // Matching seller's district with guest's district
+        },
+      };
   
       const guest_list = await RelativeModel.aggregate([
         {
@@ -497,6 +495,8 @@ exports.get_all_banners = async (req, res) => {
       });
     }
   };
+  
+  
   
   
   

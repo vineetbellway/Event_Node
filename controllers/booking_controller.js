@@ -706,24 +706,30 @@ const get_guest_coupon_balance = async (req, res) => {
           },
         },
         {
+          $lookup: {
+            from: 'events',
+            localField: 'event_id',
+            foreignField: '_id',
+            as: 'event_data',
+          },
+        },
+        {
+          $unwind: "$event_data",
+        },
+        {
           $sort: { createdAt: -1 }, // Sort by createdAt in descending order
         },
         {
           $project: {
-            _id: 0, // Exclude the _id field
-            total_coupon_balance: { $multiply: ["$booked_menu_data.quantity", { $arrayElemAt: ["$menu_data.selling_price", 0] }] },
-          },
-        },
-        {
-          $group: {
-            _id: null,
-            total_coupon_balance: { $sum: "$total_coupon_balance" },
-          },
-        },
-        {
-          $project: {
-            _id: 0, // Exclude the _id field
-            total_coupon_balance: 1,
+            _id: 0,
+            total_coupon_balance: {
+              $sum: [
+                {
+                  $multiply: ["$booked_menu_data.quantity", { $arrayElemAt: ["$menu_data.selling_price", 0] }],
+                },
+                "$event_data.cover_charge", // Add cover charge to the total coupon balance
+              ],
+            },
           },
         },
       ])
@@ -736,7 +742,7 @@ const get_guest_coupon_balance = async (req, res) => {
             data: result[0], // Since we're grouping, result is an array with one element
           });
         } else {
-          res.status(404).json({ status: false, message: "No bookings found" });
+          res.status(200).json({ status: false, message: "No bookings found",data:null });
         }
       })
       .catch((error) => {
@@ -744,6 +750,7 @@ const get_guest_coupon_balance = async (req, res) => {
         res.status(500).json({
           status: false,
           message: error.toString() || "Internal Server Error",
+          data:null
         });
       });
     } catch (error) {
@@ -751,10 +758,12 @@ const get_guest_coupon_balance = async (req, res) => {
       res.status(500).json({
         status: false,
         message: error.toString() || "Internal Server Error",
+        data:null
       });
     }
   }
 };
+
 
 
 

@@ -49,12 +49,6 @@ const schema = new mongoose.Schema(
       type: String,
       index: "text",
     },
-    tax_name: {
-      type: String,
-    },
-    tax_percent: {
-      type: Number,
-    },
     amount: {
       type: Number,
     },

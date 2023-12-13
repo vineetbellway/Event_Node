@@ -58,12 +58,10 @@ exports.create_banner = async (req, res, next) => {
 
         const user_data = await User.findById(guest_id);
 
-        var fcm_token = user_data.fcm_token;
-
-        
+        var fcm_token = user_data.fcm_token;       
 
         var guest_data = await GuestModel.findOne({'user_id':guest_id});
-        console.log("guest_data",guest_data);
+    
         var guest_name = guest_data.full_name;
 
         const notification = {
@@ -111,7 +109,7 @@ exports.create_banner = async (req, res, next) => {
     res.status(201).send({
       status: true,
       message: 'Success',
-      data: banners,
+      data: banners[0],
     });
   } catch (error) {
     console.error('Error:', error);

@@ -672,7 +672,6 @@ const get_booked_guest_list = async (req, res) => {
 };
 
 
-
 const get_guest_coupon_balance = async (req, res) => {
   const guest_id = req.query.guest_id;
 
@@ -695,7 +694,7 @@ const get_guest_coupon_balance = async (req, res) => {
           },
         },
         {
-          $unwind: "$booked_menu_data",
+          $unwind: { path: "$booked_menu_data", preserveNullAndEmptyArrays: true },
         },
         {
           $lookup: {
@@ -704,6 +703,9 @@ const get_guest_coupon_balance = async (req, res) => {
             foreignField: '_id',
             as: 'menu_data',
           },
+        },
+        {
+          $unwind: { path: "$menu_data", preserveNullAndEmptyArrays: true },
         },
         {
           $lookup: {
@@ -725,16 +727,29 @@ const get_guest_coupon_balance = async (req, res) => {
             total_coupon_balance: {
               $sum: [
                 {
-                  $multiply: ["$booked_menu_data.quantity", { $arrayElemAt: ["$menu_data.selling_price", 0] }],
+                  $cond: {
+                    if: {
+                      $and: [
+                        { $ifNull: ["$booked_menu_data", []] }, // Check if booked_menu_data is not null or empty
+                        { $ifNull: ["$menu_data", []] }, // Check if menu_data is not null or empty
+                      ],
+                    },
+                    then: "$event_data.cover_charge", // If both arrays are empty or null, include cover charge
+                    else: {
+                      $multiply: [
+                        "$booked_menu_data.quantity",
+                        { $arrayElemAt: ["$menu_data.selling_price", 0] },
+                      ],
+                    },
+                  },
                 },
-                "$event_data.cover_charge", // Add cover charge to the total coupon balance
               ],
             },
           },
         },
       ])
       .then((result) => {
-        console.log("result",result)
+        console.log("result", result);
         if (result && result.length > 0) {
           res.status(200).json({
             status: true,
@@ -742,7 +757,7 @@ const get_guest_coupon_balance = async (req, res) => {
             data: result[0], // Since we're grouping, result is an array with one element
           });
         } else {
-          res.status(200).json({ status: false, message: "No bookings found",data:null });
+          res.status(200).json({ status: false, message: "No bookings found", data: null });
         }
       })
       .catch((error) => {
@@ -750,7 +765,6 @@ const get_guest_coupon_balance = async (req, res) => {
         res.status(500).json({
           status: false,
           message: error.toString() || "Internal Server Error",
-          data:null
         });
       });
     } catch (error) {
@@ -758,11 +772,14 @@ const get_guest_coupon_balance = async (req, res) => {
       res.status(500).json({
         status: false,
         message: error.toString() || "Internal Server Error",
-        data:null
       });
     }
   }
 };
+
+
+
+
 
 
 

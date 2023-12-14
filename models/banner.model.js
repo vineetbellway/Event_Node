@@ -18,13 +18,7 @@ const schema = new mongoose.Schema(
       type: String,
       enum: ['event','birthday','anniversary'],
       required:true
-    },   
-    date: {
-      type: String,
-    },
-    description: {
-      type: String,
-    },
+    }
   },
   {
     timestamps: true,

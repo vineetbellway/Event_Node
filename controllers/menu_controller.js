@@ -261,7 +261,7 @@ exports.get_menu = async (req, res) => {
   }
 };
 
-exports.get_menu_by_event_idold = async (req, res) => {
+exports.get_menu_by_event_id= async (req, res) => {
   try {
     var id = req.params.id;
     await Menu.aggregate([
@@ -345,7 +345,7 @@ exports.get_menu_by_event_idold = async (req, res) => {
   }
 };
 
-exports.get_menu_by_event_id = async (req, res) => {
+exports.get_menu_by_event_id_old = async (req, res) => {
   try {
     const id = req.params.id;
     const result = await Menu.aggregate([

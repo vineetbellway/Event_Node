@@ -585,7 +585,7 @@ exports.update_menu = async (req, res, next) => {
 
 exports.manage_menu_item = async (req, res, next) => {
   if (!req.body || !req.body.menu_id || !req.body.guest_id || req.body.quantity === undefined) {
-    res.status(400).send({ status: false, message: "Invalid request body", data: null });
+    res.status(400).send({ status: false, message: "Invalid request body", data: [] });
   } else {
     try {
 
@@ -595,7 +595,7 @@ exports.manage_menu_item = async (req, res, next) => {
 
       const { menu_id, guest_id, quantity } = req.body;
       if(quantity < 1){
-        res.status(200).send({ status: false, message: "Quantity should be greter than 1", data: null });
+        res.status(200).send({ status: false, message: "Quantity should be greter than 1", data: [] });
       }
 
       // Assuming MenuItem is a mongoose model
@@ -608,7 +608,7 @@ exports.manage_menu_item = async (req, res, next) => {
       res.status(200).send({ status: true, message: "Quantity updated successfully", data: menuItem });
     } catch (error) {
       console.log("error", error);
-      res.status(500).send({ status: false, message: error.toString() || "Internal Server Error", data: null });
+      res.status(500).send({ status: false, message: error.toString() || "Internal Server Error", data: [] });
     }
   }
 };
@@ -634,21 +634,29 @@ exports.get_menu_items = async (req, res) => {
     if (result.length > 0) {
       let sum = 0;
       const menuPromises = result.map(async (item) => {
-        var menu_id = item.menu_id;
-        var menu_record = await Menu.findById(menu_id);
-        var new_price = menu_record.selling_price * item.quantity;
-        sum += new_price;
-        return new_price; // Return new_price for Promise.all
+        console.log("quantity", item.quantity);
+        if (item && typeof item.quantity === 'number' && item.quantity > 0) {
+          var menu_id = item.menu_id;
+          var menu_record = await Menu.findById(menu_id);
+          if (menu_record) {
+            var new_price = menu_record.selling_price * item.quantity;
+            sum += new_price;
+            return {
+              ...item,
+              quantity: item.quantity, // Include quantity in the response
+            }; // Return item with new_price for Promise.all
+          }
+        }
       });
 
       const new_prices = await Promise.all(menuPromises);
-
+      const filteredMenuList = new_prices.filter((item) => item && typeof item.quantity === 'number' && item.quantity > 0);
 
       res.status(200).send({
         status: true,
         message: "Data found",
         data: {
-          menu_list: result,
+          menu_list: filteredMenuList,
           total_selling_price: sum, // Calculate sum after promises are resolved
         },
       });
@@ -667,5 +675,8 @@ exports.get_menu_items = async (req, res) => {
     });
   }
 };
+
+
+
 
 

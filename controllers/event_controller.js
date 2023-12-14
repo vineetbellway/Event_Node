@@ -648,6 +648,8 @@ exports.update_event = async (req, res, next) => {
         eventData,
         { new: true }
       );
+
+
       if (updatedEvent) {
 
         // Get the host (domain and port)
@@ -667,7 +669,7 @@ exports.update_event = async (req, res, next) => {
           },
         });
     } else {
-      res.status(500).send({ status: false, message: "Banner not found", data:null });
+      res.status(500).send({ status: false, message: "Faile ! please try again", data:null });
     }
       
       

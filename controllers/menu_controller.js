@@ -261,7 +261,7 @@ exports.get_menu = async (req, res) => {
   }
 };
 
-exports.get_menu_by_event_id = async (req, res) => {
+exports.get_menu_by_event_idold = async (req, res) => {
   try {
     var id = req.params.id;
     await Menu.aggregate([
@@ -315,6 +315,7 @@ exports.get_menu_by_event_id = async (req, res) => {
     ])
       .then((result) => {
         if (result.length > 0) {
+
           res.status(200).send({
             status: true,
             message: "Data found",
@@ -343,6 +344,119 @@ exports.get_menu_by_event_id = async (req, res) => {
     });
   }
 };
+
+exports.get_menu_by_event_id = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const result = await Menu.aggregate([
+      // Your existing aggregation stages here
+      {
+        $match: {
+          event_id: new mongoose.Types.ObjectId(id),
+        },
+      },
+      {
+        $lookup: {
+          from: "uoms",
+          localField: "uom_id",
+          foreignField: "_id",
+          as: "uom_data",
+        },
+      },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "category_id",
+          foreignField: "_id",
+          as: "category_data",
+        },
+      },
+      {
+        $unwind: "$uom_data", // Unwind to access the uom_data
+      },
+      {
+        $unwind: "$category_data", // Unwind to access the category_data
+      },
+    ]);
+
+    if (result.length > 0) {
+      const limitedList = [];
+      const unlimitedList = [];
+
+      result.forEach((item) => {
+        const categoryIndexLimited = limitedList.findIndex(
+          (category) => category.category_id.toString() === item.category_id.toString() && item.is_limited === 'yes'
+        );
+        const categoryIndexUnlimited = unlimitedList.findIndex(
+          (category) => category.category_id.toString() === item.category_id.toString() && item.is_limited === 'no'
+        );
+
+        const formattedItem = {
+          _id: item._id,
+          event_id: item.event_id,
+          name: item.name,
+          uom_id: item.uom_id,
+          category_id: item.category_id,
+          total_stock: item.total_stock,
+          cost_price: item.cost_price,
+          selling_price: item.selling_price,
+          is_limited: item.is_limited,
+          limited_count: item.limited_count,
+          status: item.status,
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt,
+          uom: item.uom_data.name, // Access uom name from uom_data
+          category: item.category_data.name, // Access category name from category_data
+        };
+
+        if (item.is_limited === 'yes') {
+          if (categoryIndexLimited === -1) {
+            limitedList.push({
+              category_id: item.category_id,
+              category: item.category_data.name,
+              item_list: [formattedItem],
+            });
+          } else {
+            limitedList[categoryIndexLimited].item_list.push(formattedItem);
+          }
+        } else {
+          if (categoryIndexUnlimited === -1) {
+            unlimitedList.push({
+              category_id: item.category_id,
+              category: item.category_data.name,
+              item_list: [formattedItem],
+            });
+          } else {
+            unlimitedList[categoryIndexUnlimited].item_list.push(formattedItem);
+          }
+        }
+      });
+
+      res.status(200).send({
+        status: true,
+        message: 'Data found',
+        data: {
+          limited_list: limitedList,
+          unlimited_list: unlimitedList,
+        },
+      });
+    } else {
+      res.status(200).send({
+        status: true,
+        message: 'No data found',
+        data: [],
+      });
+    }
+  } catch (error) {
+    res.status(500).send({
+      status: false,
+      message: error.toString() || 'Internal Server Error',
+      data: null,
+    });
+  }
+};
+
+
 
 exports.delete_menu = async (req, res) => {
   var id = req.params.id;

@@ -464,11 +464,15 @@ exports.get_seller_events = async (req, res) => {
       // Update image URLs for each event in the data array
       const events = result.map(event => {
         const eventStartDateTime = moment(event.start_time);
+        const eventEndDateTime = moment(event.event_id_time);
         const eventImageUrl = baseURL + '/uploads/events/' + event.image;
         const banner_data = event.banner_data[0];
         let bannerImageUrl = '';
+        console.log("eventEndDateTime",eventEndDateTime)
+        console.log("currentDateTime",currentDateTime)
+        console.log("eventStartDateTime",eventStartDateTime)
 
-        if (eventStartDateTime >= currentDateTime) {
+        if (eventEndDateTime >= currentDateTime) {
           if (banner_data) {
             bannerImageUrl = baseURL + '/uploads/banners/' + banner_data.image;
           }

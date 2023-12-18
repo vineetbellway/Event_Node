@@ -751,10 +751,12 @@ const get_guest_coupon_balance = async (req, res) => {
       .then((result) => {
         console.log("result", result);
         if (result && result.length > 0) {
+          const lastRecord = result[result.length - 1];
+
           res.status(200).json({
             status: true,
             message: "Data found",
-            data: result[0], // Since we're grouping, result is an array with one element
+            data: lastRecord, // Since we're grouping, result is an array with one element
           });
         } else {
           res.status(200).json({ status: false, message: "No bookings found", data: null });

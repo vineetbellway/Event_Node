@@ -678,7 +678,8 @@ exports.get_menu_items = async (req, res) => {
 
 exports.book_menu_items = async (req, res, next) => {
   try {
-    const menuItems = req.body;
+    const menuItems = req.body.menu_items;
+
 
     if (!Array.isArray(menuItems)) {
       res.status(400).send({ status: false, message: "Invalid request format. Expected an array.", data: null });

@@ -817,13 +817,19 @@ exports.approve_menu_payment = async (req, res, next) => {
 
       // Fetch cover charge from the event record
       const eventRecord = await EventModel.findById(event_id);
-      const coverCharge = eventRecord ? eventRecord.cover_charge : 0;
+      let coverCharge = eventRecord ? eventRecord.cover_charge : 0;
 
       // Check if cover charge exceeds the sum of menu item prices
       if (coverCharge > sum) {
         res.status(400).send({ status: false, message: "Cover charge exceeds the sum of menu item prices", data: [] });
         return;
       }
+
+      // Subtract sum from cover charge
+      coverCharge -= sum;
+
+      // Update cover charge in the event record
+      await EventModel.findByIdAndUpdate(event_id, { $set: { cover_charge: coverCharge } });
 
       // Approve menu item payments in MenuItemPayments collection
       const is_approved = 'yes';
@@ -836,13 +842,18 @@ exports.approve_menu_payment = async (req, res, next) => {
       // Delete booked menu items
       await BookedMenuItem.deleteMany({ payment_id: payment_id });
 
-      res.status(200).send({ status: true, message: "Payment approved successfully", data: updatedPaymentResult });
+      res.status(200).send({
+        status: true,
+        message: "Payment approved successfully",
+        data: { updatedPaymentResult, remainingCoverCharge: coverCharge },
+      });
     } catch (error) {
       console.log("error", error);
       res.status(500).send({ status: false, message: error.toString() || "Internal Server Error", data: [] });
     }
   }
 };
+
 
 
 

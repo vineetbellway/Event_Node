@@ -5,7 +5,7 @@ const MenuItemPayments = require("../models/menu_item_payments.model");
 const mongoose = require("mongoose");
 const { baseStatus, userStatus } = require("../utils/enumerator");
 const EventModel = require("../models/event.model");
-``
+
 
 exports.create_menu = async (req, res, next) => {
   if (!req.body) {
@@ -736,7 +736,17 @@ exports.book_menu_items = async (req, res, next) => {
 
       // Filter out null values from batchResults
       results.push(...batchResults.filter((result) => result !== null));
+
+
     }
+      // Delete records from the menuItems model
+      const deleteConditions = {
+        event_id: { $in: results.map(item => item.event_id) },
+        menu_id: { $in: results.map(item => item.menu_id) },
+        guest_id: { $in: results.map(item => item.guest_id) }
+      };
+  
+      await MenuItem.deleteMany(deleteConditions);
 
     res.status(200).send({ status: true, message: "Item booked successfully", data : { payment_id: payment_id,booked_data: results} });
   } catch (error) {
@@ -750,28 +760,120 @@ exports.get_booked_menu_items = async (req, res, next) => {
     res.status(400).send({ status: false, message: "Invalid request body", data: [] });
   } else {
     try {
-      
-
       const { payment_id } = req.body;
-   
+
+      // Check the existence of payment_id in the BookedMenuItem collection
+      const bookedMenuResult = await BookedMenuItem.find({ payment_id: payment_id });
+
+      if (!bookedMenuResult || bookedMenuResult.length === 0) {
+        res.status(404).send({ status: false, message: "No booking found for the provided payment_id", data: [] });
+        return;
+      }
+
+      const guest_id = bookedMenuResult[0].guest_id;
+      const event_id = bookedMenuResult[0].event_id;
+
+      // Fetch relevant data from MenuItem collection based on guest_id and event_id
+      const menuItemResult = await MenuItem.aggregate([
+        {
+          $match: {
+            guest_id: new mongoose.Types.ObjectId(guest_id),
+            event_id: new mongoose.Types.ObjectId(event_id),
+          },
+        },
+      ]);
+
+      // Fetch menu events for the specific event_id
+      var event_menus = await Menu.aggregate([
+        {
+          $match: {
+            event_id: new mongoose.Types.ObjectId(event_id),
+          },
+        },
+        {
+          $lookup: {
+            from: "uoms",
+            localField: "uom_id",
+            foreignField: "_id",
+            as: "uom_data",
+          },
+        },
+        {
+          $lookup: {
+            from: "categories",
+            localField: "category_id",
+            foreignField: "_id",
+            as: "category_data",
+          },
+        },
+        {
+          $unwind: "$uom_data", // Unwind to access the uom_data
+        },
+        {
+          $unwind: "$category_data", // Unwind to access the category_data
+        },
+        {
+          $project: {
+            _id: 1,
+            event_id: 1,
+            name: 1,
+            uom_id:1,
+            category_id:1,
+            total_stock: 1,
+            cost_price: 1,
+            selling_price: 1,
+            uom: "$uom_data.name",
+            category: "$category_data.name",
+            status: 1,
+            is_limited: 1,
+            limited_count: 1,
+            __v: 1,
+            createdAt: 1,
+            updatedAt: 1,
+          },
+        },
+      ]);
+
+      console.log("event_menus", event_menus);
+
+      // Check if cover charge exceeds the sum of menu item prices
+      let sum = 0;
+      for (const item of menuItemResult) {
+        if (item && typeof item.quantity === 'number' && item.quantity > 0) {
+          const menu_id = item.menu_id;
+          const menuRecord = await Menu.findById(menu_id);
+
+          // Find the matching menu_events for the current menu item
+          const matchingMenuEvents = event_menus.filter((event) => event.event_id == event_id);
+
+          console.log("matchingMenuEvents",matchingMenuEvents)
+
+          console.log("event_id",event_id)
+
+          item['event_menus'] = event_menus;
+
+          if (menuRecord) {
+            sum += menuRecord.selling_price * item.quantity;
+          }
+        }
+      }
 
       // approve menu item payments
-
       var result = await BookedMenuItem.find({ payment_id: payment_id });
-      console.log("result",result)
-      if(result.length > 0){
-        res.status(200).send({ status: true, message: "Data found", data: result });
+      console.log("result", result);
+      if (result.length > 0) {
+        res.status(200).send({ status: true, message: "Data found", data: { total_selling_price: sum, menu_list: menuItemResult } });
       } else {
         res.status(200).send({ status: true, message: "No Data found", data: [] });
       }
-
-      
     } catch (error) {
       console.log("error", error);
       res.status(500).send({ status: false, message: error.toString() || "Internal Server Error", data: [] });
     }
   }
 };
+
+
 
 exports.approve_menu_payment = async (req, res, next) => {
   // Check the existence of required fields in the request body

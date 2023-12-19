@@ -41,6 +41,8 @@ app.get("/api/v1/test", (req, res) => {
 });
 
 app.use("/api/v1", require("./routes/app.routes"));
+app.use("/admin", require("./routes/admin.routes"));
+
 Server.listen(process.env.PORT || 3000, function () {
   console.log("Ready to go!");
 });

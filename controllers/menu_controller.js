@@ -784,7 +784,7 @@ exports.get_booked_menu_items = async (req, res, next) => {
       ]);
 
       // Fetch menu events for the specific event_id
-      var event_menus = await Menu.aggregate([
+      const event_menus = await Menu.aggregate([
         {
           $match: {
             event_id: new mongoose.Types.ObjectId(event_id),
@@ -817,8 +817,8 @@ exports.get_booked_menu_items = async (req, res, next) => {
             _id: 1,
             event_id: 1,
             name: 1,
-            uom_id:1,
-            category_id:1,
+            uom_id: 1,
+            category_id: 1,
             total_stock: 1,
             cost_price: 1,
             selling_price: 1,
@@ -843,26 +843,28 @@ exports.get_booked_menu_items = async (req, res, next) => {
           const menu_id = item.menu_id;
           const menuRecord = await Menu.findById(menu_id);
 
-          // Find the matching menu_events for the current menu item
-          const matchingMenuEvents = event_menus.filter((event) => event.event_id == event_id);
-
-          console.log("matchingMenuEvents",matchingMenuEvents)
-
-          console.log("event_id",event_id)
-
-          item['event_menus'] = event_menus;
-
           if (menuRecord) {
             sum += menuRecord.selling_price * item.quantity;
           }
         }
       }
 
-      // approve menu item payments
-      var result = await BookedMenuItem.find({ payment_id: payment_id });
+      // Approve menu item payments
+      const result = bookedMenuResult.map(item1 => {
+        // Find the matching event_menu for the current item1
+        const matchingEventMenu = event_menus.find(event => event.event_id.equals(item1.event_id) && event._id.equals(item1.menu_id));
+
+        // Assign the event_menu information to the current item1
+        return {
+          ...item1.toObject(),
+          event_menu: matchingEventMenu || null,
+        };
+      });
+
       console.log("result", result);
+
       if (result.length > 0) {
-        res.status(200).send({ status: true, message: "Data found", data: { total_selling_price: sum, menu_list: menuItemResult } });
+        res.status(200).send({ status: true, message: "Data found", data: { total_selling_price: sum, menu_list: result } });
       } else {
         res.status(200).send({ status: true, message: "No Data found", data: [] });
       }
@@ -872,6 +874,7 @@ exports.get_booked_menu_items = async (req, res, next) => {
     }
   }
 };
+
 
 
 

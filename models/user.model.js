@@ -34,7 +34,7 @@ const schema = new mongoose.Schema(
     },
     type: {
       type: String,
-      default: "guest", //guest, seller, validator
+      default: "guest", //guest, seller, validator,admin
     },
     device_type: {
       type: String,
@@ -48,6 +48,12 @@ const schema = new mongoose.Schema(
     status: {
       type: String,
       default: baseStatus.pending,
+    },
+    email: {
+      type: String,
+    },
+    password: {
+      type: String
     },
   },
   {

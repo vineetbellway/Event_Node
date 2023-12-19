@@ -1,10 +1,10 @@
-const Seller = require("../../models/seller.model");
+const Guest = require("../../models/guest.model");
 const mongoose = require("mongoose");
 const { baseStatus, userStatus } = require("../../utils/enumerator");
 
 
 
-exports.get_sellers = async (req, res) => {
+exports.get_guests = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const myCustomLabels = {
@@ -25,10 +25,10 @@ exports.get_sellers = async (req, res) => {
     customLabels: myCustomLabels,
   };
   try {
-    var myAggregate = Seller.aggregate([
+    var myAggregate = Guest.aggregate([
       {
         $match: {
-          status: baseStatus.pending,
+          status: baseStatus.active,
         },
       },
       {
@@ -43,13 +43,13 @@ exports.get_sellers = async (req, res) => {
         $unwind: "$user",
       },
     ]);
-    await Seller.aggregatePaginate(myAggregate, options)
+    await Guest.aggregatePaginate(myAggregate, options)
       .then((result) => {
         if (result) {
           res.status(200).send({
             status: true,
             message: "success",
-            result,
+            data: result,
           });
         }
       })
@@ -67,13 +67,13 @@ exports.get_sellers = async (req, res) => {
   }
 };
 
-exports.get_seller = async (req, res) => {
+exports.get_guest = async (req, res) => {
   var id = req.params.id;
   if (!id) {
     res.status(400).send({ status: false, message: "id missing" });
   } else {
     try {
-      await Seller.aggregate([
+      await Guest.aggregate([
         {
           $match: {
             _id: new mongoose.Types.ObjectId(id),
@@ -115,13 +115,13 @@ exports.get_seller = async (req, res) => {
   }
 };
 
-exports.update_seller = (req, res, next) => {
+exports.update_guest = (req, res, next) => {
   const id = req.params.id;
   if (!id) {
     res.status(400).send({ status: false, message: "id missing" });
   } else {
     try {
-      Seller.findByIdAndUpdate(id, req.body, { new: true })
+      Guest.findByIdAndUpdate(id, req.body, { new: true })
         .then((result) => {
           if (result) {
             res.status(201).send({
@@ -149,20 +149,22 @@ exports.update_seller = (req, res, next) => {
   }
 };
 
-exports.delete_seller = async (req, res) => {
-  var id = req.params.id;
+exports.delete_guest = (req, res, next) => {
+  const id = req.params.id;
   if (!id) {
     res.status(400).send({ status: false, message: "id missing" });
   } else {
     try {
-      await Seller.findOneAndDelete(id)
+      Guest.findByIdAndDelete(id)
         .then((result) => {
           if (result) {
-            res.status(200).send({
+            res.status(201).send({
               status: true,
-              message: "deleted",
+              message: "Deleted",
               data: result,
             });
+          } else {
+            res.status(404).send({ status: false, message: "Not deleted" });
           }
         })
         .catch((error) => {
@@ -174,8 +176,11 @@ exports.delete_seller = async (req, res) => {
     } catch (error) {
       res.status(500).send({
         status: false,
-        message: error.toString() ?? "Internal Server Error",
+        message: "failure",
+        error: error ?? "Internal Server Error",
       });
     }
   }
 };
+
+

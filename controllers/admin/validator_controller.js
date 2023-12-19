@@ -1,6 +1,6 @@
 const Validator = require("../../models/validator.model");
 const mongoose = require("mongoose");
-const { baseStatus, userStatus } = require("../utils/enumerator");
+const { baseStatus, userStatus } = require("../../utils/enumerator");
 const SellerModel = require("../../models/seller.model");
 const EventValidator = require("../../models/event_validator.model");
 

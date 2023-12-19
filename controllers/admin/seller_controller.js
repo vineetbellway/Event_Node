@@ -27,11 +27,6 @@ exports.get_sellers = async (req, res) => {
   try {
     var myAggregate = Seller.aggregate([
       {
-        $match: {
-          status: baseStatus.pending,
-        },
-      },
-      {
         $lookup: {
           from: "users",
           localField: "user_id",

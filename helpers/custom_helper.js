@@ -59,4 +59,4 @@ async function updateMenu(menu_id,total_stock){
 }
 }
 
-module.exports = {getMenu,up};
+module.exports = {getMenu,updateMenu};

@@ -17,7 +17,7 @@ const schema = new mongoose.Schema(
     },
     type: {
       type: String,
-      default: "entry_event", //entry_event, food_event, entry_food_event(banquet), loyalty
+      default: "entry_event", //entry_event, food_event(banquet), entry_food_event, loyalty
     },
     image: {
       type: String,

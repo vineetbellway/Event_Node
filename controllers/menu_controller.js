@@ -5,6 +5,7 @@ const MenuItemPayments = require("../models/menu_item_payments.model");
 const mongoose = require("mongoose");
 const { baseStatus, userStatus } = require("../utils/enumerator");
 const EventModel = require("../models/event.model");
+const Guest = require("../models/guest.model");
 
 
 exports.create_menu = async (req, res, next) => {
@@ -836,7 +837,24 @@ exports.get_booked_menu_items = async (req, res, next) => {
         },
       ]);
 
-      console.log("event_menus", event_menus);
+
+      var guest_record = await Guest.aggregate([
+        {
+          $match: {
+            user_id: new mongoose.Types.ObjectId(guest_id),
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "ser_id",
+            foreignField: "_id",
+            as: "user_data",
+          },
+        },
+      ]);
+
+      console.log("guest_record", guest_record);
       
       // Check if cover charge exceeds the sum of menu item prices
       let sum = 0;
@@ -855,11 +873,15 @@ exports.get_booked_menu_items = async (req, res, next) => {
       const result = bookedMenuResult.map(item1 => {
         // Find the matching event_menu for the current item1
         const matchingEventMenu = event_menus.find(event => event.event_id.equals(item1.event_id) && event._id.equals(item1.menu_id));
-
+      //  console.log("item1",item1)
+         // Find the matching guest record for the current item1
+         const matchingGuestRecord = guest_record.find(guest => guest.user_id.equals(item1.guest_id));
+        console.log("matchingGuestRecord",matchingGuestRecord)
         // Assign the event_menu information to the current item1
         return {
           ...item1.toObject(),
           event_menu: matchingEventMenu || null,
+          guest_record : matchingGuestRecord || null
         };
       });
 
@@ -922,39 +944,36 @@ exports.approve_menu_payment = async (req, res, next) => {
         }
       }
 
- 
       // Fetch cover charge from the event record
       const eventRecord = await EventModel.findById(event_id);
       let coverCharge = eventRecord ? eventRecord.cover_charge : 0;
 
-     
-
-      // Check if cover charge exceeds the sum of menu item prices
-      if (sum > coverCharge) {
-        res.status(400).send({ status: false, message: "Total price exceeds then cover charge", data: [] });
-        return;
-      }
-
-
+      console.log("sum", sum);
+      console.log("coverCharge", coverCharge);
 
       // Subtract sum from cover charge
       coverCharge -= sum;
 
-    
-
       // Update cover charge in the event record
       await EventModel.findByIdAndUpdate(event_id, { $set: { cover_charge: coverCharge } });
 
-      // Approve menu item payments in MenuItemPayments collection
+     // Approve menu item payments in MenuItemPayments collection
       const is_approved = 'yes';
-      const updatedPaymentResult = await MenuItemPayments.findOneAndUpdate(
+      var updatedPaymentResult = await MenuItemPayments.findOneAndUpdate(
         { _id: payment_id },
         { validator_id: validator_id, is_approved: is_approved },
         { new: true }
       );
 
+          // Check if the result is not null
+      if (updatedPaymentResult) {
+        // Now, explicitly set guest_id in the updatedPaymentResult
+        updatedPaymentResult = updatedPaymentResult.toObject(); // Convert to a plain JavaScript object
+        updatedPaymentResult.guest_id = guest_id;
+      }
 
 
+      console.log("updatedPaymentResult", updatedPaymentResult);
 
       res.status(200).send({
         status: true,
@@ -967,6 +986,8 @@ exports.approve_menu_payment = async (req, res, next) => {
     }
   }
 };
+
+
 
 
 

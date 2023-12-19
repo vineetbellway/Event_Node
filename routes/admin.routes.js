@@ -29,20 +29,36 @@ const storage = multer.diskStorage({
  });
 
 const authController = require("../controllers/admin/auth_controller");
-const sellerController = require("../controllers/seller_controller");
+const sellerController = require("../controllers/admin/seller_controller");
+const guestController = require("../controllers/admin/guest_controller");
+const validatorController = require("../controllers/admin/validator_controller");
 
+// auth routes
 
 router.post("/login",authController.login);
 
-
-router.post("/seller", sellerController.create_seller);
-router.put("/seller/:id", auth, sellerController.update_seller);
+// seller routes
 
 router.get("/seller", auth, sellerController.get_sellers);
-router.get("/seller/:id", auth, sellerController.get_seller);
-router.get("/seller_by_user_id/:id",auth,sellerController.get_seller_by_user_id);
+router.get("/seller/:id",auth, sellerController.get_seller);
+router.put("/seller/:id",auth, sellerController.update_seller);
 router.delete("/seller/:id", auth, sellerController.delete_seller);
-router.delete("/seller", auth, sellerController.delete_sellers);
+
+// guest routes
+
+router.get("/guest", auth, guestController.get_guests);
+router.get("/guest/:id", auth, guestController.get_guest);
+router.put("/guest/:id", auth, guestController.update_guest);
+router.delete("/guest/:id", auth, guestController.delete_guest);
+
+
+// validator routes
+
+
+router.get("/validator", validatorController.get_validators);
+router.get("/validator/:id", auth,validatorController.get_validator);
+router.put("/validator/:id", auth,validatorController.update_validator);
+router.delete("/validator/:id", auth, validatorController.delete_validator);
 
 
 

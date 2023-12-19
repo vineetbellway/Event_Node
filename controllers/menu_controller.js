@@ -835,10 +835,10 @@ exports.get_booked_menu_items = async (req, res, next) => {
       ]);
 
       console.log("event_menus", event_menus);
-
+      
       // Check if cover charge exceeds the sum of menu item prices
       let sum = 0;
-      for (const item of menuItemResult) {
+      for (const item of bookedMenuResult) {
         if (item && typeof item.quantity === 'number' && item.quantity > 0) {
           const menu_id = item.menu_id;
           const menuRecord = await Menu.findById(menu_id);

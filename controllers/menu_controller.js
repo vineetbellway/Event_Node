@@ -911,7 +911,7 @@ exports.approve_menu_payment = async (req, res, next) => {
 
       // Check if cover charge exceeds the sum of menu item prices
       let sum = 0;
-      for (const item of menuItemResult) {
+      for (const item of bookedMenuResult) {
         if (item && typeof item.quantity === 'number' && item.quantity > 0) {
           const menu_id = item.menu_id;
           const menuRecord = await Menu.findById(menu_id);
@@ -922,18 +922,25 @@ exports.approve_menu_payment = async (req, res, next) => {
         }
       }
 
+ 
       // Fetch cover charge from the event record
       const eventRecord = await EventModel.findById(event_id);
       let coverCharge = eventRecord ? eventRecord.cover_charge : 0;
 
+     
+
       // Check if cover charge exceeds the sum of menu item prices
-      if (coverCharge > sum) {
-        res.status(400).send({ status: false, message: "Cover charge exceeds the sum of menu item prices", data: [] });
+      if (sum > coverCharge) {
+        res.status(400).send({ status: false, message: "Total price exceeds then cover charge", data: [] });
         return;
       }
 
+
+
       // Subtract sum from cover charge
       coverCharge -= sum;
+
+    
 
       // Update cover charge in the event record
       await EventModel.findByIdAndUpdate(event_id, { $set: { cover_charge: coverCharge } });
@@ -946,8 +953,8 @@ exports.approve_menu_payment = async (req, res, next) => {
         { new: true }
       );
 
-      // Delete booked menu items
-      await BookedMenuItem.deleteMany({ payment_id: payment_id });
+
+
 
       res.status(200).send({
         status: true,

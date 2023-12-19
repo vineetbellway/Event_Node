@@ -54,8 +54,7 @@ router.delete("/guest/:id", auth, guestController.delete_guest);
 
 // validator routes
 
-
-router.get("/validator", validatorController.get_validators);
+router.get("/validator",auth, validatorController.get_validators);
 router.get("/validator/:id", auth,validatorController.get_validator);
 router.put("/validator/:id", auth,validatorController.update_validator);
 router.delete("/validator/:id", auth, validatorController.delete_validator);

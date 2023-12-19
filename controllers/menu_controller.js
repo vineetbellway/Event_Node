@@ -756,11 +756,13 @@ exports.book_menu_items = async (req, res, next) => {
 };
 
 exports.get_booked_menu_items = async (req, res, next) => {
-  if (!req.body || !req.body.payment_id) {
+  if (req.query.payment_id == '') {
     res.status(400).send({ status: false, message: "Invalid request body", data: [] });
   } else {
     try {
-      const { payment_id } = req.body;
+      var payment_id  = req.query.payment_id;
+
+      console.log("payment_id",payment_id)
 
       // Check the existence of payment_id in the BookedMenuItem collection
       const bookedMenuResult = await BookedMenuItem.find({ payment_id: payment_id });

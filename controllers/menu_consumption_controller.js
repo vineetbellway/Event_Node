@@ -4,7 +4,7 @@ const BookingMenu = require("../models/booking_menu.model");
 
 exports.add_guest_consumption_of_menu_item = async (req, res, next) => {
   try {
-    const menuItems = req.body;
+    const menuItems = req.body.menu_items;
 
     if (!Array.isArray(menuItems)) {
       res.status(400).send({ status: false, message: "Invalid request format. Expected an array.", data: null });

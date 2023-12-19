@@ -342,7 +342,7 @@ router.get("/get-guest-list-for-banner",auth, bannerController.get_guest_list_fo
 router.post("/book-menu-items",auth, menuController.book_menu_items);
 
 // get booked menu items API
-router.get("/get-booked-menu-items",auth, menuController.get_booked_menu_items);
+router.get("/get-booked-menu-items", menuController.get_booked_menu_items);
 
 // approve menu payment API
 router.post("/approve-menu-payment",auth, menuController.approve_menu_payment);

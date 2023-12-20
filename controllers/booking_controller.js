@@ -499,10 +499,10 @@ const sendExpiredEventNotification = () => {
           if (guest_result && event_result && event_result.length > 0) {
             const fcm_token = guest_result[0].fcm_token; // Assuming device_token is in the first element
             var title = "Event Expired";
-            var message = 'Your event has been expired';
+            var message = 'Your event will be expired soon';
             var end_time = moment(event_result[0].end_time);
 
-
+            // half hour before end time EVent
             if (end_time.isBefore(currentDateTime)) {
               Booking.findByIdAndUpdate(bookingData._id, { 'status': 'expired' })
                 .then(() => {

@@ -785,6 +785,14 @@ const get_booked_guest_list = async (req, res) => {
 };
 
 
+
+
+
+
+
+
+
+
 const get_guest_coupon_balance = async (req, res) => {
   const guest_id = req.query.guest_id;
 
@@ -792,34 +800,33 @@ const get_guest_coupon_balance = async (req, res) => {
     res.status(400).json({ status: false, message: "Guest ID is required in the request body" });
   } else {
     try {
+      // Fetch all MenuItemBooking records for the guest
       var MenuItemBookingRecord = await MenuItemBookings.find({ "guest_id": guest_id });
 
+      // Initialize sum as 0
+      var sum = 0;
+
+      // Iterate over each MenuItemBooking record
       for (const item1 of MenuItemBookingRecord) {
         var payment_id = item1.payment_id;
-        console.log("payment_id",payment_id)
-        const bookedPaymentResult = await MenuItemPayments.find({_id: payment_id });
-          var sum = 0;
-          console.log("bookedPaymentResult",bookedPaymentResult)
-            for (const item of bookedPaymentResult) {
-             
+        console.log("payment_id", payment_id);
 
-                
-                  sum +=  item.amount;
-                
-              
-            }
+        // Fetch the MenuItemPayments record
+        const bookedPaymentResult = await MenuItemPayments.findOne({ _id: payment_id });
 
-          }
+        // If a record is found, add its amount to the sum
+        if (bookedPaymentResult && typeof bookedPaymentResult.amount === 'number') {
+          console.log("amount", bookedPaymentResult.amount);
+          sum += bookedPaymentResult.amount;
+        }
+      }
 
-      
+      console.log("Total Sum:", sum); // Output the total sum after the loop
 
-
-
-
-      var MenuPaymentRecord = await MenuItemPayments.findById(payment_id);
+      // Now you can use the sum in your aggregation
       var paymentAmount = sum;
-      console.log("payment_id",payment_id)
-      console.log("MenuItemBookingRecord",MenuItemBookingRecord)
+
+      // Continue with the rest of your code...
 
       Booking.aggregate([
         {
@@ -914,13 +921,6 @@ const get_guest_coupon_balance = async (req, res) => {
     }
   }
 };
-
-
-
-
-
-
-
 
 
 

@@ -735,11 +735,15 @@ exports.close_event_counter = async (req, res, next) => {
 
 
 exports.get_expired_events = async (req, res) => {
-    try {
+  var id = req.params.id;  
+  try {
       await EventModel.aggregate([
         {
           $match: {
-            status: baseStatus.expired,
+            $and: [
+              { status: baseStatus.expired },
+              { seller_id: new mongoose.Types.ObjectId(id) }, // Convert id to ObjectId if needed
+            ],
           },
         },
       ])

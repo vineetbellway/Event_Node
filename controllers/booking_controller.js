@@ -10,7 +10,7 @@ const EventModel = require("../models/event.model");
 const momentTimeZone = require('moment-timezone');
 const MenuItemBookings = require("../models/booked_menu_item.model");
 const MenuItemPayments = require("../models/menu_item_payments.model");
-
+const Menu = require("../models/menu.model");
 // It will book event by guest
 
 const book = async (req, res, next) => {
@@ -793,9 +793,33 @@ const get_guest_coupon_balance = async (req, res) => {
   } else {
     try {
       var MenuItemBookingRecord = await MenuItemBookings.find({ "guest_id": guest_id });
-      var payment_id = MenuItemBookingRecord[0].payment_id;
+
+      for (const item1 of MenuItemBookingRecord) {
+        var payment_id = item1.payment_id;
+        console.log("payment_id",payment_id)
+        const bookedPaymentResult = await MenuItemPayments.find({_id: payment_id });
+          var sum = 0;
+          console.log("bookedPaymentResult",bookedPaymentResult)
+            for (const item of bookedPaymentResult) {
+             
+
+                
+                  sum +=  item.amount;
+                
+              
+            }
+
+          }
+
+      
+
+
+
+
       var MenuPaymentRecord = await MenuItemPayments.findById(payment_id);
-      var paymentAmount = MenuPaymentRecord.amount;
+      var paymentAmount = sum;
+      console.log("payment_id",payment_id)
+      console.log("MenuItemBookingRecord",MenuItemBookingRecord)
 
       Booking.aggregate([
         {

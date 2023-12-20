@@ -347,6 +347,9 @@ router.get("/get-booked-menu-items",auth, menuController.get_booked_menu_items);
 // approve menu payment API
 router.post("/approve-menu-payment",auth, menuController.approve_menu_payment);
 
+// get expired events API
+router.get("/get-expired-events",auth, eventController.get_expired_events);
+
 cron.schedule("* * * * *", function () {
   //  console.log("Cron job is running");
     // bookingController.disableSellerServices();

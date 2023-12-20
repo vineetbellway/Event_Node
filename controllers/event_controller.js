@@ -732,3 +732,36 @@ exports.close_event_counter = async (req, res, next) => {
     });
   }
 };
+
+
+exports.get_expired_events = async (req, res) => {
+    try {
+      await EventModel.aggregate([
+        {
+          $match: {
+            status: baseStatus.expired,
+          },
+        },
+      ])
+        .then((result) => {
+          if (result) {
+            res.status(200).send({
+              status: true,
+              message: "success",
+              data: result,
+            });
+          }
+        })
+        .catch((error) => {
+          res.send({
+            status: false,
+            message: error.toString() ?? "Error",
+          });
+        });
+    } catch (error) {
+      res.status(500).send({
+        status: false,
+        message: error.toString() ?? "Internal Server Error",
+      });
+    }
+};

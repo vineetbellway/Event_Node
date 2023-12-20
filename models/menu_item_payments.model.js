@@ -12,6 +12,9 @@ const schema = new mongoose.Schema(
     payment_status: {
         type: "String",
     },
+    amount: {
+        type: Number,
+    },
     is_approved: {
         type: "String",
     },

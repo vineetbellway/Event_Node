@@ -800,31 +800,43 @@ const get_guest_coupon_balance = async (req, res) => {
     res.status(400).json({ status: false, message: "Guest ID is required in the request body" });
   } else {
     try {
-      // Fetch all MenuItemBooking records for the guest
-      var MenuItemBookingRecord = await MenuItemBookings.find({ "guest_id": guest_id });
-
-      // Initialize sum as 0
-      var sum = 0;
-
-      // Iterate over each MenuItemBooking record
-      for (const item1 of MenuItemBookingRecord) {
-        var payment_id = item1.payment_id;
-        console.log("payment_id", payment_id);
-
-        // Fetch the MenuItemPayments record
-        const bookedPaymentResult = await MenuItemPayments.findOne({ _id: payment_id });
-
-        // If a record is found, add its amount to the sum
-        if (bookedPaymentResult && typeof bookedPaymentResult.amount === 'number') {
-          console.log("amount", bookedPaymentResult.amount);
-          sum += bookedPaymentResult.amount;
-        }
-      }
-
-      console.log("Total Sum:", sum); // Output the total sum after the loop
-
-      // Now you can use the sum in your aggregation
-      var paymentAmount = sum;
+            // Fetch all MenuItemBooking records for the guest
+            const result = await MenuItemBookings.aggregate([
+              {
+                $match: {
+                  guest_id: new mongoose.Types.ObjectId(guest_id),
+                },
+              },
+              {
+                $group: {
+                  _id: "$payment_id", // Group by payment_id
+                  // Add more aggregation stages as needed
+                },
+              },
+            ]);
+      
+            // Initialize sum as 0
+            var sum = 0;
+      
+            // Iterate over each MenuItemBooking record
+            for (const item1 of result) {
+              var payment_id = item1._id; // Access the _id from the result
+              console.log("payment_id", payment_id);
+      
+              // Fetch the MenuItemPayments record
+              const bookedPaymentResult = await MenuItemPayments.findOne({ _id: payment_id });
+      
+              // If a record is found, add its amount to the sum
+              if (bookedPaymentResult && typeof bookedPaymentResult.amount === 'number') {
+                console.log("amount", bookedPaymentResult.amount);
+                sum += bookedPaymentResult.amount;
+              }
+            }
+      
+            console.log("Total Sum:", sum); // Output the total sum after the loop
+      
+            // Now you can use the sum in your aggregation
+            var paymentAmount = sum;
 
       // Continue with the rest of your code...
 

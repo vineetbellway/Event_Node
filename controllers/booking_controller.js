@@ -793,7 +793,7 @@ const get_booked_guest_list = async (req, res) => {
 
 
 
-const get_guest_coupon_balance = async (req, res) => {
+const get_guest_coupon_balanceold = async (req, res) => {
   const guest_id = req.query.guest_id;
 
   if (!guest_id) {
@@ -817,6 +817,8 @@ const get_guest_coupon_balance = async (req, res) => {
       
             // Initialize sum as 0
             var sum = 0;
+
+            console.log("result",result)
       
             // Iterate over each MenuItemBooking record
             for (const item1 of result) {
@@ -825,6 +827,8 @@ const get_guest_coupon_balance = async (req, res) => {
       
               // Fetch the MenuItemPayments record
               const bookedPaymentResult = await MenuItemPayments.findOne({ _id: payment_id });
+
+            
       
               // If a record is found, add its amount to the sum
               if (bookedPaymentResult && typeof bookedPaymentResult.amount === 'number') {
@@ -936,7 +940,163 @@ const get_guest_coupon_balance = async (req, res) => {
 
 
 
+const get_guest_coupon_balance = async (req, res) => {
+  const guest_id = req.query.guest_id;
 
+  if (!guest_id) {
+    res.status(400).json({ status: false, message: "Guest ID is required in the request body" });
+  } else {
+    try {
+      // Fetch all MenuItemBooking records for the guest
+      const result = await MenuItemBookings.aggregate([
+        {
+          $match: {
+            guest_id: new mongoose.Types.ObjectId(guest_id),
+          },
+        },
+        {
+          $lookup: {
+            from: 'MenuItemPayments',
+            localField: 'payment_id',
+            foreignField: '_id',
+            as: 'payment_data',
+          },
+        },
+        {
+          $group: {
+            _id: {
+              payment_id: "$payment_id", // Group by payment_id
+              event_id: "$event_id", // Group by event_id if it exists
+            },
+          },
+        },
+      ]);
+      
+      // Initialize sum as 0
+      let sum = 0;
+      
+      console.log("result", result);
+      
+      // Iterate over each MenuItemBooking record
+      for (const item1 of result) {
+        const payment_id = item1._id.payment_id; // Access the payment_id from the result
+        const event_id = item1._id.event_id; // Access the event_id from the result
+        console.log("payment_id", payment_id);
+        console.log("event_id", event_id);
+      
+        // Fetch the MenuItemPayments record
+        const bookedPaymentResult = await MenuItemPayments.findOne({ _id: payment_id });
+      
+        // Check if the event is active
+        if (bookedPaymentResult) {
+          const eventDetails = await EventModel.findOne({ '_id': event_id });
+          if (eventDetails && eventDetails.status === 'active') {
+            // If the event is active, add its amount to the sum
+            sum += bookedPaymentResult.amount;
+          }
+        }
+      }
+
+      console.log("Total Sum:", sum); // Output the total sum after the loop
+
+      // Now you can use the sum in your aggregation
+      const paymentAmount = sum;
+
+      // Continue with the rest of your code...
+
+      Booking.aggregate([
+        {
+          $match: {
+            guest_id: new mongoose.Types.ObjectId(guest_id),
+          },
+        },
+        {
+          $lookup: {
+            from: 'bookingmenus',
+            localField: '_id',
+            foreignField: 'booking_id',
+            as: 'booked_menu_data',
+          },
+        },
+        {
+          $unwind: { path: "$booked_menu_data", preserveNullAndEmptyArrays: true },
+        },
+        {
+          $lookup: {
+            from: 'menus',
+            localField: 'booked_menu_data.menu_id',
+            foreignField: '_id',
+            as: 'menu_data',
+          },
+        },
+        {
+          $unwind: { path: "$menu_data", preserveNullAndEmptyArrays: true },
+        },
+        {
+          $sort: { createdAt: -1 }, // Sort by createdAt in descending order
+        },
+        {
+          $project: {
+            _id: 0,
+            total_coupon_balance: {
+              $sum: [
+                {
+                  $cond: {
+                    if: {
+                      $and: [
+                        { $ifNull: ["$booked_menu_data", []] }, // Check if booked_menu_data is not null or empty
+                        { $ifNull: ["$menu_data", []] }, // Check if menu_data is not null or empty
+                      ],
+                    },
+                    then: paymentAmount, // Use paymentAmount directly
+                    else: {
+                      $sum: [
+                        {
+                          $multiply: [
+                            "$booked_menu_data.quantity",
+                            { $arrayElemAt: ["$menu_data.selling_price", 0] },
+                          ],
+                        },
+                        paymentAmount, // Sum paymentAmount with the calculated value
+                      ],
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        },
+      ])
+        .then((result) => {
+          console.log("result", result);
+          if (result && result.length > 0) {
+            const lastRecord = result[result.length - 1];
+
+            res.status(200).json({
+              status: true,
+              message: "Data found",
+              data: lastRecord, // Since we're grouping, result is an array with one element
+            });
+          } else {
+            res.status(200).json({ status: false, message: "No bookings found", data: null });
+          }
+        })
+        .catch((error) => {
+          console.log("error", error);
+          res.status(500).json({
+            status: false,
+            message: error.toString() || "Internal Server Error",
+          });
+        });
+    } catch (error) {
+      console.log("error", error);
+      res.status(500).json({
+        status: false,
+        message: error.toString() || "Internal Server Error",
+      });
+    }
+  }
+};
 
 module.exports = {
   sendEventNotification,

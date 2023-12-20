@@ -707,6 +707,9 @@ exports.book_menu_items = async (req, res, next) => {
     
         const payment_id = paymentResult._id;
 
+
+
+
         for (let i = 0; i < menuItems.length; i += batchSize) {
           const batch = menuItems.slice(i, i + batchSize);
     
@@ -749,6 +752,23 @@ exports.book_menu_items = async (req, res, next) => {
     
     
         }
+
+        const bookedMenuResult = await BookedMenuItem.find({ payment_id: payment_id });
+          var sum = 0;
+            for (const item of bookedMenuResult) {
+              if (item && typeof item.quantity === 'number' && item.quantity > 0) {
+                const menu_id = item.menu_id;
+                const menuRecord = await Menu.findById(menu_id);
+
+                if (menuRecord) {
+                  sum += menuRecord.selling_price * item.quantity;
+                }
+              }
+            }
+
+            await MenuItemPayments.findByIdAndUpdate(payment_id, { $set: { amount: sum } });
+
+
           // Delete records from the menuItems model
           const deleteConditions = {
             event_id: { $in: results.map(item => item.event_id) },

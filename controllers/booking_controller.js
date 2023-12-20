@@ -7,6 +7,9 @@ const { addNotification } = require('../helpers/notification_helper');
 const { sendPushNotification } = require('../config/firebase.config'); // Update with the correct path to your module.
 const SellerModel = require("../models/seller.model");
 const EventModel = require("../models/event.model");
+const momentTimeZone = require('moment-timezone');
+const MenuItemBookings = require("../models/booked_menu_item.model");
+const MenuItemPayments = require("../models/menu_item_payments.model");
 
 // It will book event by guest
 
@@ -463,6 +466,96 @@ const  get_booking_detail = async (req, res) => {
   }
 };
 
+const sendExpireEventNotification = () => {
+  Booking.aggregate([
+    {
+      $match: {
+        status: 'active'
+      },
+    },
+    {
+      $lookup: {
+        from: 'events',
+        localField: 'event_id',
+        foreignField: '_id',
+        as: 'event_data',
+      },
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'guest_id',
+        foreignField: '_id',
+        as: 'guest_data',
+      },
+    },
+  ])
+    .then((result) => {
+      console.log("result", result)
+      if (result && result.length > 0) {
+        const currentDateTime = moment();
+        for (const bookingData of result) {
+          var guest_result = bookingData.guest_data;
+          var event_result = bookingData.event_data;
+
+
+          if (guest_result && event_result && event_result.length > 0) {
+            const guest_fcm_token = guest_result[0].fcm_token; // Assuming device_token is in the first element
+            var title = "Event will be expired";
+            var message = 'Your event will be expired soon';
+            var end_time = moment(event_result[0].end_time);
+
+            // half hour before end time Event
+            console.log('end_time',end_time);
+             // half an hour before end time Event
+             const originalDateTime = end_time.clone().subtract(30, 'minutes');
+
+             const originalTimezone = 'Asia/Kolkata'; 
+
+
+            const convertedEventDateTime = momentTimeZone.tz(originalDateTime, originalTimezone).utc().format();
+            const convertedCurrentDateTime = momentTimeZone.tz(currentDateTime, originalTimezone).utc();
+            const formattedDateTime = convertedCurrentDateTime.format('YYYY-MM-DDTHH:mm:ss[Z]');
+
+
+             console.log('convertedEventDateTime', moment(convertedEventDateTime));
+             console.log('currentDateTime', currentDateTime);
+ 
+             if (currentDateTime.isAfter(moment(convertedEventDateTime))) {
+              console.log("inside this")
+
+              const notification = {
+                title: title,
+                body: message,
+              };
+
+              const data = {
+                // Additional data to send with the notification, if needed.
+              };
+
+              var type = 'app';
+              addNotification(bookingData.guest_id, bookingData.guest_id, title, message, type);
+
+              sendPushNotification(guest_fcm_token, notification, data)
+                .then(() => {
+                  console.log('Push notification sent successfully to guest.');
+                })
+                .catch((error) => {
+                  console.error('Error sending push notification to guest:', error);
+                });
+            }
+          }
+        }
+      } else {
+       // console.log("No bookings found");
+      }
+    })
+    .catch((error) => {
+      console.error(error.toString() || "Error");
+    });
+};
+
+
 const sendExpiredEventNotification = () => {
   Booking.aggregate([
     {
@@ -490,26 +583,48 @@ const sendExpiredEventNotification = () => {
     .then((result) => {
      // console.log("result", result)
       if (result && result.length > 0) {
-        const currentDateTime = moment();
+        //const currentDateTime = moment();
         for (const bookingData of result) {
           var guest_result = bookingData.guest_data;
           var event_result = bookingData.event_data;
 
 
           if (guest_result && event_result && event_result.length > 0) {
-            const fcm_token = guest_result[0].fcm_token; // Assuming device_token is in the first element
+            const guest_fcm_token = guest_result[0].fcm_token; 
+            var seller_id = event_result[0].seller_id;
+            console.log("seller_id",seller_id);
+           // var seller_record = User.findById(seller_id);
+         //  console.log("seller_record",seller_record[0]);
             var title = "Event Expired";
-            var message = 'Your event will be expired soon';
-            var end_time = moment(event_result[0].end_time);
+            var message = 'Your event has been expired';
+            var end_time = event_result[0].end_time;
+            var eventId = event_result[0]._id;
+            const currentDateTime = moment();
+            var formated_current_date_time = currentDateTime.tz('Asia/Kolkata').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+            console.log("end_time",end_time)    
+            // Extract hour and minute from formatted_current_date_time
+            const currentHourMinute = currentDateTime.format('HH:mm');
 
-            // half hour before end time EVent
-            if (end_time.isBefore(currentDateTime)) {
-              Booking.findByIdAndUpdate(bookingData._id, { 'status': 'expired' })
+            // Extract hour and minute from end_time
+            const endTimeHourMinute = moment(end_time).format('HH:mm');
+
+            // Check if current time (hour:minute) is after end_time (13:06)
+            if (endTimeHourMinute > currentHourMinute) {
+              console.log('formatted_current_date_time is after end_time (13:05).');
+            } else {
+              console.log('formatted_current_date_time is not after end_time (13:05).');
+            }
+
+            console.log("formated_current_date_time",formated_current_date_time)  
+            // after event end time
+            if (endTimeHourMinute > currentHourMinute) {
+              console.log("inside this")
+              EventModel.findByIdAndUpdate(eventId, { 'status': 'expired' })
                 .then(() => {
                   // Update successful
                 })
                 .catch((error) => {
-                  console.error('Error updating booking status:', error);
+                  console.error('Error updating event status:', error);
                 });
 
               const notification = {
@@ -524,7 +639,7 @@ const sendExpiredEventNotification = () => {
               var type = 'app';
               addNotification(bookingData.guest_id, bookingData.guest_id, title, message, type);
 
-              sendPushNotification(fcm_token, notification, data)
+              sendPushNotification(guest_fcm_token, notification, data)
                 .then(() => {
                   console.log('Push notification sent successfully to guest.');
                 })
@@ -542,8 +657,6 @@ const sendExpiredEventNotification = () => {
       console.error(error.toString() || "Error");
     });
 };
-
-
 
 const get_booked_guest_list = async (req, res) => {
   var seller_id = req.query.seller_id;
@@ -679,6 +792,11 @@ const get_guest_coupon_balance = async (req, res) => {
     res.status(400).json({ status: false, message: "Guest ID is required in the request body" });
   } else {
     try {
+      var MenuItemBookingRecord = await MenuItemBookings.find({ "guest_id": guest_id });
+      var payment_id = MenuItemBookingRecord[0].payment_id;
+      var MenuPaymentRecord = await MenuItemPayments.findById(payment_id);
+      var paymentAmount = MenuPaymentRecord.amount;
+
       Booking.aggregate([
         {
           $match: {
@@ -708,17 +826,6 @@ const get_guest_coupon_balance = async (req, res) => {
           $unwind: { path: "$menu_data", preserveNullAndEmptyArrays: true },
         },
         {
-          $lookup: {
-            from: 'events',
-            localField: 'event_id',
-            foreignField: '_id',
-            as: 'event_data',
-          },
-        },
-        {
-          $unwind: "$event_data",
-        },
-        {
           $sort: { createdAt: -1 }, // Sort by createdAt in descending order
         },
         {
@@ -734,11 +841,16 @@ const get_guest_coupon_balance = async (req, res) => {
                         { $ifNull: ["$menu_data", []] }, // Check if menu_data is not null or empty
                       ],
                     },
-                    then: "$event_data.cover_charge", // If both arrays are empty or null, include cover charge
+                    then: paymentAmount, // Use paymentAmount directly
                     else: {
-                      $multiply: [
-                        "$booked_menu_data.quantity",
-                        { $arrayElemAt: ["$menu_data.selling_price", 0] },
+                      $sum: [
+                        {
+                          $multiply: [
+                            "$booked_menu_data.quantity",
+                            { $arrayElemAt: ["$menu_data.selling_price", 0] },
+                          ],
+                        },
+                        paymentAmount, // Sum paymentAmount with the calculated value
                       ],
                     },
                   },
@@ -748,27 +860,27 @@ const get_guest_coupon_balance = async (req, res) => {
           },
         },
       ])
-      .then((result) => {
-        console.log("result", result);
-        if (result && result.length > 0) {
-          const lastRecord = result[result.length - 1];
+        .then((result) => {
+          console.log("result", result);
+          if (result && result.length > 0) {
+            const lastRecord = result[result.length - 1];
 
-          res.status(200).json({
-            status: true,
-            message: "Data found",
-            data: lastRecord, // Since we're grouping, result is an array with one element
+            res.status(200).json({
+              status: true,
+              message: "Data found",
+              data: lastRecord, // Since we're grouping, result is an array with one element
+            });
+          } else {
+            res.status(200).json({ status: false, message: "No bookings found", data: null });
+          }
+        })
+        .catch((error) => {
+          console.log("error", error);
+          res.status(500).json({
+            status: false,
+            message: error.toString() || "Internal Server Error",
           });
-        } else {
-          res.status(200).json({ status: false, message: "No bookings found", data: null });
-        }
-      })
-      .catch((error) => {
-        console.log("error", error);
-        res.status(500).json({
-          status: false,
-          message: error.toString() || "Internal Server Error",
         });
-      });
     } catch (error) {
       console.log("error", error);
       res.status(500).json({
@@ -788,8 +900,11 @@ const get_guest_coupon_balance = async (req, res) => {
 
 
 
+
+
 module.exports = {
   sendEventNotification,
+  sendExpireEventNotification,
   sendExpiredEventNotification,
   manage_bookings,
   get_bookings,

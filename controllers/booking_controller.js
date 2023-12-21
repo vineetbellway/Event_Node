@@ -556,89 +556,120 @@ const sendExpireEventNotification = () => {
 };
 
 
-const sendExpiredEventNotification = () => {
-  Booking.aggregate([
-    {
-      $match: {
-        status: 'active'
+const sendExpiredEventNotification = async () => {
+  try {
+    const result = await Booking.aggregate([
+      {
+        $match: {
+          status: 'active'
+        },
       },
-    },
-    {
-      $lookup: {
-        from: 'events',
-        localField: 'event_id',
-        foreignField: '_id',
-        as: 'event_data',
+      {
+        $lookup: {
+          from: 'events',
+          localField: 'event_id',
+          foreignField: '_id',
+          as: 'event_data',
+        },
       },
-    },
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'guest_id',
-        foreignField: '_id',
-        as: 'guest_data',
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'guest_id',
+          foreignField: '_id',
+          as: 'guest_data',
+        },
       },
-    },
-  ])
-    .then((result) => {
-     // console.log("result", result)
-      if (result && result.length > 0) {
-        //const currentDateTime = moment();
-        for (const bookingData of result) {
-          var guest_result = bookingData.guest_data;
-          var event_result = bookingData.event_data;
+    ]);
+
+    if (result && result.length > 0) {
+      for (const bookingData of result) {
+        const guest_result = bookingData.guest_data;
+        const event_result = bookingData.event_data;
+
+        var guest_id = guest_result[0].user_id;
+
+        if (guest_result && event_result && event_result.length > 0) {
+          const guest_fcm_token = guest_result[0].fcm_token;
+          const seller_id = event_result[0].seller_id;
+
+          // Make sure the function is marked as async to use await
+          const seller_record = await User.findById(seller_id);
+
+          const title = "Event Expired";
+          const message = 'Your event has been expired';
+          const end_time = event_result[0].end_time;
 
 
-          if (guest_result && event_result && event_result.length > 0) {
-            const guest_fcm_token = guest_result[0].fcm_token; 
-            var seller_id = event_result[0].seller_id;
-            console.log("seller_id",seller_id);
-           // var seller_record = User.findById(seller_id);
-         //  console.log("seller_record",seller_record[0]);
-            var title = "Event Expired";
-            var message = 'Your event has been expired';
-            var end_time = event_result[0].end_time;
-            var eventId = event_result[0]._id;
-            const currentDateTime = moment();
-            var formated_current_date_time = currentDateTime.tz('Asia/Kolkata').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
-            console.log("end_time",end_time)    
-            // Extract hour and minute from formatted_current_date_time
-            const currentHourMinute = currentDateTime.format('HH:mm');
+          const seller_fcm_token = seller_record.fcm_token;
 
-            // Extract hour and minute from end_time
-            const endTimeHourMinute = moment(end_time).format('HH:mm');
+          const currentDateTime = new Date();
+          const year = currentDateTime.getFullYear();
+          const month = ('0' + (currentDateTime.getMonth() + 1)).slice(-2);
+          const day = ('0' + currentDateTime.getDate()).slice(-2);
+          const hours = ('0' + currentDateTime.getHours()).slice(-2);
+          const minutes = ('0' + currentDateTime.getMinutes()).slice(-2);
+          const seconds = ('0' + currentDateTime.getSeconds()).slice(-2);
+          
+          const currentDateTimeFormatted = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000Z`;
 
-            // Check if current time (hour:minute) is after end_time (13:06)
-            if (endTimeHourMinute > currentHourMinute) {
-              console.log('formatted_current_date_time is after end_time (13:05).');
-            } else {
-              console.log('formatted_current_date_time is not after end_time (13:05).');
-            }
 
-            console.log("formated_current_date_time",formated_current_date_time)  
-            // after event end time
-            if (endTimeHourMinute > currentHourMinute) {
-              console.log("inside this")
-              EventModel.findByIdAndUpdate(eventId, { 'status': 'expired' })
-                .then(() => {
-                  // Update successful
-                })
-                .catch((error) => {
-                  console.error('Error updating event status:', error);
-                });
+          var now = moment().toDate();
+          const formattedCurrentDateTime = currentDateTime.toISOString();
+          console.log("formattedCurrentDateTime",currentDateTimeFormatted)
+          
+   
+          const startOfDay = new Date(currentDateTimeFormatted);
+          console.log("startOfDay",startOfDay)
 
-              const notification = {
-                title: title,
-                body: message,
-              };
+          const endOfDay = new Date(currentDateTimeFormatted);
+          endOfDay.setSeconds(endOfDay.getSeconds() + 1); // Add 1 second
+          console.log("endOfDay",endOfDay)
+          const future_events = await EventModel.find({
+            end_time: { $gte: startOfDay, $lt: endOfDay }
+          });
+          console.log("future_events",future_events)
+          if(future_events.length > 0){
+            for(const ev of future_events){
+                  var eventId = ev._id;
 
-              const data = {
-                // Additional data to send with the notification, if needed.
-              };
+                  const menuItemBookingResult = await MenuItemBookings.aggregate([
+                    {
+                      $match: {
+                        guest_id: new mongoose.Types.ObjectId(guest_id),
+                        event_id: new mongoose.Types.ObjectId(eventId),
+                      },
+                    },
+                  ]);
 
+                  if(menuItemBookingResult.length > 0){
+                     for(itembooking of menuItemBookingResult){
+                        var payment_id = itembooking.payment_id;
+                         // Update amount in the menu item payment record
+                        await MenuItemPayments.findByIdAndUpdate(payment_id, { $set: { amount: 0 } });
+                     }
+                  }
+
+
+
+                  EventModel.findByIdAndUpdate(eventId, { 'status': 'expired' })
+                  .then(() => {
+                    // Update successful
+
+                const notification = {
+                  title: title,
+                  body: message,
+                };
+
+                const data = {
+                  // Additional data to send with the notification, if needed.
+                };
+
+              // Add notification to the guest
               var type = 'app';
               addNotification(bookingData.guest_id, bookingData.guest_id, title, message, type);
 
+              // Send push notification to the guest
               sendPushNotification(guest_fcm_token, notification, data)
                 .then(() => {
                   console.log('Push notification sent successfully to guest.');
@@ -646,17 +677,35 @@ const sendExpiredEventNotification = () => {
                 .catch((error) => {
                   console.error('Error sending push notification to guest:', error);
                 });
+
+                // Add notification to the seller
+              var type = 'app';
+              addNotification(seller_id, seller_id, title, message, type);
+
+              // Send push notification to the seller
+              sendPushNotification(seller_fcm_token, notification, data)
+                .then(() => {
+                  console.log('Push notification sent successfully to seller.');
+                })
+                .catch((error) => {
+                  console.error('Error sending push notification to seller:', error);
+                });
+                })
+              .catch((error) => {
+                console.error('Error updating event status:', error);
+              }); 
             }
           }
         }
-      } else {
-       // console.log("No bookings found");
       }
-    })
-    .catch((error) => {
-      console.error(error.toString() || "Error");
-    });
+    } else {
+      console.log("No bookings found");
+    }
+  } catch (error) {
+    console.error(error.toString() || "Error");
+  }
 };
+
 
 const get_booked_guest_list = async (req, res) => {
   var seller_id = req.query.seller_id;
@@ -788,159 +837,7 @@ const get_booked_guest_list = async (req, res) => {
 
 
 
-
-
-
-
-
 const get_guest_coupon_balanceold = async (req, res) => {
-  const guest_id = req.query.guest_id;
-
-  if (!guest_id) {
-    res.status(400).json({ status: false, message: "Guest ID is required in the request body" });
-  } else {
-    try {
-            // Fetch all MenuItemBooking records for the guest
-            const result = await MenuItemBookings.aggregate([
-              {
-                $match: {
-                  guest_id: new mongoose.Types.ObjectId(guest_id),
-                },
-              },
-              {
-                $group: {
-                  _id: "$payment_id", // Group by payment_id
-                  // Add more aggregation stages as needed
-                },
-              },
-            ]);
-      
-            // Initialize sum as 0
-            var sum = 0;
-
-            console.log("result",result)
-      
-            // Iterate over each MenuItemBooking record
-            for (const item1 of result) {
-              var payment_id = item1._id; // Access the _id from the result
-              console.log("payment_id", payment_id);
-      
-              // Fetch the MenuItemPayments record
-              const bookedPaymentResult = await MenuItemPayments.findOne({ _id: payment_id });
-
-            
-      
-              // If a record is found, add its amount to the sum
-              if (bookedPaymentResult && typeof bookedPaymentResult.amount === 'number') {
-                console.log("amount", bookedPaymentResult.amount);
-                sum += bookedPaymentResult.amount;
-              }
-            }
-      
-            console.log("Total Sum:", sum); // Output the total sum after the loop
-      
-            // Now you can use the sum in your aggregation
-            var paymentAmount = sum;
-
-      // Continue with the rest of your code...
-
-      Booking.aggregate([
-        {
-          $match: {
-            guest_id: new mongoose.Types.ObjectId(guest_id),
-          },
-        },
-        {
-          $lookup: {
-            from: 'bookingmenus',
-            localField: '_id',
-            foreignField: 'booking_id',
-            as: 'booked_menu_data',
-          },
-        },
-        {
-          $unwind: { path: "$booked_menu_data", preserveNullAndEmptyArrays: true },
-        },
-        {
-          $lookup: {
-            from: 'menus',
-            localField: 'booked_menu_data.menu_id',
-            foreignField: '_id',
-            as: 'menu_data',
-          },
-        },
-        {
-          $unwind: { path: "$menu_data", preserveNullAndEmptyArrays: true },
-        },
-        {
-          $sort: { createdAt: -1 }, // Sort by createdAt in descending order
-        },
-        {
-          $project: {
-            _id: 0,
-            total_coupon_balance: {
-              $sum: [
-                {
-                  $cond: {
-                    if: {
-                      $and: [
-                        { $ifNull: ["$booked_menu_data", []] }, // Check if booked_menu_data is not null or empty
-                        { $ifNull: ["$menu_data", []] }, // Check if menu_data is not null or empty
-                      ],
-                    },
-                    then: paymentAmount, // Use paymentAmount directly
-                    else: {
-                      $sum: [
-                        {
-                          $multiply: [
-                            "$booked_menu_data.quantity",
-                            { $arrayElemAt: ["$menu_data.selling_price", 0] },
-                          ],
-                        },
-                        paymentAmount, // Sum paymentAmount with the calculated value
-                      ],
-                    },
-                  },
-                },
-              ],
-            },
-          },
-        },
-      ])
-        .then((result) => {
-          console.log("result", result);
-          if (result && result.length > 0) {
-            const lastRecord = result[result.length - 1];
-
-            res.status(200).json({
-              status: true,
-              message: "Data found",
-              data: lastRecord, // Since we're grouping, result is an array with one element
-            });
-          } else {
-            res.status(200).json({ status: false, message: "No bookings found", data: null });
-          }
-        })
-        .catch((error) => {
-          console.log("error", error);
-          res.status(500).json({
-            status: false,
-            message: error.toString() || "Internal Server Error",
-          });
-        });
-    } catch (error) {
-      console.log("error", error);
-      res.status(500).json({
-        status: false,
-        message: error.toString() || "Internal Server Error",
-      });
-    }
-  }
-};
-
-
-
-const get_guest_coupon_balance = async (req, res) => {
   const guest_id = req.query.guest_id;
 
   if (!guest_id) {
@@ -962,6 +859,9 @@ const get_guest_coupon_balance = async (req, res) => {
             as: 'payment_data',
           },
         },
+
+      
+        
         {
           $group: {
             _id: {
@@ -970,10 +870,12 @@ const get_guest_coupon_balance = async (req, res) => {
             },
           },
         },
+   
+        
       ]);
       
       // Initialize sum as 0
-      let sum = 0;
+      var sum = 0;
       
       console.log("result", result);
       
@@ -983,18 +885,44 @@ const get_guest_coupon_balance = async (req, res) => {
         const event_id = item1._id.event_id; // Access the event_id from the result
         console.log("payment_id", payment_id);
         console.log("event_id", event_id);
-      
-        // Fetch the MenuItemPayments record
-        const bookedPaymentResult = await MenuItemPayments.findOne({ _id: payment_id });
-      
-        // Check if the event is active
-        if (bookedPaymentResult) {
-          const eventDetails = await EventModel.findOne({ '_id': event_id });
-          if (eventDetails && eventDetails.status === 'active') {
-            // If the event is active, add its amount to the sum
-            sum += bookedPaymentResult.amount;
+         // Check if the event is active
+         const eventDetails = await EventModel.findOne({ '_id': event_id });
+
+        // Fetch the MenuItemPayments records for the current payment_id
+        const bookedPaymentResults = await MenuItemPayments.aggregate([
+          {
+            $match: {
+              _id: payment_id,
+              is_approved: "yes",
+            },
+          },
+          {
+            $sort: { createdAt: 1 },
+          },
+        ]);
+
+
+        console.log("bookedPaymentResults",bookedPaymentResults)
+
+        // Loop through each bookedPaymentResult
+        if(bookedPaymentResults.length > 0){
+          for (const bookedPaymentResult of bookedPaymentResults) { 
+           
+            if (eventDetails && eventDetails.status == 'active') {
+
+              if(eventDetails.type == "food_event" && eventDetails.is_cover_charge_added == "yes"){
+                sum += bookedPaymentResult.amount;
+                break;
+              }
+             
+            }
           }
+        } else {
+  
+          var  coverCharge = eventDetails ? eventDetails.cover_charge : 0;
+            sum = 0;
         }
+        
       }
 
       console.log("Total Sum:", sum); // Output the total sum after the loop
@@ -1033,7 +961,7 @@ const get_guest_coupon_balance = async (req, res) => {
           $unwind: { path: "$menu_data", preserveNullAndEmptyArrays: true },
         },
         {
-          $sort: { createdAt: -1 }, // Sort by createdAt in descending order
+          $sort: { createdAt: 1 }, // Sort by createdAt in ascredsning order
         },
         {
           $project: {
@@ -1098,6 +1026,167 @@ const get_guest_coupon_balance = async (req, res) => {
   }
 };
 
+const get_guest_coupon_balance = async (req, res) => {
+  const guest_id = req.query.guest_id;
+
+  if (!guest_id) {
+    res.status(400).json({ status: false, message: "Guest ID is required in the request body" });
+  } else {
+    try {
+
+       // Fetch all MenuItemBooking records for the guest
+
+      const result = await MenuItemPayments.aggregate([
+        {
+          $lookup: {
+            from: 'menuitembookings',
+            localField: '_id', // Match based on _id field in MenuItemPayments
+            foreignField: 'payment_id', // Match based on payment_id field in MenuItemBookings
+            as: 'booking_data',
+          },
+        },
+       
+        {
+          $match: {
+            'booking_data.guest_id': new mongoose.Types.ObjectId(guest_id),
+            'is_approved' : 'yes'
+          },
+        },
+        {
+          $sort: { 'createdAt': -1 }, // Sort in descending order based on the 'createdAt' field
+        },
+        {
+          $limit: 1, // Limit the result to one document
+        },
+      ]);  
+      
+      // Initialize sum as 0
+      var sum = 0;
+      
+      if(result.length > 0){      
+      // Iterate over each MenuItemBooking record
+      for (const item1 of result) {
+        var booking_data = item1.booking_data[0];  
+    
+        const event_id = booking_data.event_id; // Access the event_id from the result
+
+         // Check if the event is active
+         const eventDetails = await EventModel.findOne({ '_id': event_id });
+        if (eventDetails && eventDetails.status == 'active') {
+          if(eventDetails.type == "food_event" && eventDetails.is_cover_charge_added == "yes"){
+            sum += item1.amount;
+            break;
+          }
+          
+        }     
+        
+      }
+    }
+    else {
+        sum = 0;
+    }
+      
+
+      console.log("Total Sum:", sum); // Output the total sum after the loop
+
+      // Now you can use the sum in your aggregation
+      const paymentAmount = sum;
+
+      // Continue with the rest of your code...
+
+      Booking.aggregate([
+        {
+          $match: {
+            guest_id: new mongoose.Types.ObjectId(guest_id),
+          },
+        },
+        {
+          $lookup: {
+            from: 'bookingmenus',
+            localField: '_id',
+            foreignField: 'booking_id',
+            as: 'booked_menu_data',
+          },
+        },
+        {
+          $unwind: { path: "$booked_menu_data", preserveNullAndEmptyArrays: true },
+        },
+        {
+          $lookup: {
+            from: 'menus',
+            localField: 'booked_menu_data.menu_id',
+            foreignField: '_id',
+            as: 'menu_data',
+          },
+        },
+        {
+          $unwind: { path: "$menu_data", preserveNullAndEmptyArrays: true },
+        },
+        {
+          $sort: { createdAt: 1 }, // Sort by createdAt in ascredsning order
+        },
+        {
+          $project: {
+            _id: 0,
+            total_coupon_balance: {
+              $sum: [
+                {
+                  $cond: {
+                    if: {
+                      $and: [
+                        { $ifNull: ["$booked_menu_data", []] }, // Check if booked_menu_data is not null or empty
+                        { $ifNull: ["$menu_data", []] }, // Check if menu_data is not null or empty
+                      ],
+                    },
+                    then: paymentAmount, // Use paymentAmount directly
+                    else: {
+                      $sum: [
+                        {
+                          $multiply: [
+                            "$booked_menu_data.quantity",
+                            { $arrayElemAt: ["$menu_data.selling_price", 0] },
+                          ],
+                        },
+                        paymentAmount, // Sum paymentAmount with the calculated value
+                      ],
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        },
+      ])
+        .then((result) => {
+          console.log("result", result);
+          if (result && result.length > 0) {
+            const lastRecord = result[result.length - 1];
+
+            res.status(200).json({
+              status: true,
+              message: "Data found",
+              data: lastRecord, // Since we're grouping, result is an array with one element
+            });
+          } else {
+            res.status(200).json({ status: false, message: "No bookings found", data: null });
+          }
+        })
+        .catch((error) => {
+          console.log("error", error);
+          res.status(500).json({
+            status: false,
+            message: error.toString() || "Internal Server Error",
+          });
+        });
+    } catch (error) {
+      console.log("error", error);
+      res.status(500).json({
+        status: false,
+        message: error.toString() || "Internal Server Error",
+      });
+    }
+  }
+};
 module.exports = {
   sendEventNotification,
   sendExpireEventNotification,

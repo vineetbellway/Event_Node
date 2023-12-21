@@ -355,7 +355,7 @@ cron.schedule("* * * * *", function () {
     // bookingController.disableSellerServices();
    //bookingController.sendEventNotification();
   // bookingController.sendExpireEventNotification();
-  // bookingController.sendExpiredEventNotification();
+   bookingController.sendExpiredEventNotification();
 });
 
 

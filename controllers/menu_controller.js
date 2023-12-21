@@ -697,6 +697,11 @@ exports.book_menu_items = async (req, res, next) => {
      
     }
 
+    if(event_record.status == "expired"){
+      res.status(400).send({ status: false, message: "Event is expired", data: null });
+      return;
+    }
+
     if(event_record.type == "food_event"){
        if(event_record.is_cover_charge_added == "yes"){
         const paymentData = {
@@ -1056,29 +1061,47 @@ exports.approve_menu_payment = async (req, res, next) => {
 
       // Fetch cover charge from the event record
       const eventRecord = await EventModel.findById(event_id);
-      let coverCharge = eventRecord ? eventRecord.cover_charge : 0;
+     
 
-      if(eventRecord.type == "food_event"){
-        if(eventRecord.is_cover_charge_added == "yes"){
-          if (sum > coverCharge) {
-            res.status(400).send({ status: false, message: "Total price exceeds then cover charge", data: [] });
-            return;
-          }
-    
-          // Subtract sum from cover charge
-          coverCharge -= sum;
+      const bookedPaymentResult = await MenuItemPayments.find({
+        _id: { $lt: payment_id },
+      })
+        .sort({ _id: -1 }) // Sort in descending order by _id
+        .limit(1);
 
-      
-    
-          // Update cover charge in the event record
-          await MenuItemPayments.findByIdAndUpdate(payment_id, { $set: { amount: coverCharge } });
+   
 
-        }
-
+      // Loop through each bookedPaymentResult
+      if(bookedPaymentResult.length > 0){
+         var coverCharge = bookedPaymentResult[0].amount;
+      } else {
+        var coverCharge = eventRecord ? eventRecord.cover_charge : 0;
       }
 
 
-  
+
+
+
+
+      if(eventRecord.type == "food_event"){
+        if(eventRecord.is_cover_charge_added == "yes"){
+       
+          if (sum > coverCharge) {
+            res.status(400).send({ status: false, message: "Total price exceeds then cover charge", data: [] });
+            return;
+          }    
+      
+          // Subtract sum from cover charge
+          coverCharge -= sum;   
+    
+    
+          // Update amount in the menu item payment record
+          await MenuItemPayments.findByIdAndUpdate(payment_id, { $set: { amount: coverCharge } });
+
+        } else {
+          coverCharge = 0;
+        }
+      }  
 
      // Approve menu item payments in MenuItemPayments collection
       const is_approved = 'yes';

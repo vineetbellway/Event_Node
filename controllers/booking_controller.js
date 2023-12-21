@@ -466,76 +466,107 @@ const  get_booking_detail = async (req, res) => {
   }
 };
 
-const sendExpireEventNotification = () => {
-  Booking.aggregate([
-    {
-      $match: {
-        status: 'active'
+
+const sendExpireEventNotification = async () => {
+  try {
+    const result = await Booking.aggregate([
+      {
+        $match: {
+          status: 'active'
+        },
       },
-    },
-    {
-      $lookup: {
-        from: 'events',
-        localField: 'event_id',
-        foreignField: '_id',
-        as: 'event_data',
+      {
+        $lookup: {
+          from: 'events',
+          localField: 'event_id',
+          foreignField: '_id',
+          as: 'event_data',
+        },
       },
-    },
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'guest_id',
-        foreignField: '_id',
-        as: 'guest_data',
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'guest_id',
+          foreignField: '_id',
+          as: 'guest_data',
+        },
       },
-    },
-  ])
-    .then((result) => {
-      console.log("result", result)
-      if (result && result.length > 0) {
-        const currentDateTime = moment();
-        for (const bookingData of result) {
-          var guest_result = bookingData.guest_data;
-          var event_result = bookingData.event_data;
+    ]);
+
+    if (result && result.length > 0) {
+      for (const bookingData of result) {
+        const guest_result = bookingData.guest_data;
+        const event_result = bookingData.event_data;
+
+        var guest_id = guest_result[0].user_id;
+
+        if (guest_result && event_result && event_result.length > 0) {
+          const guest_fcm_token = guest_result[0].fcm_token;
+          const seller_id = event_result[0].seller_id;
+
+          // Make sure the function is marked as async to use await
+          const seller_record = await User.findById(seller_id);
+
+          const title = "Event Expired";
+          const message = 'Your event has been expired';
+          const end_time = event_result[0].end_time;
 
 
-          if (guest_result && event_result && event_result.length > 0) {
-            const guest_fcm_token = guest_result[0].fcm_token; // Assuming device_token is in the first element
-            var title = "Event will be expired";
-            var message = 'Your event will be expired soon';
-            var end_time = moment(event_result[0].end_time);
+          const seller_fcm_token = seller_record.fcm_token;
 
-            // half hour before end time Event
-            console.log('end_time',end_time);
-             // half an hour before end time Event
-             const originalDateTime = end_time.clone().subtract(30, 'minutes');
-
-             const originalTimezone = 'Asia/Kolkata'; 
-
-
-            const convertedEventDateTime = momentTimeZone.tz(originalDateTime, originalTimezone).utc().format();
-            const convertedCurrentDateTime = momentTimeZone.tz(currentDateTime, originalTimezone).utc();
-            const formattedDateTime = convertedCurrentDateTime.format('YYYY-MM-DDTHH:mm:ss[Z]');
+          const currentDateTime = new Date();
+          const year = currentDateTime.getFullYear();
+          const month = ('0' + (currentDateTime.getMonth() + 1)).slice(-2);
+          const day = ('0' + currentDateTime.getDate()).slice(-2);
+          const hours = ('0' + currentDateTime.getHours()).slice(-2);
+          const minutes = ('0' + currentDateTime.getMinutes()).slice(-2);
+          const seconds = ('0' + currentDateTime.getSeconds()).slice(-2);
+          
+          const currentDateTimeFormatted = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000Z`;
 
 
-             console.log('convertedEventDateTime', moment(convertedEventDateTime));
-             console.log('currentDateTime', currentDateTime);
- 
-             if (currentDateTime.isAfter(moment(convertedEventDateTime))) {
-              console.log("inside this")
+          var now = moment().toDate();
+          const formattedCurrentDateTime = currentDateTime.toISOString();
+          console.log("formattedCurrentDateTime",currentDateTimeFormatted)
+          
+   
+          const startOfDay = new Date(currentDateTimeFormatted);
+          console.log("startOfDay",startOfDay)
 
-              const notification = {
-                title: title,
-                body: message,
-              };
+            // half an hour before end time Event
 
-              const data = {
-                // Additional data to send with the notification, if needed.
-              };
+          const endOfDay = new Date(currentDateTimeFormatted);
+          endOfDay.setSeconds(endOfDay.getSeconds() + 1); // Add 1 second
+          console.log("endOfDay",endOfDay)
+          const currentDateTime2 = moment();
+            console.log("currentDateTime", currentDateTime2.format());
 
+            const halfAnHourLater = moment(currentDateTime2).add(30, 'minutes');
+            console.log("halfAnHourLater", halfAnHourLater.format());
+
+            const future_events = await EventModel.find({
+              end_time: { $gte: currentDateTime2.toDate(), $lt: halfAnHourLater.toDate() }
+            });
+
+          console.log("upcoming",future_events)
+          if(future_events.length > 0){
+            for(const ev of future_events){
+                // Update successful
+
+                const notification = {
+                  title: title,
+                  body: message,
+                };
+
+                const data = {
+                  // Additional data to send with the notification, if needed.
+                };
+
+              // Add notification to the guest
               var type = 'app';
               addNotification(bookingData.guest_id, bookingData.guest_id, title, message, type);
 
+              // Send push notification to the guest
               sendPushNotification(guest_fcm_token, notification, data)
                 .then(() => {
                   console.log('Push notification sent successfully to guest.');
@@ -543,18 +574,31 @@ const sendExpireEventNotification = () => {
                 .catch((error) => {
                   console.error('Error sending push notification to guest:', error);
                 });
+
+                // Add notification to the seller
+              var type = 'app';
+              addNotification(seller_id, seller_id, title, message, type);
+
+              // Send push notification to the seller
+              sendPushNotification(seller_fcm_token, notification, data)
+                .then(() => {
+                  console.log('Push notification sent successfully to seller.');
+                })
+                .catch((error) => {
+                  console.error('Error sending push notification to seller:', error);
+                });
+               
             }
           }
         }
-      } else {
-       // console.log("No bookings found");
       }
-    })
-    .catch((error) => {
-      console.error(error.toString() || "Error");
-    });
+    } else {
+      console.log("No bookings found");
+    }
+  } catch (error) {
+    console.error(error.toString() || "Error");
+  }
 };
-
 
 const sendExpiredEventNotification = async () => {
   try {

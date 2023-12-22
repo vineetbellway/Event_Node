@@ -1093,7 +1093,8 @@ const get_guest_coupon_balance = async (req, res) => {
         {
           $match: {
             'booking_data.guest_id': new mongoose.Types.ObjectId(guest_id),
-            'is_approved' : 'yes'
+            'is_approved' : 'yes',
+            'amount': { $gt: 0 }, 
           },
         },
         {

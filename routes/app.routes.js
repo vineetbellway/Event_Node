@@ -350,6 +350,10 @@ router.post("/approve-menu-payment",auth, menuController.approve_menu_payment);
 // get expired events API
 router.get("/get-expired-events/:id",auth, eventController.get_expired_events);
 
+
+// get approve guest list API
+router.get("/get-approve-guest-list", auth, bookingController.get_approve_guest_list);
+
 cron.schedule("* * * * *", function () {
   //  console.log("Cron job is running");
     // bookingController.disableSellerServices();

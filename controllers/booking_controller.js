@@ -26,13 +26,27 @@ const book = async (req, res, next) => {
       const transaction_id = req.body.transaction_id;
       const fcm_token = req.body.fcm_token;
       const event_id = req.body.event_id;
+      var event_record = await EventModel.findById(event_id);
+
+      if(event_record){
+        if(event_record.status == "expired"){
+          res.status(400).send({ status: false, message: "Event is expired", data: null });
+          return;
+        }
+      }else {
+        res.status(200).send({ status: false, message: "Event not found", data: null });
+        return;
+      }
+
+     
 
       var bookingData = {
         'event_id': event_id,
         'guest_id': guest_id,
         'payment_mode': payment_mode,
         'transaction_id': transaction_id,
-        'fcm_token': fcm_token
+        'fcm_token': fcm_token,
+         'amount' : event_record.amount
       };
 
       const result = await Booking(bookingData).save();
@@ -41,19 +55,23 @@ const book = async (req, res, next) => {
         
         var bookingMenu = req.body.menu_list;
 
-        // Save booking menu data
-        for (const item of bookingMenu) {
-          var bookingMenuData = {
-            "booking_id": result._id,
-            "menu_id": item.menu_id,
-            "quantity": item.quantity,
-          };
-          console.log("bookingMenuData",bookingMenuData);
-       
-      
+        if(bookingMenu.length > 0){
+           // Save booking menu data
+            for (const item of bookingMenu) {
+              var bookingMenuData = {
+                "booking_id": result._id,
+                "menu_id": item.menu_id,
+                "quantity": item.quantity,
+              };
+              console.log("bookingMenuData",bookingMenuData);
+          
+          
 
-          await BookingMenu(bookingMenuData).save();
+              await BookingMenu(bookingMenuData).save();
+            }
         }
+
+       
 
         const notification = {
           title: 'Event booked',
@@ -209,7 +227,7 @@ const manage_bookings = async (req, res) => {
     res.status(400).json({ status: false, message: "booking id , validator id and status are required in the request body" });
   } else {
     try {
-      Booking.findByIdAndUpdate(booking_id,{'status':status})
+      Booking.findByIdAndUpdate(booking_id,{'validator_id': validator_id,'status':status})
       .then((result) => {
         if (result) {   
           if(status == "active"){
@@ -1232,6 +1250,117 @@ const get_guest_coupon_balance = async (req, res) => {
     }
   }
 };
+
+const get_approve_guest_list = async (req, res) => {
+  var event_id = req.query.event_id;
+  var search_key = req.query.search_key;
+
+
+  if (!event_id) {
+    res.status(400).json({
+      status: false,
+      message: "Guest ID is required in the request body",
+    });
+  } else {
+    try {
+      const pipeline = [
+        {
+          $match: {
+            event_id: new mongoose.Types.ObjectId(event_id),
+            status: "pending",
+          },
+        },
+        {
+          $lookup: {
+            from: "events",
+            localField: "event_id",
+            foreignField: "_id",
+            as: "event_data",
+          },
+        },
+        {
+          $lookup: {
+            from: "guests",
+            localField: "guest_id",
+            foreignField: "user_id",
+            as: "guest_data",
+          },
+        },
+        {
+          $match: {
+            $or: [
+              { "guest_data.full_name": { $regex: search_key, $options: "i" } },
+              // Add more conditions if needed
+            ],
+          },
+        },
+        {
+          $sort: { createdAt: -1 },
+        },
+      ];
+
+      Booking.aggregate(pipeline)
+        .then((result) => {
+          console.log("result", result);
+          if (result && result.length > 0) {
+            var data = [];
+            var totalUPIBookingAmount = 0;
+            var totalPayOnCounterBooking = 0;
+
+            for (const booking of result) {
+              if (
+                booking.guest_data &&
+                booking.guest_data.length > 0 &&
+                booking.guest_data[0] !== null
+              ) {
+                const guestRecord = booking.guest_data[0];
+                
+                // Add payment mode to guest record
+                guestRecord.payment_mode = booking.payment_mode;
+
+                // Calculate booking cost based on payment mode
+                if (booking.payment_mode === "upi") {
+                  totalUPIBookingAmount += guestRecord.cost || 0;
+                } else if (booking.payment_mode === "counter") {
+                  totalPayOnCounterBooking += guestRecord.cost || 0;
+                }
+
+                data.push(guestRecord);
+              }
+            }
+
+            res.status(200).json({
+              status: true,
+              message: "Data found",
+              data: data,
+              total_upi_booking_amount: totalUPIBookingAmount,
+              total_pay_counter_booking_amount: totalPayOnCounterBooking,
+            });
+          } else {
+            res.status(404).json({ status: false, message: "No guests found",data: [] });
+          }
+        })
+        .catch((error) => {
+          console.log("error", error);
+          res.status(500).json({
+            status: false,
+            message: error.toString() || "Internal Server Error",
+          });
+        });
+    } catch (error) {
+      console.log("error", error);
+      res.status(500).json({
+        status: false,
+        message: error.toString() || "Internal Server Error",
+      });
+    }
+  }
+};
+
+
+
+
+
 module.exports = {
   sendEventNotification,
   sendExpireEventNotification,
@@ -1242,6 +1371,7 @@ module.exports = {
   get_bookings_by_payment_mode,
   get_booking_detail,
   get_booked_guest_list,
-  get_guest_coupon_balance
+  get_guest_coupon_balance,
+  get_approve_guest_list
 
 }; 

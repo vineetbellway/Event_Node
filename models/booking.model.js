@@ -15,7 +15,7 @@ const schema = new mongoose.Schema(
       ref: "Guest",
       required: true,
     },
-    managed_by: {
+    validator_id: {
       type: mongoose.Schema.Types.ObjectID,
       ref: "Validator",
     },
@@ -29,7 +29,10 @@ const schema = new mongoose.Schema(
     },
     transaction_id:{
         type: String,
-    }
+    },
+    amount:{
+      type: Number,
+  }
   },
   {
     timestamps: true,

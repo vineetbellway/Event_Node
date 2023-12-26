@@ -351,8 +351,11 @@ router.post("/approve-menu-payment",auth, menuController.approve_menu_payment);
 router.get("/get-expired-events/:id",auth, eventController.get_expired_events);
 
 
-// get approve guest list API
-router.get("/get-approve-guest-list", auth, bookingController.get_approve_guest_list);
+// get pending guest list API
+router.get("/get-pending-guest-list",auth, bookingController.get_pending_guest_list);
+
+// get pending guest list API
+router.get("/get-approved-booking-cost", bookingController.get_approved_booking_cost);
 
 cron.schedule("* * * * *", function () {
   //  console.log("Cron job is running");

@@ -291,7 +291,8 @@ exports.search_events = async (req, res) => {
       },
       {
         $match: {
-          $or: [{ name: regex }, { coupon_name: regex }],
+          $or: [{ name: regex }, { coupon_name: regex } ],
+          'status' : 'active'
         },
       },
     ]);

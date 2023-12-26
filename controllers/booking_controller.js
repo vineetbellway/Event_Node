@@ -220,14 +220,15 @@ const manage_bookings = async (req, res) => {
   var booking_id = req.body.booking_id;
   var status = req.body.status;
   var validator_id = req.body.validator_id;
+  var payment_mode = req.body.payment_mode;
 
   // validator id will be taken from token
 
-  if (!booking_id || !status || !validator_id) {
-    res.status(400).json({ status: false, message: "booking id , validator id and status are required in the request body" });
+  if (!booking_id || !status || !validator_id || !payment_mode) {
+    res.status(400).json({ status: false, message: "booking id , validator id , payment_mode status are required in the request body" });
   } else {
     try {
-      Booking.findByIdAndUpdate(booking_id,{'validator_id': validator_id,'status':status})
+      Booking.findByIdAndUpdate(booking_id,{'validator_id': validator_id,'payment_mode': payment_mode,'status':status})
       .then((result) => {
         if (result) {   
           if(status == "active"){
@@ -243,6 +244,12 @@ const manage_bookings = async (req, res) => {
             status: true,
             message: message,
             data: result,
+          });
+        } else {
+          res.status(200).json({
+            status: false,
+            message: "No booking found",
+            data: null,
           });
         }
       })
@@ -1319,19 +1326,19 @@ const get_pending_guest_list = async (req, res) => {
           console.log("result", result);
           if (result && result.length > 0) {
             var data = [];
-            var totalUPIBookingAmount = 0;
-            var totalPayOnCounterBooking = 0;
-            var totalCashBooking = 0;
-            var totalCardBooking = 0;
+
+
+           
 
             for (const booking of result) {
+              
               if (
                 booking.guest_data &&
                 booking.guest_data.length > 0 &&
                 booking.guest_data[0] !== null
               ) {
                 const guestRecord = booking.guest_data[0];
-                
+                guestRecord.contact_number = booking.user_data[0].code_phone
 
 
                 data.push(guestRecord);
@@ -1378,9 +1385,9 @@ const get_approved_booking_cost = async (req, res) => {
       const pipeline = [
         {
           $match: {
+            validator_id: new mongoose.Types.ObjectId(validator_id),
             event_id: new mongoose.Types.ObjectId(event_id),
-            status: "pending",
-            payment_mode: { $ne: "upi" } ,
+            status: "active",
           },
         },
         {
@@ -1389,22 +1396,6 @@ const get_approved_booking_cost = async (req, res) => {
             localField: "event_id",
             foreignField: "_id",
             as: "event_data",
-          },
-        },
-        {
-          $lookup: {
-            from: "guests",
-            localField: "guest_id",
-            foreignField: "user_id",
-            as: "guest_data",
-          },
-        },
-        {
-          $lookup: {
-            from: "users",  // Assuming the contact number is in the "users" table
-            localField: "guest_data.user_id",  // Assuming "user_id" links to the "users" table
-            foreignField: "_id",
-            as: "user_data",
           },
         },
         {
@@ -1423,47 +1414,41 @@ const get_approved_booking_cost = async (req, res) => {
             var totalCardBooking = 0;
 
             for (const booking of result) {
-              if (
-                booking.guest_data &&
-                booking.guest_data.length > 0 &&
-                booking.guest_data[0] !== null
-              ) {
-                const guestRecord = booking.guest_data[0];
-                
-                // Add payment mode to guest record
-               // guestRecord.payment_mode = booking.payment_mode;
+          
 
                 // Calculate booking cost based on payment mode
-                if (booking.payment_mode === "upi") {
-                  totalUPIBookingAmount += guestRecord.amount || 0;
+                if (booking.payment_mode === "counter_upi") {
+                  totalUPIBookingAmount += booking.amount || 0;
                 } 
                 if (booking.payment_mode === "pay on counter") {
-                  totalPayOnCounterBooking += guestRecord.amount || 0;
+                  totalPayOnCounterBooking += booking.amount || 0;
                 }
 
                 if (booking.payment_mode === "cash") {
-                  totalCashBooking += guestRecord.amount || 0;
+                  totalCashBooking += booking.amount || 0;
                 }
 
                 if (booking.payment_mode === "card") {
-                  totalCardBooking += guestRecord.amount || 0;
+                  totalCardBooking += booking.amount || 0;
                 }
 
-                data.push(guestRecord);
-              }
+            
+              
             }
 
             res.status(200).json({
               status: true,
               message: "Data found",
-              data: data,
-              total_upi_booking_amount: totalUPIBookingAmount,
-              total_pay_counter_booking_amount: totalPayOnCounterBooking,
-              total_cash_booking_amount: totalCashBooking,
-              total_card_booking_amount: totalCardBooking,
+              data : {
+              'total_upi_booking_amount': totalUPIBookingAmount,
+              'total_cash_booking_amount': totalCashBooking,
+              'total_card_booking_amount': totalCardBooking,
+              'total_amount' : totalUPIBookingAmount  + totalCashBooking + totalCardBooking
+              }
+              
             });
           } else {
-            res.status(404).json({ status: false, message: "No guests found",data: [] });
+            res.status(404).json({ status: false, message: "No data found",data: null });
           }
         })
         .catch((error) => {

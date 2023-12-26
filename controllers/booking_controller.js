@@ -1428,13 +1428,11 @@ const get_approved_booking_cost = async (req, res) => {
           
 
                 // Calculate booking cost based on payment mode
-              /*  if (booking.payment_mode === "pay on counter") {
-                  totalUPIBookingAmount += booking.amount || 0;
-                } 
+              
 
                 if (booking.payment_mode === "counter_upi") {
                   totalUPIBookingAmount += booking.amount || 0;
-                } */
+                } 
                
 
                 if (booking.payment_mode === "cash") {

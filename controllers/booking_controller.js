@@ -217,28 +217,33 @@ const constructImageUrl = (req, imagePath) => {
 // It will manage bookings by validator
   
 const manage_bookings = async (req, res) => {
-  var booking_id = req.body.booking_id;
+  var event_id = req.body.event_id;
+  var guest_id = req.body.guest_id;
   var status = req.body.status;
   var validator_id = req.body.validator_id;
   var payment_mode = req.body.payment_mode;
 
   // validator id will be taken from token
 
-  if (!booking_id || !status || !validator_id || !payment_mode) {
-    res.status(400).json({ status: false, message: "booking id , validator id , payment_mode status are required in the request body" });
+  if (!event_id || !guest_id || !status || !validator_id || !payment_mode) {
+    res.status(400).json({ status: false, message: "event_id , guest_id, validator id , payment_mode status are required in the request body" });
   } else {
     try {
-      Booking.findByIdAndUpdate(booking_id,{'validator_id': validator_id,'payment_mode': payment_mode,'status':status})
+      Booking.findOneAndUpdate(
+        { event_id: event_id, guest_id: guest_id },
+        { $set: { validator_id: validator_id, payment_mode: payment_mode, status: status } },
+        { new: true } // This option returns the modified document
+      )
       .then((result) => {
-        if (result) {   
-          if(status == "active"){
-              status = "approved";
+        if (result) {
+          if (status == "active") {
+            status = "approved";
           } else {
-              status = "rejected";
+            status = "rejected";
           }
-           var message = "Booking "+status+" successfully";
-           // send notification
-           addNotification(validator_id,result.guest_id,"Booking status updated",message);
+          var message = "Booking " + status + " successfully";
+          // send notification
+          addNotification(validator_id, result.guest_id, "Booking status updated", message);
 
           res.status(200).json({
             status: true,
@@ -253,13 +258,6 @@ const manage_bookings = async (req, res) => {
           });
         }
       })
-      .catch((error) => {
-        console.log("error", error);
-        res.status(500).json({
-          status: false,
-          message: error.toString() || "Internal Server Error",
-        });
-      });
     } catch (error) {
       console.log("error", error);
       res.status(500).json({
@@ -1420,9 +1418,7 @@ const get_approved_booking_cost = async (req, res) => {
                 if (booking.payment_mode === "counter_upi") {
                   totalUPIBookingAmount += booking.amount || 0;
                 } 
-                if (booking.payment_mode === "pay on counter") {
-                  totalPayOnCounterBooking += booking.amount || 0;
-                }
+               
 
                 if (booking.payment_mode === "cash") {
                   totalCashBooking += booking.amount || 0;

@@ -382,7 +382,7 @@ exports.event_by_seller_id = async (req, res) => {
         },
       },
       {
-        $match: { seller_id: new mongoose.Types.ObjectId(id) },
+        $match: { seller_id: new mongoose.Types.ObjectId(id) , 'status' : 'active' },
       },
     ]);
     await EventModel.aggregatePaginate(myAggregate, options)

@@ -1285,7 +1285,8 @@ const get_pending_guest_list = async (req, res) => {
           $match: {
             event_id: new mongoose.Types.ObjectId(event_id),
             status: "pending",
-            payment_mode: { $ne: "upi" } ,
+             "payment_mode": { $nin: ["upi", "pay on counter"] } , // Exclude documents with payment_mode not equal to "upi" or "pay on counter"
+
           },
         },
         {
@@ -1427,9 +1428,13 @@ const get_approved_booking_cost = async (req, res) => {
           
 
                 // Calculate booking cost based on payment mode
-                if (booking.payment_mode === "counter_upi") {
+              /*  if (booking.payment_mode === "pay on counter") {
                   totalUPIBookingAmount += booking.amount || 0;
                 } 
+
+                if (booking.payment_mode === "counter_upi") {
+                  totalUPIBookingAmount += booking.amount || 0;
+                } */
                
 
                 if (booking.payment_mode === "cash") {

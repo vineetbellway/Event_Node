@@ -1251,10 +1251,10 @@ const get_guest_coupon_balance = async (req, res) => {
   }
 };
 
-const get_approve_guest_list = async (req, res) => {
+const get_pending_guest_list = async (req, res) => {
   var event_id = req.query.event_id;
   var search_key = req.query.search_key;
-
+  const sanitizedSearchKey = search_key.trim(); 
 
   if (!event_id) {
     res.status(400).json({
@@ -1268,6 +1268,7 @@ const get_approve_guest_list = async (req, res) => {
           $match: {
             event_id: new mongoose.Types.ObjectId(event_id),
             status: "pending",
+            payment_mode: { $ne: "upi" } ,
           },
         },
         {
@@ -1287,9 +1288,23 @@ const get_approve_guest_list = async (req, res) => {
           },
         },
         {
+          $lookup: {
+            from: "users",  // Assuming the contact number is in the "users" table
+            localField: "guest_data.user_id",  // Assuming "user_id" links to the "users" table
+            foreignField: "_id",
+            as: "user_data",
+          },
+        },
+        {
           $match: {
             $or: [
               { "guest_data.full_name": { $regex: search_key, $options: "i" } },
+              { "user_data.code_phone": { $regex: search_key, $options: "i" } },
+              {
+                "user_data.code_phone": {
+                  $regex: new RegExp(`^(\\+${sanitizedSearchKey}|0?${sanitizedSearchKey})$`, 'i')
+                }
+              },
               // Add more conditions if needed
             ],
           },
@@ -1306,6 +1321,106 @@ const get_approve_guest_list = async (req, res) => {
             var data = [];
             var totalUPIBookingAmount = 0;
             var totalPayOnCounterBooking = 0;
+            var totalCashBooking = 0;
+            var totalCardBooking = 0;
+
+            for (const booking of result) {
+              if (
+                booking.guest_data &&
+                booking.guest_data.length > 0 &&
+                booking.guest_data[0] !== null
+              ) {
+                const guestRecord = booking.guest_data[0];
+                
+
+
+                data.push(guestRecord);
+              }
+            }
+
+            res.status(200).json({
+              status: true,
+              message: "Data found",
+              data: data,
+            });
+          } else {
+            res.status(404).json({ status: false, message: "No guests found",data: [] });
+          }
+        })
+        .catch((error) => {
+          console.log("error", error);
+          res.status(500).json({
+            status: false,
+            message: error.toString() || "Internal Server Error",
+          });
+        });
+    } catch (error) {
+      console.log("error", error);
+      res.status(500).json({
+        status: false,
+        message: error.toString() || "Internal Server Error",
+      });
+    }
+  }
+};
+
+const get_approved_booking_cost = async (req, res) => {
+  var event_id = req.query.event_id;
+  var validator_id = req.query.validator_id;
+
+  if (!event_id) {
+    res.status(400).json({
+      status: false,
+      message: "Guest ID is required in the request body",
+    });
+  } else {
+    try {
+      const pipeline = [
+        {
+          $match: {
+            event_id: new mongoose.Types.ObjectId(event_id),
+            status: "pending",
+            payment_mode: { $ne: "upi" } ,
+          },
+        },
+        {
+          $lookup: {
+            from: "events",
+            localField: "event_id",
+            foreignField: "_id",
+            as: "event_data",
+          },
+        },
+        {
+          $lookup: {
+            from: "guests",
+            localField: "guest_id",
+            foreignField: "user_id",
+            as: "guest_data",
+          },
+        },
+        {
+          $lookup: {
+            from: "users",  // Assuming the contact number is in the "users" table
+            localField: "guest_data.user_id",  // Assuming "user_id" links to the "users" table
+            foreignField: "_id",
+            as: "user_data",
+          },
+        },
+        {
+          $sort: { createdAt: -1 },
+        },
+      ];
+
+      Booking.aggregate(pipeline)
+        .then((result) => {
+          console.log("result", result);
+          if (result && result.length > 0) {
+            var data = [];
+            var totalUPIBookingAmount = 0;
+            var totalPayOnCounterBooking = 0;
+            var totalCashBooking = 0;
+            var totalCardBooking = 0;
 
             for (const booking of result) {
               if (
@@ -1316,13 +1431,22 @@ const get_approve_guest_list = async (req, res) => {
                 const guestRecord = booking.guest_data[0];
                 
                 // Add payment mode to guest record
-                guestRecord.payment_mode = booking.payment_mode;
+               // guestRecord.payment_mode = booking.payment_mode;
 
                 // Calculate booking cost based on payment mode
                 if (booking.payment_mode === "upi") {
-                  totalUPIBookingAmount += guestRecord.cost || 0;
-                } else if (booking.payment_mode === "counter") {
-                  totalPayOnCounterBooking += guestRecord.cost || 0;
+                  totalUPIBookingAmount += guestRecord.amount || 0;
+                } 
+                if (booking.payment_mode === "pay on counter") {
+                  totalPayOnCounterBooking += guestRecord.amount || 0;
+                }
+
+                if (booking.payment_mode === "cash") {
+                  totalCashBooking += guestRecord.amount || 0;
+                }
+
+                if (booking.payment_mode === "card") {
+                  totalCardBooking += guestRecord.amount || 0;
                 }
 
                 data.push(guestRecord);
@@ -1335,6 +1459,8 @@ const get_approve_guest_list = async (req, res) => {
               data: data,
               total_upi_booking_amount: totalUPIBookingAmount,
               total_pay_counter_booking_amount: totalPayOnCounterBooking,
+              total_cash_booking_amount: totalCashBooking,
+              total_card_booking_amount: totalCardBooking,
             });
           } else {
             res.status(404).json({ status: false, message: "No guests found",data: [] });
@@ -1359,8 +1485,6 @@ const get_approve_guest_list = async (req, res) => {
 
 
 
-
-
 module.exports = {
   sendEventNotification,
   sendExpireEventNotification,
@@ -1372,6 +1496,7 @@ module.exports = {
   get_booking_detail,
   get_booked_guest_list,
   get_guest_coupon_balance,
-  get_approve_guest_list
+  get_pending_guest_list,
+  get_approved_booking_cost
 
 }; 

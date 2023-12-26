@@ -354,8 +354,11 @@ router.get("/get-expired-events/:id",auth, eventController.get_expired_events);
 // get pending guest list API
 router.get("/get-pending-guest-list",auth,bookingController.get_pending_guest_list);
 
-// get pending guest list API
+// get approved booking cost API
 router.get("/get-approved-booking-cost",auth, bookingController.get_approved_booking_cost);
+
+// read all notifications api
+router.post("/read-all-notifications",auth, notificationController.read_all_notifications);
 
 cron.schedule("* * * * *", function () {
   //  console.log("Cron job is running");

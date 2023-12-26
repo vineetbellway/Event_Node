@@ -107,8 +107,50 @@ const get_unread_notifications_count = async (req, res) => {
     }
 };
 
+const read_all_notifications = async (req, res) => {
+  var user_id = req.body.user_id;
+
+
+  // validator id will be taken from token
+
+  if (!user_id) {
+    res.status(400).json({ status: false, message: "user id is required in the request body" });
+  } else {
+    try {
+      Notification.updateMany(
+        { to_user_id: user_id },
+        { $set: { is_read: 1 } }
+      )
+      .then((result) => {
+        if (result) {
+
+          res.status(200).json({
+            status: true,
+            message: "Notification read successfully",
+            data: result,
+          });
+        } else {
+          res.status(200).json({
+            status: false,
+            message: "Failed ! please try again",
+            data: null,
+          });
+        }
+      })
+    } catch (error) {
+      console.log("error", error);
+      res.status(500).json({
+        status: false,
+        message: error.toString() || "Internal Server Error",
+      });
+    }
+  }
+}; 
+
+
 
 module.exports = {
   get_notifications,
-  get_unread_notifications_count
+  get_unread_notifications_count,
+  read_all_notifications
 };

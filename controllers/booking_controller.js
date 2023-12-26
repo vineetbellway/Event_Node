@@ -138,6 +138,11 @@ const get_bookings = async (req, res) => {
           },
         },
         {
+          $match: {
+            "event_data.status": "active", // Filter by event status
+          },
+        },
+        {
           $lookup: {
             from: 'bookingmenus',
             localField: '_id',
@@ -337,7 +342,7 @@ const  get_bookings_by_payment_mode = async (req, res) => {
         {
           $match: {
             guest_id: new mongoose.Types.ObjectId(guest_id),
-            payment_mode : payment_mode
+            payment_mode : payment_mode,                  
           },
         },
         {
@@ -346,6 +351,11 @@ const  get_bookings_by_payment_mode = async (req, res) => {
             localField: 'event_id',
             foreignField: '_id',
             as: 'event_data',
+          },
+        },
+        {
+          $match: {
+            "event_data.status": "active", // Filter by event status
           },
         },
         {
@@ -384,7 +394,7 @@ const  get_bookings_by_payment_mode = async (req, res) => {
             data: booking_data,
           });
         } else {
-          res.status(404).json({ status: false, message: "No bookings found" });
+          res.status(404).json({ status: false, message: "No bookings found",data:[] });
         }
       })
       .catch((error) => {
@@ -392,6 +402,7 @@ const  get_bookings_by_payment_mode = async (req, res) => {
         res.status(500).json({
           status: false,
           message: error.toString() || "Internal Server Error",
+          data:[] 
         });
       });
     } catch (error) {
@@ -399,6 +410,7 @@ const  get_bookings_by_payment_mode = async (req, res) => {
       res.status(500).json({
         status: false,
         message: error.toString() || "Internal Server Error",
+        data:[] 
       });
     }
   }

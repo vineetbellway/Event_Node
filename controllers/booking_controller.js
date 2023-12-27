@@ -118,6 +118,24 @@ const get_bookings = async (req, res) => {
   var guest_id = req.query.guest_id;
   var status = req.query.status;
 
+  console.log("status",status)
+  var match;
+
+    if (status == "expired") {
+      match = {
+        $match: {
+          "event_data.status": "expired", 
+        }
+      };
+    } else {
+      match = {
+        $match: {
+          "event_data.status": "active", // Filter by event status
+        }
+      };
+    }
+
+
   if (!guest_id || !status) {
     res.status(400).json({ status: false, message: "Guest ID and status are required in the request body" });
   } else {
@@ -137,11 +155,8 @@ const get_bookings = async (req, res) => {
             as: 'event_data',
           },
         },
-        {
-          $match: {
-            "event_data.status": "active", // Filter by event status
-          },
-        },
+        match,
+        
         {
           $lookup: {
             from: 'bookingmenus',
@@ -732,9 +747,12 @@ const sendExpiredEventNotification = async () => {
 
 
                   EventModel.findByIdAndUpdate(eventId, { 'status': 'expired' })
-                  .then(() => {
+                  .then(async () => {
                     // Update successful
-
+                    await Booking.updateMany(
+                      { event_id: eventId },
+                      { $set: { 'status': 'expired' } }
+                    );
                 const notification = {
                   title: title,
                   body: message,

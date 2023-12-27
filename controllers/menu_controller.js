@@ -787,7 +787,7 @@ exports.book_menu_items = async (req, res, next) => {
           };
       
           await MenuItem.deleteMany(deleteConditions);
-          res.status(200).send({ status: true, message: "Item booked successfully", data : { payment_id: payment_id,amount:amount,booked_data: results} });
+          res.status(200).send({ status: true, message: "Item booked successfully", data : { payment_id: payment_id,amount:req.body.amount,booked_data: results} });
     
        
        } else {

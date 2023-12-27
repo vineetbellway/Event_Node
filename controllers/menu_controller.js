@@ -706,6 +706,7 @@ exports.book_menu_items = async (req, res, next) => {
        if(event_record.is_cover_charge_added == "yes"){
         const paymentData = {
           payment_status: 'paid',
+          amount:req.body.amount
         };
     
         const paymentResult = await MenuItemPayments(paymentData).save();
@@ -788,7 +789,7 @@ exports.book_menu_items = async (req, res, next) => {
 
         const paymentData = {
           payment_status: 'paid',
-          amount:req.body.amount
+      
         };
     
         const paymentResult = await MenuItemPayments(paymentData).save();

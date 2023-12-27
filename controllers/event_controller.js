@@ -736,37 +736,49 @@ exports.close_event_counter = async (req, res, next) => {
 
 
 exports.get_expired_events = async (req, res) => {
-  var id = req.params.id;  
+  const id = req.params.id;
   try {
-      await EventModel.aggregate([
-        {
-          $match: {
-            $and: [
-              { status: baseStatus.expired },
-              { seller_id: new mongoose.Types.ObjectId(id) }, // Convert id to ObjectId if needed
-            ],
-          },
+    const results = await EventModel.aggregate([
+      {
+        $match: {
+          $and: [
+            { status: baseStatus.expired },
+            { seller_id: new mongoose.Types.ObjectId(id) },
+          ],
         },
-      ])
-        .then((result) => {
-          if (result) {
-            res.status(200).send({
-              status: true,
-              message: "success",
-              data: result,
-            });
-          }
-        })
-        .catch((error) => {
-          res.send({
-            status: false,
-            message: error.toString() ?? "Error",
-          });
-        });
-    } catch (error) {
-      res.status(500).send({
+      },
+    ]);
+
+    if (results.length > 0) {
+      // Get the host (domain and port)
+      const protocol = req.protocol;
+      const host = req.get('host');
+
+      // Combine protocol, host, and any other parts of the base URL you need
+      const baseURL = `${protocol}://${host}`;
+
+      // Map over the results and modify each event
+      const events = results.map((event) => ({
+        ...event,
+        image: baseURL + '/uploads/events/' + event.image,
+      }));
+
+      res.status(200).send({
+        status: true,
+        message: "success",
+        data: events,
+      });
+    } else {
+      res.status(404).send({
         status: false,
-        message: error.toString() ?? "Internal Server Error",
+        message: "No events found",
       });
     }
+  } catch (error) {
+    res.status(500).send({
+      status: false,
+      message: error.toString() || "Internal Server Error",
+    });
+  }
 };
+

@@ -1497,6 +1497,49 @@ const get_approved_booking_cost = async (req, res) => {
   }
 };
 
+// It will expire events and event's bookings
+  
+const close_party_coupon = async (req, res) => {
+  var event_id = req.body.event_id;
+
+  if (!event_id) {
+    res.status(400).json({ status: false, message: "event_id is required in the request body" });
+  } else {
+    try {
+      EventModel.findByIdAndUpdate(event_id, { 'status': 'expired' })
+        .then(async () => {
+          // Update successful
+          await Booking.updateMany(
+            { event_id: event_id },
+            { $set: { 'status': 'expired' } }
+          )
+            .then((result) => {
+              if (result) {
+
+                res.status(200).json({
+                  status: true,
+                  message: "Closed successfully",
+                  data: result,
+                });
+              } else {
+                res.status(200).json({
+                  status: false,
+                  message: "No booking found",
+                  data: null,
+                });
+              }
+            });
+        });
+    } catch (error) {
+      console.log("error", error);
+      res.status(500).json({
+        status: false,
+        message: error.toString() || "Internal Server Error",
+      });
+    }
+  }
+};
+
 
 
 module.exports = {
@@ -1511,6 +1554,7 @@ module.exports = {
   get_booked_guest_list,
   get_guest_coupon_balance,
   get_pending_guest_list,
-  get_approved_booking_cost
+  get_approved_booking_cost,
+  close_party_coupon
 
 }; 

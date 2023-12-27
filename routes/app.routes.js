@@ -360,6 +360,9 @@ router.get("/get-approved-booking-cost",auth, bookingController.get_approved_boo
 // read all notifications api
 router.post("/read-all-notifications",auth, notificationController.read_all_notifications);
 
+// feedback list
+router.get("/get-feedbacks",auth,  feedbackController.get_feedbacks);
+
 cron.schedule("* * * * *", function () {
   //  console.log("Cron job is running");
     // bookingController.disableSellerServices();

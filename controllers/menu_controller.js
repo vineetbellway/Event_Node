@@ -701,9 +701,13 @@ exports.book_menu_items = async (req, res, next) => {
       res.status(400).send({ status: false, message: "Event is expired", data: null });
       return;
     }
-
+  
     if(event_record.type == "food_event"){
+
+
+
        if(event_record.is_cover_charge_added == "yes"){
+      
         const paymentData = {
           payment_status: 'paid',
           amount:req.body.amount
@@ -783,14 +787,16 @@ exports.book_menu_items = async (req, res, next) => {
           };
       
           await MenuItem.deleteMany(deleteConditions);
+          res.status(200).send({ status: true, message: "Item booked successfully", data : { payment_id: payment_id,amount:amount,booked_data: results} });
     
-        res.status(200).send({ status: true, message: "Item booked successfully", data : { payment_id: payment_id,booked_data: results} });
+       
        } else {
 
         const paymentData = {
           payment_status: 'paid',
       
         };
+
     
         const paymentResult = await MenuItemPayments(paymentData).save();
     
@@ -842,7 +848,7 @@ exports.book_menu_items = async (req, res, next) => {
         }
 
     
-        res.status(200).send({ status: true, message: "Item booked successfully", data : { payment_id: payment_id,amount:amount,booked_data: results} });
+        res.status(200).send({ status: true, message: "Item booked successfully", data : { payment_id: payment_id,booked_data: results} });
        }
 
     }

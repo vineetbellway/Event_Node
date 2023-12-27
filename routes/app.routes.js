@@ -363,6 +363,9 @@ router.post("/read-all-notifications",auth, notificationController.read_all_noti
 // feedback list
 router.get("/get-feedbacks",auth,  feedbackController.get_feedbacks);
 
+// close party coupon
+router.post("/close-party-coupon",auth,bookingController.close_party_coupon);
+
 cron.schedule("* * * * *", function () {
   //  console.log("Cron job is running");
     // bookingController.disableSellerServices();

@@ -2,6 +2,7 @@ const Feedback = require("../models/feedback.model");
 const Event = require("../models/event.model"); // Import the Event model
 const nodemailer = require('nodemailer');
 const { addNotification } = require('../helpers/notification_helper');
+const mongoose = require("mongoose");
 
 
 exports.give_feedback = (req, res, next) => {
@@ -114,3 +115,61 @@ function sendThankYouEmail(event_name,senderEmail,feedbackData) {
     }
   });
 }
+
+exports.get_feedbacks = async (req, res) => {
+  var event_id = req.query.event_id;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const myCustomLabels = {
+    totalDocs: "totalDocs",
+    docs: "data",
+    limit: "limit",
+    page: "page",
+    nextPage: "nextPage",
+    prevPage: "prevPage",
+    totalPages: "totalPages",
+    pagingCounter: "slNo",
+    meta: "paginator",
+  };
+
+  const options = {
+    page: page,
+    limit: limit,
+    customLabels: myCustomLabels,
+  };
+
+  try {
+    var myAggregate = Feedback.aggregate([
+      {
+        $match: {
+          "event_id": new mongoose.Types.ObjectId(event_id),
+        },
+      },
+      {
+        $sort: { createdAt: -1 }, // Sort by createdAt in descending order
+      },
+    ]);
+
+    await Feedback.aggregatePaginate(myAggregate, options)
+      .then((result) => {
+        if (result) {
+          res.status(200).send({
+            status: true,
+            message: "success",
+            data: result,
+          });
+        }
+      })
+      .catch((error) => {
+        res.send({
+          status: false,
+          message: error.toString() ?? "Error",
+        });
+      });
+  } catch (error) {
+    res.status(500).send({
+      status: false,
+      message: error.toString() ?? "Internal Server Error",
+    });
+  }
+};

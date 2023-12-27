@@ -1,7 +1,7 @@
 const Feedback = require("../models/feedback.model");
 const Event = require("../models/event.model"); // Import the Event model
 const nodemailer = require('nodemailer');
-const { sendAppNotification } = require('../helpers/notification_helper');
+const { addNotification } = require('../helpers/notification_helper');
 
 
 exports.give_feedback = (req, res, next) => {
@@ -9,6 +9,7 @@ exports.give_feedback = (req, res, next) => {
     res.status(400).send({
       status: false,
       message: "Body missing",
+      data:null
     });
   } else {
     try {
@@ -32,9 +33,9 @@ exports.give_feedback = (req, res, next) => {
 
                   // guest id will be later taken from token
 
-                  var guest_id = "650bdb1e015e74e090374652";
+                 // var guest_id = "650bdb1e015e74e090374652";
                   // send notification
-                  sendAppNotification(guest_id,event.seller_id,'New feedback received');
+                //  addNotification(guest_id,event.seller_id,'New feedback received');
 
                   res.status(201).send({
                     status: true,
@@ -45,6 +46,7 @@ exports.give_feedback = (req, res, next) => {
                   res.status(404).send({
                     status: false,
                     message: "Not created",
+                    data:null
                   });
                 }
               })
@@ -53,12 +55,14 @@ exports.give_feedback = (req, res, next) => {
                 res.status(500).send({
                   status: false,
                   message: error.toString() || "Error",
+                  data:null
                 });
               });
           } else {
             res.status(404).send({
               status: false,
               message: "Event not found",
+              data:null
             });
           }
         })
@@ -67,13 +71,14 @@ exports.give_feedback = (req, res, next) => {
           res.status(500).send({
             status: false,
             message: "Internal Server Error",
+            data:null
           });
         });
     } catch (error) {
       res.status(500).send({
         status: false,
-        message: "Failure",
-        error: error || "Internal Server Error",
+        message: error || "Internal Server Error",
+        data:null
       });
     }
   }
@@ -81,8 +86,7 @@ exports.give_feedback = (req, res, next) => {
 
   
 function sendThankYouEmail(event_name,senderEmail,feedbackData) {
-  var firstName = feedbackData.first_name;
-  var lastName = feedbackData.last_name;
+  var name = feedbackData.name;
   var email = feedbackData.email;
   var phone = feedbackData.phone;
   var message = feedbackData.message;
@@ -99,7 +103,7 @@ function sendThankYouEmail(event_name,senderEmail,feedbackData) {
     from: senderEmail,
     to: 'info@mailinator.com',
     subject: 'Feedback for event '+event_name,
-    text: `New feedback is recieved from - \nFirst Name: ${firstName}\nLast Name: ${lastName}\nEmail: ${email}\nPhone: ${phone}\nMessage: ${message}`,
+    text: `New feedback is recieved from - \ Name: ${name}\nEmail: ${email}\nPhone: ${phone}\nMessage: ${message}`,
   };
 
   transporter.sendMail(mailOptions, (error, info) => {

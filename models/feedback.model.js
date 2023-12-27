@@ -10,12 +10,9 @@ const schema = new mongoose.Schema(
       ref: "EventModel",
       required: true,
     },
-    first_name: {
+    name: {
       type: String,
       required: true,
-    },
-    last_name: {
-        type: String,
     },
     phone: {
         type: String,

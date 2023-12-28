@@ -25,7 +25,6 @@ const schema = new mongoose.Schema(
     },
     status: {
       type: String,
-      default: baseStatus.pending,
     },
     transaction_id:{
         type: String,

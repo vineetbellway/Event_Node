@@ -28,6 +28,8 @@ const book = async (req, res, next) => {
       const event_id = req.body.event_id;
       var event_record = await EventModel.findById(event_id);
 
+ 
+
       if(event_record){
         if(event_record.status == "expired"){
           res.status(400).send({ status: false, message: "Event is expired", data: null });
@@ -38,7 +40,14 @@ const book = async (req, res, next) => {
         return;
       }
 
-     
+
+      if(payment_mode == "upi"){
+        var status = "active";
+      } else {
+        var status = "pending";
+      }
+
+      
 
       var bookingData = {
         'event_id': event_id,
@@ -46,7 +55,8 @@ const book = async (req, res, next) => {
         'payment_mode': payment_mode,
         'transaction_id': transaction_id,
         'fcm_token': fcm_token,
-         'amount' : event_record.amount
+        'amount' : event_record.amount,
+        'status' : status
       };
 
       const result = await Booking(bookingData).save();
@@ -62,9 +72,7 @@ const book = async (req, res, next) => {
                 "booking_id": result._id,
                 "menu_id": item.menu_id,
                 "quantity": item.quantity,
-              };
-              console.log("bookingMenuData",bookingMenuData);
-          
+              };          
           
 
               await BookingMenu(bookingMenuData).save();
@@ -1162,30 +1170,30 @@ const get_guest_coupon_balance = async (req, res) => {
       var sum = 0;
       
       if(result.length > 0){      
-      // Iterate over each MenuItemBooking record
-      for (const item1 of result) {
-        var booking_data = item1.booking_data[0];  
-    
-        const event_id = booking_data.event_id; // Access the event_id from the result
-
-         // Check if the event is active
-         const eventDetails = await EventModel.findOne({ '_id': event_id });
-        if (eventDetails && eventDetails.status == 'active') {
-          if(eventDetails.type == "food_event" && eventDetails.is_cover_charge_added == "yes"){
-            sum += item1.amount;
-            break;
-          }
-          
-        }     
+        console.log("inside if")
+          // Iterate over each MenuItemBooking record
+          for (const item1 of result) {
+            var booking_data = item1.booking_data[0];  
         
-      }
-    }
-    else {
-        sum = 0;
-    }
-      
+            const event_id = booking_data.event_id; // Access the event_id from the result
 
-      console.log("Total Sum:", sum); // Output the total sum after the loop
+            // Check if the event is active
+            const eventDetails = await EventModel.findOne({ '_id': event_id });
+            
+            if (eventDetails && eventDetails.status == 'active') {
+              var event_data = eventDetails;
+              if(eventDetails.type == "food_event" && eventDetails.is_cover_charge_added == "yes"){
+                sum += item1.amount;
+                break;
+              }              
+            }    
+          }
+      }
+      else {
+          sum = 0;
+          var event_data = null;
+      }
+      
 
       // Now you can use the sum in your aggregation
       const paymentAmount = sum;
@@ -1256,14 +1264,13 @@ const get_guest_coupon_balance = async (req, res) => {
         },
       ])
         .then((result) => {
-          console.log("result", result);
           if (result && result.length > 0) {
             const lastRecord = result[result.length - 1];
-
             res.status(200).json({
               status: true,
               message: "Data found",
-              data: lastRecord, // Since we're grouping, result is an array with one element
+              data: {"total_coupon_balance":lastRecord.total_coupon_balance,'event_data' : (event_data == undefined) ? null : event_data},
+              
             });
           } else {
             res.status(200).json({ status: false, message: "No bookings found", data: null });

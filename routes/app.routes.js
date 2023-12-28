@@ -352,7 +352,7 @@ router.get("/get-expired-events/:id",auth, eventController.get_expired_events);
 
 
 // get pending guest list API
-router.get("/get-pending-guest-list",auth,ookingController.get_pending_guest_list);
+router.get("/get-pending-guest-list",auth,bookingController.get_pending_guest_list);
 
 // get approved booking cost API
 router.get("/get-approved-booking-cost",auth, bookingController.get_approved_booking_cost);

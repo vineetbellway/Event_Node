@@ -504,7 +504,7 @@ const  get_booking_detail = async (req, res) => {
           
          
         } else {
-          res.status(404).json({ status: false, message: "No boobookingking found" });
+          res.status(404).json({ status: false, message: "No booking found" });
         }
       })
       .catch((error) => {
@@ -1360,31 +1360,64 @@ const get_pending_guest_list = async (req, res) => {
       Booking.aggregate(pipeline)
         .then((result) => {
           console.log("result", result);
+          var guest_data = [];
+          var booking_data = {};
+
+          var all_data = [];
           if (result && result.length > 0) {
-            var data = [];
 
-
-           
+                //  var guestRecord = {};
 
             for (const booking of result) {
-              
+              booking_data._id = booking._id;
+              booking_data.event_id = booking.event_id;
+              booking_data.guest_id = booking.guest_id;
+              booking_data.payment_mode = booking.payment_mode;
+              booking_data.status = booking.status;
+              booking_data.transaction_id = booking.transaction_id;
+              booking_data.amount = booking.amount;
+              booking_data.createdAt = booking.createdAt;
+              booking_data.updatedAt = booking.updatedAt;
+              booking_data.__v = booking.__v;
+
+              console.log("booking",booking)
+              const guestRecord = booking.guest_data[0];
               if (
                 booking.guest_data &&
                 booking.guest_data.length > 0 &&
                 booking.guest_data[0] !== null
               ) {
-                const guestRecord = booking.guest_data[0];
-                guestRecord.contact_number = booking.user_data[0].code_phone
+       
+               guestRecord.contact_number = booking.user_data[0].code_phone;
+               
+                console.log("guest",booking.guest_data[0])
+               /* guestRecord._id = booking.guest_data[0]._id;
+                guestRecord.user_id = booking.guest_data[0].user_id;
+                guestRecord.full_name = booking.guest_data[0].full_name;
+                guestRecord.district = booking.guest_data[0].district;
+                guestRecord.state = booking.guest_data[0].state;
+                guestRecord.district = booking.guest_data[0].district;
+                guestRecord.country = booking.guest_data[0].country;
+               
+                guestRecord.status = booking.guest_data[0].status;
+                guestRecord.createdAt = booking.guest_data[0].createdAt;
 
+                guestRecord.updatedAt = booking.guest_data[0].updatedAt;
+                guestRecord.__v = booking.guest_data[0].__v;
+                guestRecord.contact_number = booking.user_data[0].code_phone;*/
+                //guestRecord.booking_data = booking_data;
 
-                data.push(guestRecord);
+                guest_data.push(guestRecord);
               }
+              all_data.push({"guest_data":guestRecord,"booking_data":booking});
             }
+
+        
 
             res.status(200).json({
               status: true,
               message: "Data found",
-              data: data,
+              data: all_data,
             });
           } else {
             res.status(404).json({ status: false, message: "No guests found",data: [] });

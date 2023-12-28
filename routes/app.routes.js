@@ -190,7 +190,7 @@ router.get("/get-bookings-by-payment-mode",auth, bookingController.get_bookings_
 router.get("/get-bookings", auth , bookingController.get_bookings);
 
 // get booking detail
-router.get("/get-booking-detail",auth,  bookingController.get_booking_detail);
+router.get("/get-booking-detail",  bookingController.get_booking_detail);
 
 // manage bookings
 router.post("/manage-bookings", auth, bookingController.manage_bookings);
@@ -364,7 +364,7 @@ router.post("/read-all-notifications",auth, notificationController.read_all_noti
 router.get("/get-feedbacks",auth,  feedbackController.get_feedbacks);
 
 // close party coupon
-router.put("/close-party-coupon",bookingController.close_party_coupon);
+router.put("/close-party-coupon",auth,bookingController.close_party_coupon);
 
 cron.schedule("* * * * *", function () {
   //  console.log("Cron job is running");

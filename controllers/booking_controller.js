@@ -1338,6 +1338,7 @@ const get_pending_guest_list = async (req, res) => {
             as: "user_data",
           },
         },
+       
         {
           $match: {
             $or: [
@@ -1352,6 +1353,7 @@ const get_pending_guest_list = async (req, res) => {
             ],
           },
         },
+        
         {
           $sort: { createdAt: -1 },
         },
@@ -1360,59 +1362,30 @@ const get_pending_guest_list = async (req, res) => {
       Booking.aggregate(pipeline)
         .then((result) => {
           console.log("result", result);
-          var guest_data = [];
-          var booking_data = {};
-
           var all_data = [];
           if (result && result.length > 0) {
-
-                //  var guestRecord = {};
-
             for (const booking of result) {
-              booking_data._id = booking._id;
-              booking_data.event_id = booking.event_id;
-              booking_data.guest_id = booking.guest_id;
-              booking_data.payment_mode = booking.payment_mode;
-              booking_data.status = booking.status;
-              booking_data.transaction_id = booking.transaction_id;
-              booking_data.amount = booking.amount;
-              booking_data.createdAt = booking.createdAt;
-              booking_data.updatedAt = booking.updatedAt;
-              booking_data.__v = booking.__v;
-
-              console.log("booking",booking)
-              const guestRecord = booking.guest_data[0];
-              if (
-                booking.guest_data &&
-                booking.guest_data.length > 0 &&
-                booking.guest_data[0] !== null
-              ) {
-       
-               guestRecord.contact_number = booking.user_data[0].code_phone;
-               
-                console.log("guest",booking.guest_data[0])
-               /* guestRecord._id = booking.guest_data[0]._id;
-                guestRecord.user_id = booking.guest_data[0].user_id;
-                guestRecord.full_name = booking.guest_data[0].full_name;
-                guestRecord.district = booking.guest_data[0].district;
-                guestRecord.state = booking.guest_data[0].state;
-                guestRecord.district = booking.guest_data[0].district;
-                guestRecord.country = booking.guest_data[0].country;
-               
-                guestRecord.status = booking.guest_data[0].status;
-                guestRecord.createdAt = booking.guest_data[0].createdAt;
-
-                guestRecord.updatedAt = booking.guest_data[0].updatedAt;
-                guestRecord.__v = booking.guest_data[0].__v;
-                guestRecord.contact_number = booking.user_data[0].code_phone;*/
-                //guestRecord.booking_data = booking_data;
-
-                guest_data.push(guestRecord);
-              }
-              all_data.push({"guest_data":guestRecord,"booking_data":booking});
+             
+             
+                const guestRecord = booking.guest_data[0];
+                guestRecord.contact_number = booking.user_data[0].code_phone;
+                all_data.push({
+                  "guest_data": { ...guestRecord },
+                  "booking_data": {
+                    _id: booking._id,
+                    event_id: booking.event_id,
+                    guest_id: booking.guest_id,
+                    payment_mode: booking.payment_mode,
+                    status: booking.status,
+                    transaction_id: booking.transaction_id,
+                    amount: booking.amount,
+                    createdAt: booking.createdAt,
+                    updatedAt: booking.updatedAt,
+                    __v: booking.__v,
+                  },
+                });
+              
             }
-
-        
 
             res.status(200).json({
               status: true,
@@ -1420,7 +1393,11 @@ const get_pending_guest_list = async (req, res) => {
               data: all_data,
             });
           } else {
-            res.status(404).json({ status: false, message: "No guests found",data: [] });
+            res.status(404).json({
+              status: false,
+              message: "No guests found",
+              data: [],
+            });
           }
         })
         .catch((error) => {
@@ -1439,6 +1416,7 @@ const get_pending_guest_list = async (req, res) => {
     }
   }
 };
+
 
 const get_approved_booking_cost = async (req, res) => {
   var event_id = req.query.event_id;

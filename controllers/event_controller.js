@@ -159,7 +159,7 @@ exports.get_events = async (req, res) => {
                 return {
                   ...event,
                   image: eventImageUrl,
-                  banner_data: {},
+                  banner_data: null,
                 };
               }            
             });         
@@ -218,23 +218,43 @@ exports.get_event = async (req, res) => {
     ]);
 
     if (result && result.length > 0) {
+      console.log("result",result)
       const baseURL = `${req.protocol}://${req.get('host')}`;
       
       // Update the image URL for the event
       const eventImageUrl = baseURL + '/uploads/events/' + result[0].image;
       
       // Include the image URL in the "banner_data" field for the banner
-      const bannerImageUrl = baseURL + '/uploads/banners/' + result[0].banner_data[0].image;
+      var bannerImageUrl = '';
+      if(result[0].banner_data.length > 0){
+        var  bannerImageUrl = baseURL + '/uploads/banners/' + result[0].banner_data[0].image;
+        var banner_data = result[0].banner_data[0];
+      } else {
+        var banner_data = null;
+      }
 
-      // Update the event response
-      const updatedResult = {
-        ...result[0],
-        image: eventImageUrl,
-        banner_data: {
-          ...result[0].banner_data[0], // Assuming there's only one banner
-          image: bannerImageUrl,
-        },
-      };
+      console.log("banner_data",banner_data)
+
+      if(banner_data == null){
+         // Update the event response
+        var updatedResult = {
+          ...result[0],
+          image: eventImageUrl,
+          banner_data: null,
+        };
+      } else {
+        // Update the event response
+        var updatedResult = {
+          ...result[0],
+          image: eventImageUrl,
+          banner_data: {
+            ...banner_data, // Assuming there's only one banner
+            image: bannerImageUrl,
+          },
+        };
+      }
+
+     
 
       res.status(200).send({
         status: true,
@@ -291,7 +311,7 @@ exports.search_events = async (req, res) => {
       },
       {
         $match: {
-          $or: [{ name: regex }, { coupon_name: regex } ],
+          $or: [{ name: regex }, { coupon_name: regex }, { venue: regex } ],
           'status' : 'active'
         },
       },
@@ -322,7 +342,7 @@ exports.search_events = async (req, res) => {
             return {
               ...event,
               image: eventImageUrl,
-              banner_data: {},
+              banner_data: null,
             };
           }            
         });         
@@ -411,7 +431,7 @@ exports.event_by_seller_id = async (req, res) => {
             return {
               ...event,
               image: eventImageUrl,
-              banner_data: {},
+              banner_data: null,
             };
           }            
         });         
@@ -483,7 +503,7 @@ exports.get_seller_events = async (req, res) => {
             image: eventImageUrl,
             banner_data: banner_data
               ? { ...banner_data, image: bannerImageUrl }
-              : {},
+              : null,
           };
         }
       });

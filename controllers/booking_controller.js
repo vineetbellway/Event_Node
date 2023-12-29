@@ -1256,14 +1256,18 @@ var menu_payment_record = await MenuItemBookings.aggregate([
   },
 ])
   .then(async (result2) => {
+
     if (result2.length > 0) {
       var payment_id = result2[0].payment_id;
       var payment_record = await MenuItemPayments.findById(payment_id);
-      console.log("result", payment_record.amount);
-
+      console.log("amount", payment_record.amount);
+      console.log("result2",payment_record)
       if (payment_record) {
-        total_coupon_balance = total_coupon_balance - payment_record.amount;
-        console.log("total_coupon_balance", payment_record.amount);
+        if(payment_record.amount!=undefined){
+          total_coupon_balance = total_coupon_balance - payment_record.amount;
+        }
+        
+        console.log("total_coupon_balance",total_coupon_balance);
       }
     } else {
       total_coupon_balance = total_coupon_balance;
@@ -1274,7 +1278,7 @@ var menu_payment_record = await MenuItemBookings.aggregate([
   });
 
 // Now you can use total_coupon_balance here or perform other operations
-console.log("total_coupon_balance", total_coupon_balance);
+console.log("total_coupon_balance 33", total_coupon_balance);
 
 
 

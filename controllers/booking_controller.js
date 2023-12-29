@@ -1289,7 +1289,7 @@ console.log("total_coupon_balance", total_coupon_balance);
               
             });
           } else {
-            res.status(200).json({ status: false, message: "No data found", data: {"total_coupon_balance":total_coupon_balance,'event_data' : null } });
+            res.status(200).json({ status: false, message: "No data found", data: null});
           }
         })
         .catch((error) => {

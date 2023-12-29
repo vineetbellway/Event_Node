@@ -56,6 +56,7 @@ const book = async (req, res, next) => {
         'transaction_id': transaction_id,
         'fcm_token': fcm_token,
         'amount' : event_record.amount,
+       // 'coupon_balance' : coupon_balance,
         'status' : status
       };
 
@@ -942,196 +943,9 @@ const get_booked_guest_list = async (req, res) => {
 
 
 
-const get_guest_coupon_balanceold = async (req, res) => {
-  const guest_id = req.query.guest_id;
-
-  if (!guest_id) {
-    res.status(400).json({ status: false, message: "Guest ID is required in the request body" });
-  } else {
-    try {
-      // Fetch all MenuItemBooking records for the guest
-      const result = await MenuItemBookings.aggregate([
-        {
-          $match: {
-            guest_id: new mongoose.Types.ObjectId(guest_id),
-          },
-        },
-        {
-          $lookup: {
-            from: 'MenuItemPayments',
-            localField: 'payment_id',
-            foreignField: '_id',
-            as: 'payment_data',
-          },
-        },
-
-      
-        
-        {
-          $group: {
-            _id: {
-              payment_id: "$payment_id", // Group by payment_id
-              event_id: "$event_id", // Group by event_id if it exists
-            },
-          },
-        },
-   
-        
-      ]);
-      
-      // Initialize sum as 0
-      var sum = 0;
-      
-      console.log("result", result);
-      
-      // Iterate over each MenuItemBooking record
-      for (const item1 of result) {
-        const payment_id = item1._id.payment_id; // Access the payment_id from the result
-        const event_id = item1._id.event_id; // Access the event_id from the result
-        console.log("payment_id", payment_id);
-        console.log("event_id", event_id);
-         // Check if the event is active
-         const eventDetails = await EventModel.findOne({ '_id': event_id });
-
-        // Fetch the MenuItemPayments records for the current payment_id
-        const bookedPaymentResults = await MenuItemPayments.aggregate([
-          {
-            $match: {
-              _id: payment_id,
-              is_approved: "yes",
-            },
-          },
-          {
-            $sort: { createdAt: 1 },
-          },
-        ]);
 
 
-        console.log("bookedPaymentResults",bookedPaymentResults)
-
-        // Loop through each bookedPaymentResult
-        if(bookedPaymentResults.length > 0){
-          for (const bookedPaymentResult of bookedPaymentResults) { 
-           
-            if (eventDetails && eventDetails.status == 'active') {
-
-              if(eventDetails.type == "food_event" && eventDetails.is_cover_charge_added == "yes"){
-                sum += bookedPaymentResult.amount;
-                break;
-              }
-             
-            }
-          }
-        } else {
-  
-          var  coverCharge = eventDetails ? eventDetails.cover_charge : 0;
-            sum = 0;
-        }
-        
-      }
-
-      console.log("Total Sum:", sum); // Output the total sum after the loop
-
-      // Now you can use the sum in your aggregation
-      const paymentAmount = sum;
-
-      // Continue with the rest of your code...
-
-      Booking.aggregate([
-        {
-          $match: {
-            guest_id: new mongoose.Types.ObjectId(guest_id),
-          },
-        },
-        {
-          $lookup: {
-            from: 'bookingmenus',
-            localField: '_id',
-            foreignField: 'booking_id',
-            as: 'booked_menu_data',
-          },
-        },
-        {
-          $unwind: { path: "$booked_menu_data", preserveNullAndEmptyArrays: true },
-        },
-        {
-          $lookup: {
-            from: 'menus',
-            localField: 'booked_menu_data.menu_id',
-            foreignField: '_id',
-            as: 'menu_data',
-          },
-        },
-        {
-          $unwind: { path: "$menu_data", preserveNullAndEmptyArrays: true },
-        },
-        {
-          $sort: { createdAt: 1 }, // Sort by createdAt in ascredsning order
-        },
-        {
-          $project: {
-            _id: 0,
-            total_coupon_balance: {
-              $sum: [
-                {
-                  $cond: {
-                    if: {
-                      $and: [
-                        { $ifNull: ["$booked_menu_data", []] }, // Check if booked_menu_data is not null or empty
-                        { $ifNull: ["$menu_data", []] }, // Check if menu_data is not null or empty
-                      ],
-                    },
-                    then: paymentAmount, // Use paymentAmount directly
-                    else: {
-                      $sum: [
-                        {
-                          $multiply: [
-                            "$booked_menu_data.quantity",
-                            { $arrayElemAt: ["$menu_data.selling_price", 0] },
-                          ],
-                        },
-                        paymentAmount, // Sum paymentAmount with the calculated value
-                      ],
-                    },
-                  },
-                },
-              ],
-            },
-          },
-        },
-      ])
-        .then((result) => {
-          console.log("result", result);
-          if (result && result.length > 0) {
-            const lastRecord = result[result.length - 1];
-
-            res.status(200).json({
-              status: true,
-              message: "Data found",
-              data: lastRecord, // Since we're grouping, result is an array with one element
-            });
-          } else {
-            res.status(200).json({ status: false, message: "No bookings found", data: null });
-          }
-        })
-        .catch((error) => {
-          console.log("error", error);
-          res.status(500).json({
-            status: false,
-            message: error.toString() || "Internal Server Error",
-          });
-        });
-    } catch (error) {
-      console.log("error", error);
-      res.status(500).json({
-        status: false,
-        message: error.toString() || "Internal Server Error",
-      });
-    }
-  }
-};
-
-const get_guest_coupon_balance = async (req, res) => {
+const get_guest_coupon_balance_old = async (req, res) => {
   const guest_id = req.query.guest_id;
 
   if (!guest_id) {
@@ -1170,7 +984,7 @@ const get_guest_coupon_balance = async (req, res) => {
       var sum = 0;
       
       if(result.length > 0){      
-        console.log("inside if")
+       
           // Iterate over each MenuItemBooking record
           for (const item1 of result) {
             var booking_data = item1.booking_data[0];  
@@ -1179,9 +993,10 @@ const get_guest_coupon_balance = async (req, res) => {
 
             // Check if the event is active
             const eventDetails = await EventModel.findOne({ '_id': event_id });
-            
+            console.log("inside if",event_id)
             if (eventDetails && eventDetails.status == 'active') {
               var event_data = eventDetails;
+              
               if(eventDetails.type == "food_event" && eventDetails.is_cover_charge_added == "yes"){
                 sum += item1.amount;
                 break;
@@ -1265,6 +1080,7 @@ const get_guest_coupon_balance = async (req, res) => {
       ])
         .then((result) => {
           if (result && result.length > 0) {
+            console.log("result",result)
             const lastRecord = result[result.length - 1];
             res.status(200).json({
               status: true,
@@ -1274,6 +1090,206 @@ const get_guest_coupon_balance = async (req, res) => {
             });
           } else {
             res.status(200).json({ status: false, message: "No bookings found", data: null });
+          }
+        })
+        .catch((error) => {
+          console.log("error", error);
+          res.status(500).json({
+            status: false,
+            message: error.toString() || "Internal Server Error",
+          });
+        });
+    } catch (error) {
+      console.log("error", error);
+      res.status(500).json({
+        status: false,
+        message: error.toString() || "Internal Server Error",
+      });
+    }
+  }
+};
+
+
+
+const get_guest_coupon_balance = async (req, res) => {
+  var guest_id = req.query.guest_id;
+  var event_id = req.query.event_id;
+
+  if (!guest_id) {
+    res.status(400).json({ status: false, message: "Guest ID is required in the request body" });
+  } else {
+    try {
+
+       // Fetch all MenuItemBooking records for the guest
+
+   /*   const result = await MenuItemPayments.aggregate([
+        {
+          $lookup: {
+            from: 'menuitembookings',
+            localField: '_id', // Match based on _id field in MenuItemPayments
+            foreignField: 'payment_id', // Match based on payment_id field in MenuItemBookings
+            as: 'booking_data',
+          },
+        },
+       
+        {
+          $match: {
+            'booking_data.guest_id': new mongoose.Types.ObjectId(guest_id),
+            'is_approved' : 'yes',
+            'amount': { $gt: 0 }, 
+          },
+        },
+        {
+          $sort: { 'createdAt': -1 }, // Sort in descending order based on the 'createdAt' field
+        },
+        {
+          $limit: 1, // Limit the result to one document
+        },
+      ]);  
+      
+      // Initialize sum as 0
+      var sum = 0;
+      
+      if(result.length > 0){      
+       
+          // Iterate over each MenuItemBooking record
+          for (const item1 of result) {
+            var booking_data = item1.booking_data[0];  
+        
+            const event_id = booking_data.event_id; // Access the event_id from the result
+
+            // Check if the event is active
+            const eventDetails = await EventModel.findOne({ '_id': event_id });
+            console.log("inside if",event_id)
+            if (eventDetails && eventDetails.status == 'active') {
+              var event_data = eventDetails;
+              
+              if(eventDetails.type == "food_event" && eventDetails.is_cover_charge_added == "yes"){
+                sum += item1.amount;
+                break;
+              }              
+            }    
+          }
+      }
+      else {
+          sum = 0;
+          var event_data = null;
+      }
+      
+
+      // Now you can use the sum in your aggregation
+      const paymentAmount = sum;*/
+
+      // Continue with the rest of your code...
+
+      Booking.aggregate([
+        {
+          $match: {
+            guest_id: new mongoose.Types.ObjectId(guest_id),
+            status : 'active'
+          },
+        },
+        {
+          $lookup: {
+            from: 'bookingmenus',
+            localField: '_id',
+            foreignField: 'booking_id',
+            as: 'booked_menu_data',
+          },
+        },
+        {
+          $unwind: { path: "$booked_menu_data", preserveNullAndEmptyArrays: true },
+        },
+        {
+          $lookup: {
+            from: 'menus',
+            localField: 'booked_menu_data.menu_id',
+            foreignField: '_id',
+            as: 'menu_data',
+          },
+        },
+        {
+          $unwind: { path: "$menu_data", preserveNullAndEmptyArrays: true },
+        },
+        {
+          $sort: { createdAt: 1 }, // Sort by createdAt in ascending order
+        },
+      ])
+        .then(async(result) => {
+          var total_coupon_balance = 0;
+          if (result && result.length > 0) {
+            for (const item2 of result) {
+                const event_id = item2.event_id; // Access the event_id from the result
+
+                // Check if the event is active
+                const eventDetails = await EventModel.findOne({ '_id': event_id });
+                if (eventDetails && eventDetails.status == 'active') {
+                  var event_data = eventDetails;
+                 console.log("eventDetails",eventDetails)
+                  
+                  if(eventDetails.type == "food_event" && eventDetails.is_cover_charge_added == "yes"){
+                    console.log("item2",eventDetails)
+                    total_coupon_balance = eventDetails.cover_charge;
+                    break;
+                  }              
+                }   
+               // console.log("eventDetails",eventDetails);
+                //return false;
+            }
+
+            var event_id = event_data._id;
+            console.log("result 3",event_id)
+
+            
+var menu_payment_record = await MenuItemBookings.aggregate([
+  {
+    $match: {
+      'guest_id': new mongoose.Types.ObjectId(guest_id),
+      'event_id': new mongoose.Types.ObjectId(event_id),
+    },
+  },
+  {
+    $sort: { 'createdAt': -1 },
+  },
+  {
+    $limit: 1,
+  },
+])
+  .then(async (result2) => {
+    if (result2.length > 0) {
+      var payment_id = result2[0].payment_id;
+      var payment_record = await MenuItemPayments.findById(payment_id);
+      console.log("result", payment_record.amount);
+
+      if (payment_record) {
+        total_coupon_balance = total_coupon_balance - payment_record.amount;
+        console.log("total_coupon_balance", payment_record.amount);
+      }
+    } else {
+      total_coupon_balance = total_coupon_balance;
+    }
+  })
+  .catch((error) => {
+    console.error("Error:", error);
+  });
+
+// Now you can use total_coupon_balance here or perform other operations
+console.log("total_coupon_balance", total_coupon_balance);
+
+
+
+
+            if(event_data.is_cover_charge_added == "no"){
+              event_data = undefined;
+            }
+            res.status(200).json({
+              status: true,
+              message: "Data found",
+              data: {"total_coupon_balance":total_coupon_balance,'event_data' : (event_data == undefined) ? null : event_data},
+              
+            });
+          } else {
+            res.status(200).json({ status: false, message: "No data found", data: {"total_coupon_balance":total_coupon_balance,'event_data' : null } });
           }
         })
         .catch((error) => {
@@ -1517,9 +1533,9 @@ const get_approved_booking_cost = async (req, res) => {
 
 // It will expire events and event's bookings
   
-const close_party_coupon = async (req, res) => {
+const close_event_by_seller = async (req, res) => {
   var event_id = req.body.event_id;
-
+  var seller_id = req.body.seller_id;
   if (!event_id) {
     res.status(400).json({ status: false, message: "event_id is required in the request body" });
   } else {
@@ -1573,6 +1589,6 @@ module.exports = {
   get_guest_coupon_balance,
   get_pending_guest_list,
   get_approved_booking_cost,
-  close_party_coupon
+  close_event_by_seller
 
 }; 

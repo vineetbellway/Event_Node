@@ -47,6 +47,11 @@ const schema = new mongoose.Schema(
       type: String,
       default: baseStatus.active,
     },
+    validator_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+     // required: true,
+    },
   },
   {
     timestamps: true,

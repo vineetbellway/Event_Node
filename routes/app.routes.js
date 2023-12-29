@@ -90,7 +90,7 @@ router.get("/validator_by_user_id/:id",auth,validatorController.get_validator_by
 router.delete("/validator/:id", auth, validatorController.delete_validator);
 router.delete("/validator", auth, validatorController.delete_validators);
 
-router.post("/event",auth, upload.single('image'), eventController.create_event);
+router.post("/event", upload.single('image'), eventController.create_event);
 router.put("/event/:id",auth, upload.single('image'),eventController.update_event);
 router.get("/event", auth,eventController.get_events);
 router.get("/search_event/:keyword",auth,eventController.search_events);
@@ -99,7 +99,7 @@ router.get("/event/:id",auth,  eventController.get_event);
 router.delete("/event/:id",auth,  eventController.delete_event);
 router.delete("/event",auth,  eventController.delete_events);
 
-router.post("/menu", auth,menuController.create_menu);
+router.post("/menu",menuController.create_menu);
 router.put("/menu/:id", auth, menuController.update_menu);
 router.get("/menu", auth,menuController.get_menus);
 router.get("/menu_by_event_id/:id", auth,menuController.get_menu_by_event_id);
@@ -180,7 +180,7 @@ router.post("/approve-guest-consumption/:id", loyalityController.approve_guest_c
 
 // book event/loyalty
 
-router.post("/book",auth, bookingController.book);
+router.post("/book", bookingController.book);
 
 // get bookings by payment mode
 
@@ -193,7 +193,7 @@ router.get("/get-bookings", auth , bookingController.get_bookings);
 router.get("/get-booking-detail",  bookingController.get_booking_detail);
 
 // manage bookings
-router.post("/manage-bookings", auth, bookingController.manage_bookings);
+router.post("/manage-bookings", bookingController.manage_bookings);
 
 // give feedback
 router.post("/give-feedback",auth,  feedbackController.give_feedback);
@@ -305,7 +305,7 @@ router.get("/number-of-guests-for-event", auth, reportController.get_number_of_g
 router.get("/repated-guests-for-seller",auth,reportController.get_repeated_guests_for_seller_attending_events);
 
 // get the number of guests attending events by a specific seller
-router.get("/number-guests-for-seller",reportController.get_number_of_guests_for_seller);
+router.get("/number-guests-for-seller",auth,reportController.get_number_of_guests_for_seller);
 
 
 // get event validator detail API
@@ -363,14 +363,17 @@ router.post("/read-all-notifications",auth, notificationController.read_all_noti
 // feedback list
 router.get("/get-feedbacks",auth,  feedbackController.get_feedbacks);
 
-// close party coupon
-router.put("/close-party-coupon",auth,bookingController.close_party_coupon);
+// close event by seller
+router.put("/close-event-by-seller",auth,bookingController.close_event_by_seller);
+
+// close menu counter by validator
+router.put("/close-menu-counter-by-validator",auth,menuController.close_menu_counter_by_validator);
 
 cron.schedule("* * * * *", function () {
   //  console.log("Cron job is running");
     // bookingController.disableSellerServices();
    //bookingController.sendEventNotification();
-   bookingController.sendExpireEventNotification();
+  bookingController.sendExpireEventNotification();
   bookingController.sendExpiredEventNotification();
 });
 

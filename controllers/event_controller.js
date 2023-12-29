@@ -711,6 +711,7 @@ exports.update_event = async (req, res, next) => {
 
 exports.close_event_counter = async (req, res, next) => {
   const event_id = req.query.event_id;
+  
 
   if (!event_id) {
     return res.status(400).json({

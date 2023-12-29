@@ -706,11 +706,11 @@ exports.book_menu_items = async (req, res, next) => {
 
 
 
-       if(event_record.is_cover_charge_added == "yes"){
+       if(event_record.is_cover_charge_added == "no"){
       
         const paymentData = {
           payment_status: 'paid',
-          amount:req.body.amount
+         
         };
     
         const paymentResult = await MenuItemPayments(paymentData).save();
@@ -787,13 +787,14 @@ exports.book_menu_items = async (req, res, next) => {
           };
       
           await MenuItem.deleteMany(deleteConditions);
-          res.status(200).send({ status: true, message: "Item booked successfully", data : { payment_id: payment_id,amount:req.body.amount,booked_data: results} });
+          res.status(200).send({ status: true, message: "Item booked successfully", data : { payment_id: payment_id,booked_data: results} });
     
        
        } else {
 
         const paymentData = {
           payment_status: 'paid',
+          amount:req.body.amount
       
         };
 
@@ -848,7 +849,7 @@ exports.book_menu_items = async (req, res, next) => {
         }
 
     
-        res.status(200).send({ status: true, message: "Item booked successfully", data : { payment_id: payment_id,booked_data: results} });
+        res.status(200).send({ status: true, message: "Item booked successfully", data : { payment_id: payment_id,amount:req.body.amount,booked_data: results} });
        }
 
     }
@@ -970,9 +971,9 @@ exports.get_booked_menu_items = async (req, res) => {
       // Check if cover charge exceeds the sum of menu item prices
 
       const eventRecord = await EventModel.findById(event_id);
-
+      console.log("rr",eventRecord)
       if(eventRecord.type == "food_event"){
-        if(eventRecord.is_cover_charge_added == "yes"){
+        if(eventRecord.is_cover_charge_added == "no"){
           var sum = 0;
           for (const item of bookedMenuResult) {
             if (item && typeof item.quantity === 'number' && item.quantity > 0) {
@@ -1059,6 +1060,11 @@ exports.approve_menu_payment = async (req, res, next) => {
         if (item && typeof item.quantity === 'number' && item.quantity > 0) {
           const menu_id = item.menu_id;
           const menuRecord = await Menu.findById(menu_id);
+          console.log("menuRecord",menuRecord)
+           // Update total stock in Menu collection
+           const newTotalStock = menuRecord.total_stock - item.quantity;
+           await Menu.findByIdAndUpdate(menu_id, { $set: { total_stock: newTotalStock } });
+        
 
           if (menuRecord) {
             sum += menuRecord.selling_price * item.quantity;
@@ -1089,7 +1095,8 @@ exports.approve_menu_payment = async (req, res, next) => {
 
 
 
-
+      console.log("type",eventRecord.type)
+      console.log("covercharge",bookedPaymentResult)
       if(eventRecord.type == "food_event"){
         if(eventRecord.is_cover_charge_added == "yes"){
        
@@ -1100,7 +1107,7 @@ exports.approve_menu_payment = async (req, res, next) => {
       
           // Subtract sum from cover charge
           coverCharge -= sum;   
-    
+      
     
           // Update amount in the menu item payment record
           await MenuItemPayments.findByIdAndUpdate(payment_id, { $set: { amount: coverCharge } });
@@ -1139,6 +1146,49 @@ exports.approve_menu_payment = async (req, res, next) => {
     }
   }
 };
+
+exports.close_menu_counter_by_validator = async (req, res) => {
+  var event_id = req.body.event_id;
+  var validator_id = req.body.validator_id;
+  console.log("event_id",event_id)
+  console.log("validator_id",validator_id)
+
+    try {
+      Menu.updateMany(
+        { event_id: event_id },
+        { 
+          $set: { 
+            total_stock: 0,  
+            validator_id: new mongoose.Types.ObjectId(validator_id),
+          } 
+        },
+        { new: true } // This option returns the modified document
+      )
+      .then((result) => {
+        if (result) {
+          res.status(200).json({
+            status: true,
+            message: "Counter close successfully",
+            data: result,
+          });
+        } else {
+          res.status(200).json({
+            status: false,
+            message: "Failed ! Please try again",
+            data: null,
+          });
+        }
+      });
+    } catch (error) {
+      console.log("error", error);
+      res.status(500).json({
+        status: false,
+        message: error.toString() || "Internal Server Error",
+      });
+    }
+  
+};
+
 
 
 

@@ -1077,39 +1077,98 @@ exports.approve_menu_payment = async (req, res, next) => {
 
       // Fetch cover charge from the event record
       const eventRecord = await EventModel.findById(event_id);
+
+      var total_coupon_balance = eventRecord.cover_charge;
+
+      var total_sum = 0;
+
+      var bookedPaymentResult = await MenuItemPayments.aggregate([
+              
+        {
+          $lookup: {
+            from: 'menuitembookings',
+            localField: '_id',
+            foreignField: 'payment_id',
+            as: 'booking_data',
+          },
+        },
+       {
+          $match: {
+            "booking_data.event_id": new mongoose.Types.ObjectId(event_id),
+            "booking_data.guest_id": new mongoose.Types.ObjectId(guest_id)
+       
+          },
+        },
+        {
+          $sort: { 'createdAt': -1 },
+        },
+
+      ])
+        .then(async (result2) => {
+
+          if (result2.length > 0) {
+      
+      
+            for(var p_item of result2){
+                if(p_item.amount!=undefined){                        
+                  total_sum += p_item.amount;
+                }
+            }
+            console.log("total_coupon_balance",total_coupon_balance)
+            console.log("total_sum",total_sum)
+              total_coupon_balance = total_coupon_balance - total_sum;
+          } else {
+            total_coupon_balance = total_coupon_balance;
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
      
 
-      const bookedPaymentResult = await MenuItemPayments.find({
-        _id: { $lt: payment_id },
+     /* const bookedPaymentResult = await MenuItemPayments.find({
+      //  _id: { $lt: payment_id },
       })
-        .sort({ _id: -1 }) // Sort in descending order by _id
-        .limit(1);
+        .sort({ _id: -1 });*/
 
    
-
+   /*   var total_sum = 0;
       // Loop through each bookedPaymentResult
       if(bookedPaymentResult.length > 0){
-         var coverCharge = bookedPaymentResult[0].amount;
+
+         for(var bookpay of bookedPaymentResult){
+          if(bookpay.amount!=undefined){
+            total_sum += bookpay.amount;
+          }
+          
+         
+         }
+
+         var coverCharge = total_sum;
+        
       } else {
         var coverCharge = eventRecord ? eventRecord.cover_charge : 0;
-      }
+      }*/
 
 
 
 
 
-      console.log("type",eventRecord.type)
-      console.log("covercharge",bookedPaymentResult)
       if(eventRecord.type == "food_event"){
         if(eventRecord.is_cover_charge_added == "yes"){
-       
-          if (sum > coverCharge) {
+          console.log("total_coupon_balance",total_coupon_balance)
+          console.log("total_sum",total_sum);
+          console.log("sum",sum);
+      //    return false;
+         
+          if (sum > total_coupon_balance) {
             res.status(400).send({ status: false, message: "Total price exceeds then cover charge", data: [] });
             return;
           }    
+
       
           // Subtract sum from cover charge
-          coverCharge -= sum;   
+         // coverCharge -= sum;   
           //console.log("coverCharge",sum);
           //return false;
     
@@ -1142,7 +1201,7 @@ exports.approve_menu_payment = async (req, res, next) => {
       res.status(200).send({
         status: true,
         message: "Payment approved successfully",
-        data: { updatedPaymentResult, remainingCoverCharge: coverCharge },
+        data: { updatedPaymentResult, remainingCoverCharge: total_coupon_balance-sum },
       });
     } catch (error) {
       console.log("error", error);

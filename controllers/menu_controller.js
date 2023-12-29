@@ -973,7 +973,7 @@ exports.get_booked_menu_items = async (req, res) => {
       const eventRecord = await EventModel.findById(event_id);
       console.log("rr",eventRecord)
       if(eventRecord.type == "food_event"){
-        if(eventRecord.is_cover_charge_added == "no"){
+      /*  if(eventRecord.is_cover_charge_added == "yes"){*/
           var sum = 0;
           for (const item of bookedMenuResult) {
             if (item && typeof item.quantity === 'number' && item.quantity > 0) {
@@ -986,9 +986,9 @@ exports.get_booked_menu_items = async (req, res) => {
             }
           }
 
-        } else {
+       /* } else {
            var sum = paymentData.amount;
-        }
+        }*/
       }
       
 
@@ -1011,6 +1011,7 @@ exports.get_booked_menu_items = async (req, res) => {
       console.log("result", result);
 
       if (result.length > 0) {
+        console.log("result");
         res.status(200).send({ status: true, message: "Data found", data: { total_selling_price: sum, menu_list: result } });
       } else {
         res.status(200).send({ status: true, message: "No Data found", data: [] });

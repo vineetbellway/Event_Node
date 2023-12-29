@@ -653,33 +653,8 @@ exports.get_menu_items = async (req, res) => {
       const new_result = await Promise.all(menuPromises);
 
 
-      const test = await BookedMenuItem.aggregate([
-        {
-          $match: {
-            guest_id: new mongoose.Types.ObjectId(guest_id),
-            event_id: new mongoose.Types.ObjectId(event_id),
-           // event_id: new mongoose.Types.ObjectId(event_id),
-          },
-        },
-      ]);
 
-      const filteredBookedMenuList = new_result.filter((item) => item && typeof item.quantity === 'number' && item.quantity > 0);
-
-     
-
-      if(filteredBookedMenuList.length > 0){
-
-        res.status(200).send({
-          status: true,
-          message: "No Data found",
-          data: {
-            menu_list: [],
-            total_selling_price: 0, // Calculate sum after promises are resolved
-          },
-        });
-
-      } else {
-        const filteredMenuList = new_result.filter((item) => item && typeof item.quantity === 'number' && item.quantity > 0);
+      const filteredMenuList = new_result.filter((item) => item && typeof item.quantity === 'number' && item.quantity > 0);
         console.log("new_result",new_result)
         res.status(200).send({
           status: true,
@@ -689,7 +664,6 @@ exports.get_menu_items = async (req, res) => {
             total_selling_price: sum, // Calculate sum after promises are resolved
           },
         });
-      }
 
 
       
@@ -736,6 +710,8 @@ exports.book_menu_items = async (req, res, next) => {
     }
   
     if(event_record.type == "food_event"){
+
+
 
 
 
@@ -880,6 +856,14 @@ exports.book_menu_items = async (req, res, next) => {
     
     
         }
+              // Delete records from the menuItems model
+              const deleteConditions = {
+                event_id: { $in: results.map(item => item.event_id) },
+                menu_id: { $in: results.map(item => item.menu_id) },
+                guest_id: { $in: results.map(item => item.guest_id) }
+              };
+          
+              await MenuItem.deleteMany(deleteConditions);
 
     
         res.status(200).send({ status: true, message: "Item booked successfully", data : { payment_id: payment_id,amount:req.body.amount,booked_data: results} });

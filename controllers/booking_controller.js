@@ -1537,8 +1537,9 @@ const get_approved_booking_cost = async (req, res) => {
       ];
 
       Booking.aggregate(pipeline)
-        .then((result) => {
+        .then(async(result) => {
           console.log("result", result);
+     
           if (result && result.length > 0) {
             var data = [];
             var totalUPIBookingAmount = 0;
@@ -1548,22 +1549,61 @@ const get_approved_booking_cost = async (req, res) => {
 
             for (const booking of result) {
           
+              var event_record = await EventModel.findById(booking.event_id);
 
-                // Calculate booking cost based on payment mode
               
 
-                if (booking.payment_mode === "counter_upi") {
-                  totalUPIBookingAmount += booking.amount || 0;
-                } 
-               
+              if(event_record.type == "food_event"){
+                 if(event_record.is_cover_charge_added == "yes"){
+                    if (booking.payment_mode === "counter_upi") {
+                      totalUPIBookingAmount = event_record.cover_charge|| 0;
+                    } 
+                  
 
-                if (booking.payment_mode === "cash") {
-                  totalCashBooking += booking.amount || 0;
-                }
+                    if (booking.payment_mode === "cash") {
+                      totalCashBooking = event_record.cover_charge || 0;
+                    }
 
-                if (booking.payment_mode === "card") {
-                  totalCardBooking += booking.amount || 0;
-                }
+                    if (booking.payment_mode === "card") {
+                      totalCardBooking = event_record.cover_charge || 0;
+                    }
+                 } else {
+                  if (booking.payment_mode === "counter_upi") {
+                    totalUPIBookingAmount += booking.amount || 0;
+                  } 
+                
+
+                  if (booking.payment_mode === "cash") {
+                    totalCashBooking += booking.amount || 0;
+                  }
+
+                  if (booking.payment_mode === "card") {
+                    totalCardBooking += booking.amount || 0;
+                  }
+
+                 }
+                
+
+                 
+              } else {
+                  // Calculate booking cost based on payment mode
+                
+
+                  if (booking.payment_mode === "counter_upi") {
+                    totalUPIBookingAmount += booking.amount || 0;
+                  } 
+                
+
+                  if (booking.payment_mode === "cash") {
+                    totalCashBooking += booking.amount || 0;
+                  }
+
+                  if (booking.payment_mode === "card") {
+                    totalCardBooking += booking.amount || 0;
+                  }
+
+              }
+                
 
             
               

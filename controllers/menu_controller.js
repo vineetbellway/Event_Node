@@ -630,11 +630,12 @@ exports.get_menu_items = async (req, res) => {
         },
       },
     ]);
-
+  //  console.log("result",result);
+    //return false;
     if (result.length > 0) {
       let sum = 0;
       const menuPromises = result.map(async (item) => {
-        console.log("quantity", item.quantity);
+        //console.log("item", item);
         if (item && typeof item.quantity === 'number' && item.quantity > 0) {
           var menu_id = item.menu_id;
           var menu_record = await Menu.findById(menu_id);
@@ -649,17 +650,49 @@ exports.get_menu_items = async (req, res) => {
         }
       });
 
-      const new_prices = await Promise.all(menuPromises);
-      const filteredMenuList = new_prices.filter((item) => item && typeof item.quantity === 'number' && item.quantity > 0);
+      const new_result = await Promise.all(menuPromises);
 
-      res.status(200).send({
-        status: true,
-        message: "Data found",
-        data: {
-          menu_list: filteredMenuList,
-          total_selling_price: sum, // Calculate sum after promises are resolved
+
+      const test = await BookedMenuItem.aggregate([
+        {
+          $match: {
+            guest_id: new mongoose.Types.ObjectId(guest_id),
+            event_id: new mongoose.Types.ObjectId(event_id),
+           // event_id: new mongoose.Types.ObjectId(event_id),
+          },
         },
-      });
+      ]);
+
+      const filteredBookedMenuList = new_result.filter((item) => item && typeof item.quantity === 'number' && item.quantity > 0);
+
+     
+
+      if(filteredBookedMenuList.length > 0){
+
+        res.status(200).send({
+          status: true,
+          message: "No Data found",
+          data: {
+            menu_list: [],
+            total_selling_price: 0, // Calculate sum after promises are resolved
+          },
+        });
+
+      } else {
+        const filteredMenuList = new_result.filter((item) => item && typeof item.quantity === 'number' && item.quantity > 0);
+        console.log("new_result",new_result)
+        res.status(200).send({
+          status: true,
+          message: "Data found",
+          data: {
+            menu_list: filteredMenuList,
+            total_selling_price: sum, // Calculate sum after promises are resolved
+          },
+        });
+      }
+
+
+      
     } else {
       res.status(200).send({
         status: true,

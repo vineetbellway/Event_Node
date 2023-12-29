@@ -1225,10 +1225,10 @@ const get_guest_coupon_balance = async (req, res) => {
                 const eventDetails = await EventModel.findOne({ '_id': event_id });
                 if (eventDetails && eventDetails.status == 'active') {
                   var event_data = eventDetails;
-                 console.log("eventDetails",eventDetails)
+               //  console.log("eventDetails",eventDetails)
                   
                   if(eventDetails.type == "food_event" && eventDetails.is_cover_charge_added == "yes"){
-                    console.log("item2",eventDetails)
+                   // console.log("item2",eventDetails)
                     total_coupon_balance = eventDetails.cover_charge;
                     break;
                   }              
@@ -1238,47 +1238,113 @@ const get_guest_coupon_balance = async (req, res) => {
             }
 
             var event_id = event_data._id;
-            console.log("result 3",event_id)
+           // console.log("result 3",event_id)
 
             
-var menu_payment_record = await MenuItemBookings.aggregate([
-  {
-    $match: {
-      'guest_id': new mongoose.Types.ObjectId(guest_id),
-      'event_id': new mongoose.Types.ObjectId(event_id),
-    },
-  },
-  {
-    $sort: { 'createdAt': -1 },
-  },
-  {
-    $limit: 1,
-  },
-])
-  .then(async (result2) => {
+     /*     var menu_payment_record_old = await MenuItemBookings.aggregate([
+            {
+              $match: {
+                'guest_id': new mongoose.Types.ObjectId(guest_id),
+                'event_id': new mongoose.Types.ObjectId(event_id),
+              },
+            },
+            {
+              $lookup: {
+                from: 'menu_item_payments',
+                localField: '_id',
+                foreignField: 'payment_id',
+                as: 'payment_data',
+              },
+            },
+            {
+              $sort: { 'createdAt': -1 },
+            },
 
-    if (result2.length > 0) {
-      var payment_id = result2[0].payment_id;
-      var payment_record = await MenuItemPayments.findById(payment_id);
-      console.log("amount", payment_record.amount);
-      console.log("result2",payment_record)
-      if (payment_record) {
-        if(payment_record.amount!=undefined){
-          total_coupon_balance = total_coupon_balance - payment_record.amount;
-        }
-        
-        console.log("total_coupon_balance",total_coupon_balance);
-      }
-    } else {
-      total_coupon_balance = total_coupon_balance;
-    }
-  })
-  .catch((error) => {
-    console.error("Error:", error);
-  });
+          ])
+            .then(async (result2) => {
 
-// Now you can use total_coupon_balance here or perform other operations
-console.log("total_coupon_balance 33", total_coupon_balance);
+          
+            
+              if (result2.length > 0) {
+              // console.log("hello",result2)
+              var total = 0;
+                for(var p_item of result2){
+                  // console.log("item 33",p_item);
+                  var payment_id = p_item.payment_id;
+                  var payment_record = await MenuItemPayments.findById(payment_id);
+                  console.log("payment_id",payment_id);
+                  console.log("payment_record id", payment_record._id);
+                  console.log("amount",payment_record.amount);
+                  if(payment_id == payment_record._id){
+                
+                    console.log("payment_id",payment_id);
+                    if(payment_record.amount!=undefined){
+                      
+                      total += payment_record.amount;
+                        console.log("amount",payment_record.amount)
+                    //  console.log("inside coupon blance",total_coupon_balance)
+                    
+                    }
+                  
+                  }
+            
+                      
+                      
+                    
+                }
+
+                console.log("total",total)
+              // console.log("total_coupon_balance",total_coupon_balance)
+                  total_coupon_balance = total_coupon_balance - total;
+              } else {
+                total_coupon_balance = total_coupon_balance;
+              }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+            });*/
+
+            var menu_payment_record = await MenuItemPayments.aggregate([
+              
+              {
+                $lookup: {
+                  from: 'menuitembookings',
+                  localField: '_id',
+                  foreignField: 'payment_id',
+                  as: 'booking_data',
+                },
+              },
+             {
+                $match: {
+                  "booking_data.event_id": new mongoose.Types.ObjectId(event_id),
+                  "booking_data.guest_id": new mongoose.Types.ObjectId(guest_id)
+             
+                },
+              },
+              {
+                $sort: { 'createdAt': -1 },
+              },
+  
+            ])
+              .then(async (result2) => {
+  
+                if (result2.length > 0) {
+            
+                var total = 0;
+                  for(var p_item of result2){
+                      if(p_item.amount!=undefined){                        
+                        total += p_item.amount;
+                      }
+                  }
+                    total_coupon_balance = total_coupon_balance - total;
+                } else {
+                  total_coupon_balance = total_coupon_balance;
+                }
+              })
+              .catch((error) => {
+                console.error("Error:", error);
+              });
+
 
 
 

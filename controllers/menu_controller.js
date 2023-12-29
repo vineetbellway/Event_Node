@@ -1058,14 +1058,16 @@ exports.approve_menu_payment = async (req, res, next) => {
       // Check if cover charge exceeds the sum of menu item prices
       let sum = 0;
       for (const item of bookedMenuResult) {
+        console.log("item",item)
         if (item && typeof item.quantity === 'number' && item.quantity > 0) {
           const menu_id = item.menu_id;
           const menuRecord = await Menu.findById(menu_id);
-          console.log("menuRecord",menuRecord)
+       
            // Update total stock in Menu collection
            const newTotalStock = menuRecord.total_stock - item.quantity;
+       
            await Menu.findByIdAndUpdate(menu_id, { $set: { total_stock: newTotalStock } });
-        
+      
 
           if (menuRecord) {
             sum += menuRecord.selling_price * item.quantity;
@@ -1108,10 +1110,11 @@ exports.approve_menu_payment = async (req, res, next) => {
       
           // Subtract sum from cover charge
           coverCharge -= sum;   
-      
+          //console.log("coverCharge",sum);
+          //return false;
     
           // Update amount in the menu item payment record
-          await MenuItemPayments.findByIdAndUpdate(payment_id, { $set: { amount: coverCharge } });
+          await MenuItemPayments.findByIdAndUpdate(payment_id, { $set: { amount: sum } });
 
         } else {
           coverCharge = 0;

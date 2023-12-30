@@ -24,6 +24,10 @@ const schema = new mongoose.Schema(
       ref: "Menu",
       required: true,
     },
+    category_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+    },
     guest_id: {
         type: mongoose.Schema.Types.ObjectID,
         ref: "User",

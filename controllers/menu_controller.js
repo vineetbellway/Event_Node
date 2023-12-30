@@ -644,6 +644,7 @@ exports.get_menu_items = async (req, res) => {
             sum += new_price;
             return {
               ...item,
+              'category_id':menu_record.category_id,
               quantity: item.quantity, // Include quantity in the response
             }; // Return item with new_price for Promise.all
           }
@@ -655,7 +656,6 @@ exports.get_menu_items = async (req, res) => {
 
 
       const filteredMenuList = new_result.filter((item) => item && typeof item.quantity === 'number' && item.quantity > 0);
-        console.log("new_result",new_result)
         res.status(200).send({
           status: true,
           message: "Data found",
@@ -688,6 +688,8 @@ exports.book_menu_items = async (req, res, next) => {
   try {
     const menuItems = req.body.menu_items;
 
+    
+
 
     if (!Array.isArray(menuItems)) {
       res.status(400).send({ status: false, message: "Invalid request format. Expected an array.", data: null });
@@ -709,8 +711,8 @@ exports.book_menu_items = async (req, res, next) => {
       return;
     }
   
-    if(event_record.type == "food_event"){
 
+    if(event_record.type == "food_event"){
 
 
 
@@ -733,10 +735,10 @@ exports.book_menu_items = async (req, res, next) => {
           const batch = menuItems.slice(i, i + batchSize);
     
           const batchResults = await Promise.all(batch.map(async (menuItem) => {
-            const { _id, event_id, guest_id, menu_id, quantity } = menuItem;
+            const { _id, event_id, guest_id, menu_id, quantity,category_id } = menuItem;
     
-            if (!_id || !event_id || !guest_id || !menu_id || !quantity) {
-              return { status: false, message: "_id, event_id, guest_id,menu_id, or quantity missing", data: null };
+            if (!_id || !event_id || !guest_id || !menu_id || !quantity || !category_id) {
+              return { status: false, message: "_id, event_id, guest_id,menu_id, quantity  or category_id missing", data: null };
             }
     
             const menuRecord = await Menu.findById(menu_id);
@@ -752,8 +754,11 @@ exports.book_menu_items = async (req, res, next) => {
               guest_id,
               menu_id,
               quantity,
-              payment_id
-            };
+              payment_id,
+              category_id
+            };  
+
+          
     
             const result = await BookedMenuItem(bookingData).save();
     
@@ -792,7 +797,7 @@ exports.book_menu_items = async (req, res, next) => {
           const deleteConditions = {
             event_id: { $in: results.map(item => item.event_id) },
             menu_id: { $in: results.map(item => item.menu_id) },
-            guest_id: { $in: results.map(item => item.guest_id) }
+            guest_id: { $in: results.map(item => item.guest_id) },
           };
       
           await MenuItem.deleteMany(deleteConditions);
@@ -818,10 +823,10 @@ exports.book_menu_items = async (req, res, next) => {
           const batch = menuItems.slice(i, i + batchSize);
     
           const batchResults = await Promise.all(batch.map(async (menuItem) => {
-            const { _id, event_id, guest_id, menu_id, quantity } = menuItem;
+            const { _id, event_id, guest_id, menu_id, quantity,category_id } = menuItem;
     
-            if (!_id || !event_id || !guest_id || !menu_id || !quantity) {
-              return { status: false, message: "_id, event_id, guest_id,menu_id, or quantity missing", data: null };
+            if (!_id || !event_id || !guest_id || !menu_id || !quantity || !category_id) {
+              return { status: false, message: "_id, event_id, guest_id,menu_id, or quantity, category_id missing", data: null };
             }
     
             const menuRecord = await Menu.findById(menu_id);
@@ -837,7 +842,8 @@ exports.book_menu_items = async (req, res, next) => {
               guest_id,
               menu_id,
               quantity,
-              payment_id
+              payment_id,
+              category_id
             };
     
             const result = await BookedMenuItem(bookingData).save();
@@ -860,7 +866,7 @@ exports.book_menu_items = async (req, res, next) => {
               const deleteConditions = {
                 event_id: { $in: results.map(item => item.event_id) },
                 menu_id: { $in: results.map(item => item.menu_id) },
-                guest_id: { $in: results.map(item => item.guest_id) }
+                guest_id: { $in: results.map(item => item.guest_id) },
               };
           
               await MenuItem.deleteMany(deleteConditions);

@@ -266,13 +266,17 @@ exports.get_menu = async (req, res) => {
   }
 };
 
-exports.get_menu_by_event_id= async (req, res) => {
+exports.get_menu_by_event_id = async (req, res) => {
   try {
-    var id = req.params.id;
-    await Menu.aggregate([
+    var event_id = req.params.id;
+    var guest_id = req.params.guest_id;
+    console.log("guest_id", guest_id);
+
+    const menuResults = await Menu.aggregate([
       {
         $match: {
-          event_id: new mongoose.Types.ObjectId(id),
+          event_id: new mongoose.Types.ObjectId(event_id),
+          
         },
       },
       {
@@ -300,55 +304,111 @@ exports.get_menu_by_event_id= async (req, res) => {
       {
         $project: {
           _id: 1,
-          event_id:1,
+          event_id: 1,
           name: 1,
-          uom_id:1,
-          category_id:1,
-          total_stock:1,
-          cost_price:1,
-          selling_price:1,
+          uom_id: 1,
+          category_id: 1,
+          total_stock: 1,
+          cost_price: 1,
+          selling_price: 1,
           uom: "$uom_data.name",
           category: "$category_data.name",
-          status:1,
-          is_limited:1,
-          limited_count:1,
-          __v:1,
-          createdAt:1,
-          updatedAt:1,
+          status: 1,
+          is_limited: 1,
+          limited_count: 1,
+          __v: 1,
+          createdAt: 1,
+          updatedAt: 1,
         },
       },
-    ])
-      .then((result) => {
-        if (result.length > 0) {
+    ]);
 
-          res.status(200).send({
-            status: true,
-            message: "Data found",
-            data: result,
-          });
-        } else {
-          res.status(200).send({
-            status: true,
-            message: "No data found",
-            data: [],
-          });
-        }
-      })
-      .catch((error) => {
-        res.status(500).send({
-          status: false,
-          message: error.toString() ?? "Error",
-          data:null
+    const filteredResults = await Promise.all(
+      menuResults.map(async (item) => {
+        var menu_item_record = await MenuItem.find({
+          "menu_id": item._id,
+          'guest_id': guest_id,
+          'event_id': event_id,
+          'quantity': { $gt: 0 }
         });
+
+        
+
+       
+        if (menu_item_record.length > 0) {
+          var menu_record = await Menu.findById(menu_item_record[0].menu_id);
+
+          if (item.category_id.toString() == menu_record.category_id.toString()) {
+            // Filter out other menu items with the same category_id
+            const filteredMenuList = menuResults.filter((item2) => item2.category_id === item.category_id);
+          
+            const filteredMenuList1 = filteredMenuList.filter((item2) => item2.category_id !== filteredMenuList[0].category_id);
+           // console.log("filteredMenuList category id",filteredMenuList[0].category_id);
+           // console.log("filteredMenuList",filteredMenuList);
+            const filteredMenuList2 = menuResults.filter((item2) => item2.category_id !== item.category_id);
+          //  console.log("filteredMenuList2",filteredMenuList2)
+            const filteredMenuList3 = filteredMenuList2.filter((item2) => item2.category_id.toString() !== filteredMenuList[0].category_id.toString());
+          //  console.log("filteredMenuList3",filteredMenuList3)
+
+            //console.log("menuResults",menuResults)
+  
+    
+           // console.log("filteredMenuList1",filteredMenuList1)
+         
+
+           return [...filteredMenuList,...filteredMenuList3];
+            
+          } else {
+            console.log("inside else")
+            //return item;
+           
+           //  console.log("item",item);
+          }
+        } else {
+          console.log("inside this")
+          return null;
+        }
+        
+      })
+    );
+
+    console.log("filteredResults",filteredResults)
+ 
+
+   var finalResult = filteredResults.filter(item => item !== null);
+   
+
+     
+  /* console.log("finalResult", finalResult);
+   console.log("menuResults", menuResults);*/
+    if (menuResults.length > 0) {
+    
+     
+       return  res.status(200).send({
+          status: true,
+          message: "Data found",
+          data: (finalResult.length > 0) ? finalResult[0] : menuResults,
+        });
+      
+
+     
+    } else {
+      res.status(200).send({
+        status: true,
+        message: "No data found",
+        data: [],
       });
+    }
   } catch (error) {
     res.status(500).send({
       status: false,
-      message: error.toString() ?? "Internal Server Error",
-      data:null
+      message: error.toString() || "Internal Server Error",
+      data: null,
     });
   }
 };
+
+
 
 exports.get_menu_by_event_id_old = async (req, res) => {
   try {
@@ -600,7 +660,8 @@ exports.manage_menu_item = async (req, res, next) => {
 
       const { menu_id, guest_id, quantity } = req.body;
       if(quantity < 1){
-        res.status(200).send({ status: false, message: "Quantity should be greter than 1", data: [] });
+        res.status(200).send({ status: false, message: "Quantity should be greater than 1", data: [] });
+        return;
       }
 
       // Assuming MenuItem is a mongoose model
@@ -644,7 +705,6 @@ exports.get_menu_items = async (req, res) => {
             sum += new_price;
             return {
               ...item,
-              'category_id':menu_record.category_id,
               quantity: item.quantity, // Include quantity in the response
             }; // Return item with new_price for Promise.all
           }
@@ -735,10 +795,10 @@ exports.book_menu_items = async (req, res, next) => {
           const batch = menuItems.slice(i, i + batchSize);
     
           const batchResults = await Promise.all(batch.map(async (menuItem) => {
-            const { _id, event_id, guest_id, menu_id, quantity,category_id } = menuItem;
+            const { _id, event_id, guest_id, menu_id, quantity } = menuItem;
     
-            if (!_id || !event_id || !guest_id || !menu_id || !quantity || !category_id) {
-              return { status: false, message: "_id, event_id, guest_id,menu_id, quantity  or category_id missing", data: null };
+            if (!_id || !event_id || !guest_id || !menu_id || !quantity) {
+              return { status: false, message: "_id, event_id, guest_id,menu_id, quantity  missing", data: null };
             }
     
             const menuRecord = await Menu.findById(menu_id);
@@ -755,7 +815,6 @@ exports.book_menu_items = async (req, res, next) => {
               menu_id,
               quantity,
               payment_id,
-              category_id
             };  
 
           
@@ -823,10 +882,10 @@ exports.book_menu_items = async (req, res, next) => {
           const batch = menuItems.slice(i, i + batchSize);
     
           const batchResults = await Promise.all(batch.map(async (menuItem) => {
-            const { _id, event_id, guest_id, menu_id, quantity,category_id } = menuItem;
+            const { _id, event_id, guest_id, menu_id, quantity } = menuItem;
     
             if (!_id || !event_id || !guest_id || !menu_id || !quantity || !category_id) {
-              return { status: false, message: "_id, event_id, guest_id,menu_id, or quantity, category_id missing", data: null };
+              return { status: false, message: "_id, event_id, guest_id,menu_id, or quantity missing", data: null };
             }
     
             const menuRecord = await Menu.findById(menu_id);
@@ -843,7 +902,6 @@ exports.book_menu_items = async (req, res, next) => {
               menu_id,
               quantity,
               payment_id,
-              category_id
             };
     
             const result = await BookedMenuItem(bookingData).save();
@@ -1077,20 +1135,26 @@ exports.approve_menu_payment = async (req, res, next) => {
           },
         },
       ]);
-
+      // Fetch cover charge from the event record
+      const eventRecord = await EventModel.findById(event_id);
       // Check if cover charge exceeds the sum of menu item prices
       let sum = 0;
       for (const item of bookedMenuResult) {
-        console.log("item",item)
+
         if (item && typeof item.quantity === 'number' && item.quantity > 0) {
           const menu_id = item.menu_id;
           const menuRecord = await Menu.findById(menu_id);
        
            // Update total stock in Menu collection
            const newTotalStock = menuRecord.total_stock - item.quantity;
+
+           const newCount = menuRecord.limited_count - item.quantity;
        
            await Menu.findByIdAndUpdate(menu_id, { $set: { total_stock: newTotalStock } });
-      
+           if(eventRecord.is_cover_charge_added == "no"){
+            await Menu.findByIdAndUpdate(menu_id, { $set: { limited_count: newCount } });
+           }
+           
 
           if (menuRecord) {
             sum += menuRecord.selling_price * item.quantity;
@@ -1098,8 +1162,7 @@ exports.approve_menu_payment = async (req, res, next) => {
         }
       }
 
-      // Fetch cover charge from the event record
-      const eventRecord = await EventModel.findById(event_id);
+   
 
       var total_coupon_balance = eventRecord.cover_charge;
 
@@ -1200,8 +1263,13 @@ exports.approve_menu_payment = async (req, res, next) => {
 
         } else {
           coverCharge = 0;
+
+          
+
         }
-      }  
+      }
+      
+      return false;
 
      // Approve menu item payments in MenuItemPayments collection
       const is_approved = 'yes';

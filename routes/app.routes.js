@@ -327,7 +327,7 @@ router.post("/add-guest-menu-item-consumptions",auth,menuConsumptionController.a
 
 
 // manage menu item API
-router.post("/manage-menu-item",menuController.manage_menu_item);
+router.post("/manage-menu-item",auth,menuController.manage_menu_item);
 
 // get menu item API
 router.get("/get-menu-items",auth,menuController.get_menu_items);

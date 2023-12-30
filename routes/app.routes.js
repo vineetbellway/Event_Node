@@ -102,7 +102,7 @@ router.delete("/event",auth,  eventController.delete_events);
 router.post("/menu",menuController.create_menu);
 router.put("/menu/:id", auth, menuController.update_menu);
 router.get("/menu", auth,menuController.get_menus);
-router.get("/menu_by_event_id/:id", auth,menuController.get_menu_by_event_id);
+router.get("/menu_by_event_id/:id/:guest_id",auth,menuController.get_menu_by_event_id);
 router.get("/menu/:id", auth,menuController.get_menu);
 router.delete("/menu/:id", auth, menuController.delete_menu);
 router.delete("/menu", auth, menuController.delete_menus);
@@ -327,7 +327,7 @@ router.post("/add-guest-menu-item-consumptions",auth,menuConsumptionController.a
 
 
 // manage menu item API
-router.post("/manage-menu-item",auth,menuController.manage_menu_item);
+router.post("/manage-menu-item",menuController.manage_menu_item);
 
 // get menu item API
 router.get("/get-menu-items",auth,menuController.get_menu_items);

@@ -268,14 +268,14 @@ exports.get_menu = async (req, res) => {
 
 exports.get_menu_by_event_id = async (req, res) => {
   try {
-    var event_id = req.params.id;
-    var guest_id = req.params.guest_id;
+    const event_id = req.params.id;
+    const guest_id = req.params.guest_id;
 
+    // Fetch all menu items
     const menuResults = await Menu.aggregate([
       {
         $match: {
           event_id: new mongoose.Types.ObjectId(event_id),
-          
         },
       },
       {
@@ -295,10 +295,10 @@ exports.get_menu_by_event_id = async (req, res) => {
         },
       },
       {
-        $unwind: "$uom_data", // Unwind to access the uom_data
+        $unwind: "$uom_data",
       },
       {
-        $unwind: "$category_data", // Unwind to access the category_data
+        $unwind: "$category_data",
       },
       {
         $project: {
@@ -315,48 +315,37 @@ exports.get_menu_by_event_id = async (req, res) => {
           status: 1,
           is_limited: 1,
           limited_count: 1,
-          __v: 1,
           createdAt: 1,
           updatedAt: 1,
         },
       },
     ]);
 
-    const filteredResults = await Promise.all(
-      menuResults.map(async (item) => {
-        var menu_item_record = await MenuItem.find({
-          "menu_id": item._id,
-          'guest_id': guest_id,
-          'event_id': event_id,
-          'quantity': { $gt: 0 }
-        });
+    // Fetch all menu items selected by the guest
+    const selectedMenuItems = await MenuItem.find({
+      guest_id: guest_id,
+      event_id: event_id,
+      quantity: { $gt: 0 },
+    }).populate('menu_id');
 
-               
-        if (menu_item_record.length > 0) {
-          var menu_record = await Menu.findById(menu_item_record[0].menu_id);
-          if (item.category_id.toString() == menu_record.category_id.toString()) {
-            if(item.is_limited == "yes"){
-              // Filter out other menu items with the same category_id
-              const filteredMenuList = menuResults.filter((item2) => item2.category_id === item.category_id);
-              const filteredMenuList2 = menuResults.filter((item2) => item2.category_id !== item.category_id);
-              const filteredMenuList3 = filteredMenuList2.filter((item2) => item2.category_id.toString() !== filteredMenuList[0].category_id.toString());
-              return [...filteredMenuList,...filteredMenuList3];
-            }           
-          }
-        } else {
-          return null;
-        }
-      })
-    ); 
+    // Filter menu items based on the selected limited item's category
+    const filteredResults = menuResults.filter(item => {
+      const menuRecord = selectedMenuItems.find(selectedItem => {
+        return (
+          selectedItem.menu_id &&
+          selectedItem.menu_id.category_id.toString() === item.category_id.toString()
+        );
+      });
 
-   var finalResult = filteredResults.filter(item => item !== null);
+      return !menuRecord || (item.is_limited === "yes" && menuRecord.menu_id._id.toString() === item._id.toString());
+    });
 
-    if (menuResults.length > 0) {        
-       return  res.status(200).send({
-          status: true,
-          message: "Data found",
-          data: (finalResult.length > 0) ? finalResult[0] : menuResults,
-        });
+    if (filteredResults.length > 0) {
+      return res.status(200).send({
+        status: true,
+        message: "Data found",
+        data: filteredResults,
+      });
     } else {
       res.status(200).send({
         status: true,
@@ -372,6 +361,7 @@ exports.get_menu_by_event_id = async (req, res) => {
     });
   }
 };
+
 
 
 

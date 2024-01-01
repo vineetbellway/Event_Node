@@ -270,7 +270,6 @@ exports.get_menu_by_event_id = async (req, res) => {
   try {
     var event_id = req.params.id;
     var guest_id = req.params.guest_id;
-    console.log("guest_id", guest_id);
 
     const menuResults = await Menu.aggregate([
       {
@@ -332,66 +331,32 @@ exports.get_menu_by_event_id = async (req, res) => {
           'quantity': { $gt: 0 }
         });
 
-        
-
-       
+               
         if (menu_item_record.length > 0) {
           var menu_record = await Menu.findById(menu_item_record[0].menu_id);
-
           if (item.category_id.toString() == menu_record.category_id.toString()) {
-            // Filter out other menu items with the same category_id
-            const filteredMenuList = menuResults.filter((item2) => item2.category_id === item.category_id);
-          
-            const filteredMenuList1 = filteredMenuList.filter((item2) => item2.category_id !== filteredMenuList[0].category_id);
-           // console.log("filteredMenuList category id",filteredMenuList[0].category_id);
-           // console.log("filteredMenuList",filteredMenuList);
-            const filteredMenuList2 = menuResults.filter((item2) => item2.category_id !== item.category_id);
-          //  console.log("filteredMenuList2",filteredMenuList2)
-            const filteredMenuList3 = filteredMenuList2.filter((item2) => item2.category_id.toString() !== filteredMenuList[0].category_id.toString());
-          //  console.log("filteredMenuList3",filteredMenuList3)
-
-            //console.log("menuResults",menuResults)
-  
-    
-           // console.log("filteredMenuList1",filteredMenuList1)
-         
-
-           return [...filteredMenuList,...filteredMenuList3];
-            
-          } else {
-            console.log("inside else")
-            //return item;
-           
-           //  console.log("item",item);
+            if(item.is_limited == "yes"){
+              // Filter out other menu items with the same category_id
+              const filteredMenuList = menuResults.filter((item2) => item2.category_id === item.category_id);
+              const filteredMenuList2 = menuResults.filter((item2) => item2.category_id !== item.category_id);
+              const filteredMenuList3 = filteredMenuList2.filter((item2) => item2.category_id.toString() !== filteredMenuList[0].category_id.toString());
+              return [...filteredMenuList,...filteredMenuList3];
+            }           
           }
         } else {
-          console.log("inside this")
           return null;
         }
-        
       })
-    );
-
-    console.log("filteredResults",filteredResults)
- 
+    ); 
 
    var finalResult = filteredResults.filter(item => item !== null);
-   
 
-     
-  /* console.log("finalResult", finalResult);
-   console.log("menuResults", menuResults);*/
-    if (menuResults.length > 0) {
-    
-     
+    if (menuResults.length > 0) {        
        return  res.status(200).send({
           status: true,
           message: "Data found",
           data: (finalResult.length > 0) ? finalResult[0] : menuResults,
         });
-      
-
-     
     } else {
       res.status(200).send({
         status: true,
@@ -660,12 +625,17 @@ exports.manage_menu_item = async (req, res, next) => {
 
       const { menu_id, guest_id, quantity } = req.body;
       if(quantity < 1){
+        var menuItem = await MenuItem.findOneAndUpdate(
+          { menu_id, guest_id  , event_id },
+          { quantity:  0  }, // Increment quantity by the specified value
+          { new: true, upsert: true } // This option returns the updated document and creates a new one if not found
+        );
         res.status(200).send({ status: false, message: "Quantity should be greater than 1", data: [] });
         return;
       }
 
       // Assuming MenuItem is a mongoose model
-      const menuItem = await MenuItem.findOneAndUpdate(
+      var menuItem = await MenuItem.findOneAndUpdate(
         { menu_id, guest_id  , event_id },
         { quantity:  quantity  }, // Increment quantity by the specified value
         { new: true, upsert: true } // This option returns the updated document and creates a new one if not found

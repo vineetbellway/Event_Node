@@ -1229,7 +1229,7 @@ exports.approve_menu_payment = async (req, res, next) => {
         }
       }
       
-      return false;
+     
 
      // Approve menu item payments in MenuItemPayments collection
       const is_approved = 'yes';
@@ -1247,7 +1247,6 @@ exports.approve_menu_payment = async (req, res, next) => {
       }
 
 
-      console.log("updatedPaymentResult", updatedPaymentResult);
 
       res.status(200).send({
         status: true,

@@ -360,9 +360,9 @@ exports.get_menu_by_event_id = async (req, res) => {
       return !menuRecord || (item.is_limited === "yes" && menuRecord.menu_id._id.toString() === item._id.toString());
     });
 
-    console.log("selectedMenuItems2",selectedMenuItems2.length)
+    console.log("filteredResults2",filteredResults2)
    
-    var finalResponse = (selectedMenuItems2.length == 0) ? filteredResults : filteredResults;
+    var finalResponse = (selectedMenuItems2.length == 0) ? filteredResults : filteredResults2;
 
     if (finalResponse.length > 0) {
       return res.status(200).send({

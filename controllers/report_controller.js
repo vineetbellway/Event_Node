@@ -3,6 +3,9 @@ const OrderItem = require("../models/order_item.model");
 const mongoose = require("mongoose");
 const EventModel = require("../models/event.model");
 const Seller = require("../models/seller.model");
+const Category = require("../models/category.model"); 
+const Booking = require("../models/booking.model");
+const BookedMenuItem = require("../models/booked_menu_item.model");
 
 
 
@@ -20,10 +23,8 @@ exports.get_item_sales_report = async (req, res) => {
           }
     
         // Perform aggregation to calculate item sales report
-        const itemSalesReport = await OrderItem.aggregate([
-          {
-            $match: { event_id: new mongoose.Types.ObjectId(eventId) }
-          },
+        const itemSalesReport = await BookedMenuItem.aggregate([
+          
           {
             $lookup: {
               from: 'menus',
@@ -33,27 +34,51 @@ exports.get_item_sales_report = async (req, res) => {
             }
           },
           {
+            $lookup: {
+              from: 'menu_items_payments',
+              localField: '_id',
+              foreignField: 'payment_id',
+              as: 'payment_data',
+            },
+          },
+          {
+            $match: { "payment_data.is_approved": "yes" ,  event_id: new mongoose.Types.ObjectId(eventId) }
+          },
+          {
             $unwind: '$menu'
           },
           {
             $group: {
-              _id: '$menu.name',
-              category: { $first: '$menu.category' },
-              consumedQuantity: { $sum: '$consumed' }
+              _id: {
+                menuName: '$menu.name',
+                category: '$menu.category_id'
+              },
+              consumedQuantity: { $sum: '$quantity' },
+              payment_data: { $push: '$payment_data' }
             }
           },
           {
             $project: {
               _id: 0,
-              itemName: '$_id',
-              category: 1,
-              consumedQuantity: 1
+              itemName: '$_id.menuName',
+              category: '$_id.category',
+              consumedQuantity: 1,
+              payment_data: 1
             }
           }
         ]);
-
+        console.log("itemSalesReport",itemSalesReport)
         if(itemSalesReport.length > 0){
-            res.json({ success: true, message : "Data found",  data: itemSalesReport });
+            var allData = [];
+            for(var item of itemSalesReport){
+               var categoryData =  await Category.findById(item.category);
+                  allData.push({ 
+                    "category": categoryData.name,
+                    "consumedQuantity": item.consumedQuantity,
+                    "itemName": item.itemName
+                });
+            }
+            res.json({ success: true, message : "Data found",  data: allData });
         } else {
             res.json({ success: true, message : "No data found",  data: [] });
         }
@@ -76,31 +101,30 @@ exports.get_number_of_guests_for_event = async (req, res) => {
     
         // Find the event by eventId
         const event = await EventModel.findById(eventId);
-
-        console.log("event data",event)
     
         if (!event) {
           return res.status(200).json({ success: false, message: 'Event not found' , data :null });
         }
     
         // Calculate the number of guests attending the event
-        const numberOfGuests = await OrderItem.aggregate([
+        const numberOfGuests = await Booking.aggregate([
           {
-            $match: { event_id: eventId }
+            $match: { event_id: new mongoose.Types.ObjectId(eventId),  status: 'active' }
           },
           {
             $group: {
-              _id: '$guest_id'
+              _id: '$guest_id',
+              totalGuests: { $sum: 1 }
             }
           },
           {
             $group: {
               _id: null,
-              totalGuests: { $sum: 1 }
+              totalGuests: { $sum: '$totalGuests' }
             }
           }
         ]);
-    
+        
         const totalGuests = numberOfGuests.length > 0 ? numberOfGuests[0].totalGuests : 0;
     
         res.json({ success: true, message : "Data found", data : [{ event: event.name, numberOfGuests: totalGuests }] });
@@ -129,7 +153,7 @@ exports.get_repeated_guests_for_seller_attending_events = async (req, res) => {
         const eventIds = sellerEvents.map(event => event._id);
     
         // Calculate guests who attend multiple events created by the seller
-        const repeatedGuests = await OrderItem.aggregate([
+        const repeatedGuests = await Booking.aggregate([
           {
             $match: { event_id: { $in: eventIds } }
           },
@@ -191,7 +215,7 @@ exports.get_number_of_guests_for_seller = async (req, res) => {
         console.log("eventIds",eventIds)
     
         // Calculate the number of guests attending all events by the seller
-        const numberOfGuests = await OrderItem.aggregate([
+        const numberOfGuests = await Booking.aggregate([
           {
             $match: { event_id: { $in: eventIds } }
           },
@@ -210,7 +234,7 @@ exports.get_number_of_guests_for_seller = async (req, res) => {
     
         const totalGuests = numberOfGuests.length > 0 ? numberOfGuests[0].totalGuests : 0;
     
-        res.json({ success: true,message: 'No data found', data : [{seller: seller.company_name, numberOfGuests: totalGuests}] });
+        res.json({ success: true,message: 'Data found', data : [{seller: seller.company_name, numberOfGuests: totalGuests}] });
       } catch (err) {
         res.status(500).json({ success: false, error: err.message });
       }

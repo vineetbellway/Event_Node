@@ -340,11 +340,35 @@ exports.get_menu_by_event_id = async (req, res) => {
       return !menuRecord || (item.is_limited === "yes" && menuRecord.menu_id._id.toString() === item._id.toString());
     });
 
-    if (filteredResults.length > 0) {
+    const selectedMenuItems2 = await BookedMenuItem.find({
+      guest_id: guest_id,
+      event_id: event_id,
+    }).populate('menu_id');
+
+
+    console.log("selectedMenuItems2",selectedMenuItems2)
+
+     // Filter menu items based on the selected limited item's category
+     const filteredResults2 = filteredResults.filter(item => {
+      const menuRecord = selectedMenuItems2.find(selectedItem => {
+        return (
+          selectedItem.menu_id &&
+          selectedItem.menu_id.category_id.toString() === item.category_id.toString()
+        );
+      });
+
+      return !menuRecord || (item.is_limited === "yes" && menuRecord.menu_id._id.toString() === item._id.toString());
+    });
+
+    console.log("selectedMenuItems2",selectedMenuItems2.length)
+   
+    var finalResponse = (selectedMenuItems2.length == 0) ? filteredResults : filteredResults;
+
+    if (finalResponse.length > 0) {
       return res.status(200).send({
         status: true,
         message: "Data found",
-        data: filteredResults,
+        data: finalResponse,
       });
     } else {
       res.status(200).send({

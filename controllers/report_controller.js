@@ -42,7 +42,7 @@ exports.get_item_sales_report = async (req, res) => {
             },
           },
           {
-            $match: { "payment_data.is_approved": "yes" ,  event_id: new mongoose.Types.ObjectId(eventId) }
+            $match: { /*"payment_data.is_approved": "yes" ,*/  event_id: new mongoose.Types.ObjectId(eventId) }
           },
           {
             $unwind: '$menu'

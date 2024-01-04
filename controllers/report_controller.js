@@ -80,7 +80,7 @@ exports.get_item_sales_report = async (req, res) => {
             }
             res.json({ success: true, message : "Data found",  data: allData });
         } else {
-            res.json({ success: true, message : "No data found",  data: [] });
+            res.json({ success: false, message : "No data found",  data: [] });
         }
     
         

@@ -25,6 +25,18 @@ exports.get_item_sales_report = async (req, res) => {
         // Perform aggregation to calculate item sales report
         const itemSalesReport = await BookedMenuItem.aggregate([
           
+          
+          {
+            $lookup: {
+              from: 'menuitempayments',
+              localField: 'payment_id',
+              foreignField: '_id',
+              as: 'menu_item_payment_data',
+            },
+          },
+          {
+            $match: { "menu_item_payment_data.is_approved": "yes" ,  event_id: new mongoose.Types.ObjectId(eventId) }
+          },
           {
             $lookup: {
               from: 'menus',
@@ -32,17 +44,6 @@ exports.get_item_sales_report = async (req, res) => {
               foreignField: '_id',
               as: 'menu'
             }
-          },
-          {
-            $lookup: {
-              from: 'menu_items_payments',
-              localField: '_id',
-              foreignField: 'payment_id',
-              as: 'payment_data',
-            },
-          },
-          {
-            $match: { /*"payment_data.is_approved": "yes" ,*/  event_id: new mongoose.Types.ObjectId(eventId) }
           },
           {
             $unwind: '$menu'
@@ -54,7 +55,7 @@ exports.get_item_sales_report = async (req, res) => {
                 category: '$menu.category_id'
               },
               consumedQuantity: { $sum: '$quantity' },
-              payment_data: { $push: '$payment_data' }
+              payment_data: { $push: '$menu_item_payment_data' },
             }
           },
           {
@@ -63,11 +64,11 @@ exports.get_item_sales_report = async (req, res) => {
               itemName: '$_id.menuName',
               category: '$_id.category',
               consumedQuantity: 1,
-              payment_data: 1
+              payment_data: 1,
             }
           }
         ]);
-        console.log("itemSalesReport",itemSalesReport)
+  
         if(itemSalesReport.length > 0){
             var allData = [];
             for(var item of itemSalesReport){

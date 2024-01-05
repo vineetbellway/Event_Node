@@ -29,7 +29,7 @@ exports.give_feedback = (req, res, next) => {
               .then((result) => {
                 if (result) {
                   // Send a thank-you email
-                  sendThankYouEmail(event.name,feedbackData.email,feedbackData);
+                  //sendThankYouEmail(event.name,feedbackData.email,feedbackData);
                   
 
                   // guest id will be later taken from token

@@ -17,7 +17,7 @@ const schema = new mongoose.Schema(
     phone: {
         type: String,
     },
-    email: {
+    rating: {
         type: String,
         required: true,
     },

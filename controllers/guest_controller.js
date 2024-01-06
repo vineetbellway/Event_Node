@@ -1,4 +1,6 @@
 const Guest = require("../models/guest.model");
+const Event = require("../models/event.model");
+
 const mongoose = require("mongoose");
 const { baseStatus, userStatus } = require("../utils/enumerator");
 
@@ -288,6 +290,119 @@ exports.update_guest = (req, res, next) => {
         status: false,
         message: "failure",
         error: error ?? "Internal Server Error",
+      });
+    }
+  }
+};
+
+// async function get_active_city_events (guest_id, page, limit) {
+//   try {
+//     const guest = await Guest.findById(guest_id);
+
+//     if (!guest) {
+//       throw new Error("Guest not found");
+//     }
+
+//     const guestDistrict = guest.district;
+
+//     const pipeline = [
+//       {
+//         $match: {
+//           status: "active",
+//           district: guestDistrict,
+//         },
+//       },
+//       {
+//         $sort: { start_time: 1 }, // Sort by start time, ascending order
+//       },
+//     ];
+
+//     const options = {
+//       page: page,
+//       limit: limit,
+//     };
+
+//     const aggregate = Event.aggregate(pipeline);
+//     const result = await Event.aggregatePaginate(aggregate, options);
+
+//     return result;
+//   } catch (error) {
+//     console.error("Error fetching guest active events:", error);
+//     throw error;
+//   }
+// }
+
+// const guest_id = req.params.guest_id;
+// const page = req.params.page;
+// const size = req.params.size;
+
+// get_active_city_events(guest_id, page, size)
+//   .then((events) => {
+//     res.status(201).send({
+//       status: true,
+//       message: "Updated",
+//       events: events,
+//     });
+//   })
+//   .catch((err) => {
+//     res.send({
+//       status: false,
+//       message: err.toString() ?? "Error",
+//     });
+//   });
+
+exports.get_active_city_events = async (req, res) => {
+  const guest_id = req.params.guest_id;
+  const page = req.params.page || 1;
+  const limit = req.params.limit || 10;
+  const guest = await Guest.findById(guest_id);
+
+  if (!guest) {
+    throw new Error("Guest not found");
+  }
+  const guestDistrict = guest.district;
+  var id = req.params.id;
+  if (!id) {
+    res.status(400).send({ status: false, message: "id missing" });
+  } else {
+    try {
+      await Guest.aggregate([
+        {
+          $match: {
+            status: "active",
+            district: guestDistrict,
+          },
+        },
+        {
+          $sort: { start_time: 1 }, // Sort by start time, ascending order
+        },
+      ]);
+      const options = {
+        page: page,
+        limit: limit,
+      };
+
+      const aggregate = Event.aggregate(pipeline);
+      await Event.aggregatePaginate(aggregate, options)
+        .then((result) => {
+          if (result) {
+            res.status(200).send({
+              status: true,
+              message: "success",
+              data: result[0],
+            });
+          }
+        })
+        .catch((error) => {
+          res.send({
+            status: false,
+            message: error.toString() ?? "Error",
+          });
+        });
+    } catch (error) {
+      res.status(500).send({
+        status: false,
+        message: error.toString() ?? "Internal Server Error",
       });
     }
   }

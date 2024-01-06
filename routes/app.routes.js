@@ -72,6 +72,7 @@ router.get("/guest/:id", auth, guestController.get_guest);
 router.get("/guest_by_user_id/:id", auth, guestController.get_guest_by_user_id);
 router.delete("/guest/:id", auth, guestController.delete_guest);
 router.delete("/guest", auth, guestController.delete_guests);
+router.get("/guest/guest_id", guestController.get_active_city_events);
 
 router.post("/seller", auth, sellerController.create_seller);
 router.put("/seller/:id", auth, sellerController.update_seller);

@@ -14,8 +14,10 @@ const userTypes = {
 const baseStatus = {
   pending: "pending",
   active: "active",
+  rejected: "rejected",
   blocked: "blocked",
   deleted: "deleted",
+  expired: "expired"
 };
 
 const sellerStatus = {
@@ -25,8 +27,15 @@ const sellerStatus = {
   deleted: "deleted",
 };
 
+const validatorRoles = {
+  cashier: "cashier",
+  bar_attender: "bar_attender",
+  booker: "booker"
+};
+
 module.exports = {
   userStatus,
   userTypes,
   baseStatus,
+  validatorRoles,
 };

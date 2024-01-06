@@ -1,6 +1,8 @@
 const Validator = require("../models/validator.model");
 const mongoose = require("mongoose");
 const { baseStatus, userStatus } = require("../utils/enumerator");
+const SellerModel = require("../models/seller.model");
+const EventValidator = require("../models/event_validator.model");
 
 exports.create_validator = (req, res, next) => {
   if (!req.body) {
@@ -286,3 +288,114 @@ exports.update_validator = (req, res, next) => {
     }
   }
 };
+
+
+exports.get_seller_validator_list = async (req, res) => {
+  const seller_id = req.query.seller_id;
+  const search_key = req.query.search_key;
+  try {
+    const seller = await SellerModel.findOne({ user_id: seller_id });
+    if (!seller) {
+      return res.status(404).send({
+        status: false,
+        message: "Seller not found",
+        data: null,
+      });
+    }
+
+   
+
+    // Define the regex pattern for the search_key
+    const sanitizedSearchKey = search_key.trim(); 
+
+    const filter = {
+      $or: [
+        { full_name: { $regex: new RegExp(sanitizedSearchKey, 'i') } },
+        { "user_data.code_phone": { $regex: new RegExp(sanitizedSearchKey, 'i') } },
+        {
+          "user_data.code_phone": {
+            $regex: new RegExp(`^(\\+${sanitizedSearchKey}|0?${sanitizedSearchKey})$`, 'i')
+          }
+        },
+      ],
+    };
+
+    const validators = await Validator.aggregate([
+      {
+        $sort: { createdAt: -1 }, // Sort by createdAt in descending order
+      },
+      {
+        $lookup: {
+          from: "eventvalidators",
+          localField: "validator_id",
+          foreignField: "user_id",
+          as: "validator_event_data",
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user_id", // Assuming this is the field in Validator that corresponds to the _id in Users
+          foreignField: "_id", // Assuming this is the field in Users that corresponds to the _id in Validator
+          as: "user_data",
+        },
+      },
+      {
+        $match: filter,
+      },
+    ]);
+
+    if (validators && validators.length > 0) {
+      console.log("validators",validators[0].user_data[0])
+      const validator_data = validators
+        .map((validator) => ({
+
+         
+          _id: validator._id,
+          user_id: validator.user_id,
+          full_name: (validator.full_name) ?? '',
+          district: validator.district,
+          phone: (validators[0].user_data[0].code_phone) ?? '',
+          state: validator.state,
+          country: validator.country,
+          status: validator.status,
+          createdAt: validator.createdAt,
+          updatedAt: validator.updatedAt,
+          __v: validator.__v,
+          role: validator.validator_event_data.length > 0 ? validator.validator_event_data[0].role : '',
+        }));
+
+      if (validator_data.length > 0) {
+        res.status(200).send({
+          status: true,
+          message: "Data found",
+          data: validator_data,
+        });
+      } else {
+        res.status(200).send({
+          status: true,
+          message: "No validators found",
+          data: validator_data,
+        });
+      }
+    } else {
+      res.status(200).send({
+        status: true,
+        message: "No validators found",
+        data: [],
+      });
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).send({
+      status: false,
+      message: error.toString() || "Internal Server Error",
+      data: null,
+    });
+  }
+};
+
+
+
+
+

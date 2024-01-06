@@ -1,37 +1,64 @@
 const OrderItem = require("../models/order_item.model");
 const mongoose = require("mongoose");
-const { baseStatus, userStatus } = require("../utils/enumerator");
+const { baseStatus } = require("../utils/enumerator");
+const EventModel = require("../models/event.model");
+const Menu = require("../models/menu.model");
 
-exports.create_order_item = (req, res, next) => {
+
+exports.create_order_item = async (req, res, next) => {
   if (!req.body) {
     res.status(400).send({
       status: false,
       message: "body missing",
+      data:null
     });
   } else {
     try {
+      const event_id = req.body.event_id;
+      const menu_id = req.body.menu_id;
+
+      var event_record = await EventModel.findById(event_id);
+      var menu_record = await Menu.findById(menu_id);
+
+ 
+
+      if(event_record){
+        if(event_record.status == "expired"){
+          res.status(400).send({ status: false, message: "Event is expired", data: null });
+          return;
+        }
+      }else {
+        res.status(200).send({ status: false, message: "Event not found", data: null });
+        return;
+      }
+
+      if(!menu_record){
+        res.status(200).send({ status: false, message: "Menu not found", data: null });
+        return;
+      }
+     // return false;
+
       OrderItem(req.body)
         .save()
         .then((result) => {
           if (result) {
-            res
-              .status(201)
-              .send({ status: true, message: "success", data: result });
+            res.status(201).send({ status: true, message: "Order item created", data: result });
           } else {
-            res.status(404).send({ status: false, message: "Not created" });
+            res.status(500).send({ status: false, message: "Not created",data:null });
           }
         })
         .catch((error) => {
           res.send({
             status: false,
             message: error.toString() ?? "Error",
+            data:null
           });
         });
     } catch (error) {
       res.status(500).send({
         status: false,
-        message: "failure",
-        error: error ?? "Internal Server Error",
+        message: error ?? "Internal Server Error",
+        data:null
       });
     }
   }

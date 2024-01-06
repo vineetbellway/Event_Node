@@ -34,11 +34,26 @@ const schema = new mongoose.Schema(
     },
     type: {
       type: String,
-      default: "guest", //guest, seller, validator
+      default: "guest", //guest, seller, validator,admin
+    },
+    device_type: {
+      type: String,
+    },
+    device_token: {
+      type: String,
+    },
+    fcm_token: {
+      type: String,
     },
     status: {
       type: String,
       default: baseStatus.pending,
+    },
+    email: {
+      type: String,
+    },
+    password: {
+      type: String
     },
   },
   {

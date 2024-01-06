@@ -6,9 +6,8 @@ const { baseStatus } = require("../utils/enumerator");
 const schema = new mongoose.Schema(
   {
     seller_id: {
-      type: mongoose.Schema.Types.ObjectID,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "Seller",
-      required: true,
     },
     primary_number: {
       type: String,
@@ -18,7 +17,7 @@ const schema = new mongoose.Schema(
     },
     type: {
       type: String,
-      default: "entry_event", //entry_event, food_event, entry_food_event, loyalty
+      default: "entry_event", //entry_event, food_event(banquet), entry_food_event, loyalty
     },
     image: {
       type: String,
@@ -50,21 +49,46 @@ const schema = new mongoose.Schema(
       type: String,
       index: "text",
     },
-    tax_name: {
-      type: String,
-    },
-    tax_percent: {
-      type: Number,
-    },
     amount: {
       type: Number,
     },
     instructions: {
       type: String,
     },
+    transportation_charge: {
+      type: Number,
+    },
+    hire_charge: {
+      type: Number,
+    },
+    labour_charge: {
+      type: Number,
+    },
+    commision_charge: {
+      type: Number,
+    },
+    others: {
+      type: String,
+    },
+    is_cover_charge_added: {
+      type: String,
+      enum: ['yes','no'],
+    },
+    cover_charge: {
+      type: Number,
+    },    
     status: {
       type: String,
-      default: baseStatus.active,
+      default: baseStatus.pending,
+    },
+    is_closed: {
+      type: String,
+      default: "no",
+    },
+    banner_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Banner",
+      required: false,  
     },
   },
   {
@@ -75,4 +99,4 @@ const schema = new mongoose.Schema(
 schema.plugin(mongoosePaginate);
 schema.plugin(aggregatePaginate);
 
-module.exports = mongoose.model("EventModel", schema);
+module.exports = mongoose.model("Event", schema);

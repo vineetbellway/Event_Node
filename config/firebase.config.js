@@ -9,4 +9,26 @@ admin.initializeApp({
   databaseURL: process.env.FIREBASE_DATABASE_URL,
 });
 
-module.exports = { admin };
+/**
+ * Send a push notification.
+ * @param {string} fcm_token - The FCM registration token of the device you want to send the notification to.
+ * @param {object} notification - The notification object, including title and body.
+ * @param {object} data - Additional data to send with the notification.
+ * @param {string} sound - The name of the sound file to play (optional).
+ * @returns {Promise} A promise that resolves when the notification is sent.
+ */
+function sendPushNotification(fcm_token, notification, data) {
+  const message = {
+    token: fcm_token,
+    notification: {
+      title: notification.title,
+      body: notification.body,
+      //sound: sound || "default", // You can set a default sound or provide a specific sound file name
+    },
+    data: data || {},
+  };
+
+  return admin.messaging().send(message);
+}
+
+module.exports = { admin, sendPushNotification };

@@ -1,6 +1,10 @@
 const Membership = require("../models/membership.model");
 const mongoose = require("mongoose");
 const { baseStatus, userStatus } = require("../utils/enumerator");
+const moment = require("moment");
+var nodemailer = require('nodemailer');
+
+
 
 exports.create_membership = (req, res, next) => {
   if (!req.body) {
@@ -268,5 +272,76 @@ exports.update_membership = (req, res, next) => {
         error: error ?? "Internal Server Error",
       });
     }
+  }
+};
+
+
+exports.update_membership_plan_status = (req, res, next) => {
+  const id = req.params.id;
+  if (!id) {
+    res.status(400).send({ status: false, message: "id missing" });
+  } else {
+    try {
+      Membership.findByIdAndUpdate(id,"active", { new: true })
+        .then((result) => {
+          if (result) {
+            res.status(200).send({
+              status: true,
+              message: "Plan status updated successfully",
+            });
+          } else {
+             res.status(404).send({ status: false, message: "Failed to update" });
+          }
+        })
+        .catch((error) => {
+          res.send({
+            status: false,
+            message: error.toString() ?? "Error",
+          });
+        });
+    } catch (error) {
+      res.status(500).send({
+        status: false,
+        message: "failure",
+        error: error ?? "Internal Server Error",
+      });
+    }
+  }
+};
+
+const disableSellerServices = () => {
+  console.log("hi")
+  try {
+    var current_date = new moment().format("YYYY-MM-DDTHH:mm:ss.SSSZ");
+    console.log("here 3 s")
+    Membership.find({ status: 'active', end_date: { $gt: current_date } })
+      .then((result) => {
+        if (result) {
+          for (const membership of result) {
+            var membership_end_date = new moment(membership.end_date).format("YYYY-MM-DDTHH:mm:ss.SSSZ");
+            var membership_id = membership._id;
+            if (current_date === membership_end_date) {
+              Membership.findByIdAndUpdate(membership_id, "blocked")
+                .then((result) => {
+                  if (result) {
+                    console.log("Status blocked successfully");
+                  } else {
+                    console.log("Failed to update");
+                  }
+                })
+                .catch((error) => {
+                  console.error(error.toString() || "Error");
+                });
+            }
+          }
+        } else {
+          console.log("Data not found");
+        }
+      })
+      .catch((error) => {
+        console.error(error.toString() || "Error");
+      });
+  } catch (error) {
+    console.error("Failure: " + (error || "Internal Server Error"));
   }
 };

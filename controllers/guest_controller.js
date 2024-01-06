@@ -366,7 +366,7 @@ exports.get_active_city_events = async (req, res) => {
     res.status(400).send({ status: false, message: "id missing" });
   } else {
     try {
-      await Guest.aggregate([
+      const pipeline = await Guest.aggregate([
         {
           $match: {
             status: "active",

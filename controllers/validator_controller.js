@@ -346,7 +346,6 @@ exports.get_seller_validator_list = async (req, res) => {
     ]);
 
     if (validators && validators.length > 0) {
-      console.log("validators",validators[0].user_data[0])
       const validator_data = validators
         .map((validator) => ({
 

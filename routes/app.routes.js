@@ -72,7 +72,6 @@ router.get("/guest/:id", auth, guestController.get_guest);
 router.get("/guest_by_user_id/:id", auth, guestController.get_guest_by_user_id);
 router.delete("/guest/:id", auth, guestController.delete_guest);
 router.delete("/guest", auth, guestController.delete_guests);
-router.get("/guest/guest_id", guestController.get_active_city_events);
 
 router.post("/seller", auth, sellerController.create_seller);
 router.put("/seller/:id", auth, sellerController.update_seller);
@@ -273,7 +272,6 @@ router.get("/get-guest-banner-list",auth, bannerController.get_guest_banner_list
 // get seller validator list API
 router.get("/get-seller-validator-list",auth, validatorController.get_seller_validator_list);
 
-
 // get validators'event list API
 router.get("/get-event-validators-list",auth, validatorEventController.get_event_validators_list);
 
@@ -369,6 +367,13 @@ router.put("/close-event-by-seller",auth,bookingController.close_event_by_seller
 
 // close menu counter by validator
 router.put("/close-menu-counter-by-validator",auth,menuController.close_menu_counter_by_validator);
+
+// event participated guests
+router.get("/get-event-participated-guests",auth,sellerController.get_event_participating_guests);
+
+//  active city events
+router.get("/get-active-city-events",auth, guestController.get_active_city_events);
+
 
 cron.schedule("* * * * *", function () {
   //  console.log("Cron job is running");

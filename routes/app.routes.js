@@ -55,7 +55,7 @@ const uomController = require("../controllers/uom_controller");
 const bannerController = require("../controllers/banner_controller");
 const reportController = require("../controllers/report_controller");
 const menuConsumptionController = require("../controllers/menu_consumption_controller");
-
+const serviceController = require("../controllers/service_controller");
 
 
 router.post("/user", auth,userController.login);
@@ -99,13 +99,24 @@ router.get("/event/:id",auth,  eventController.get_event);
 router.delete("/event/:id",auth,  eventController.delete_event);
 router.delete("/event",auth,  eventController.delete_events);
 
-router.post("/menu",menuController.create_menu);
+router.post("/menu",auth,menuController.create_menu);
 router.put("/menu/:id", auth, menuController.update_menu);
 router.get("/menu", auth,menuController.get_menus);
 router.get("/menu_by_event_id/:id/:guest_id",auth,menuController.get_menu_by_event_id);
 router.get("/menu/:id", auth,menuController.get_menu);
 router.delete("/menu/:id", auth, menuController.delete_menu);
 router.delete("/menu", auth, menuController.delete_menus);
+
+
+
+router.post("/service",auth,serviceController.create_service);
+router.get("/service",auth,serviceController.get_services);
+router.get("/service/:id",auth,serviceController.get_service);
+router.put("/service/:id",auth, serviceController.update_service);
+router.delete("/service/:id", auth,serviceController.delete_service);
+router.delete("/service",auth, serviceController.delete_services);
+//router.get("/service_by_event_id/:id/:guest_id",auth,serviceController.get_service_by_event_id);
+
 
 router.post("/validator-event",validatorEventController.create_validator_event);
 router.put("/validator-event/:id",validatorEventController.update_validator_event);

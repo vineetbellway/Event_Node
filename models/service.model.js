@@ -21,9 +21,6 @@ const schema = new mongoose.Schema(
     point: {
       type: Number,
     },
-    total_stock: {
-      type: Number,
-    },
     is_limited: {
       type: String,
       enum: ['yes','no'],

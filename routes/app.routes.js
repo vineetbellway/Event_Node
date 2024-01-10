@@ -117,6 +117,21 @@ router.delete("/service/:id", auth,serviceController.delete_service);
 router.delete("/service",auth, serviceController.delete_services);
 //router.get("/service_by_event_id/:id/:guest_id",auth,serviceController.get_service_by_event_id);
 
+// manage service item API
+router.post("/manage-service-item",auth,serviceController.manage_service_item);
+
+// get service items API
+router.get("/get-service-items",auth,serviceController.get_service_items);
+
+// book service items API
+router.post("/book-service-items",auth, serviceController.book_service_items);
+
+// get booked service items API
+router.get("/get-booked-service-items", auth,serviceController.get_booked_service_items);
+
+// approve service payment API
+router.post("/approve-service-payment", auth,serviceController.approve_service_payment);
+
 
 router.post("/validator-event",validatorEventController.create_validator_event);
 router.put("/validator-event/:id",validatorEventController.update_validator_event);

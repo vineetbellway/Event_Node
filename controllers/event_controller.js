@@ -32,7 +32,14 @@ exports.create_event = (req, res, next) => {
     const others = req.body.others.trim();
     const status = req.body.status.trim();
     const banner_id = req.body.banner_id ? req.body.banner_id.trim() : null;
+    const point = req.body.point ? req.body.point.trim() : 0;
 
+    if(type == "loyalty"){
+      if (point == '' || point == 0) {
+        res.status(400).send({ status: false, message: "Please enter point", data: null  });
+        return;
+      }  
+    }
 
     const eventData = {
       seller_id: new ObjectId(seller_id),
@@ -58,7 +65,8 @@ exports.create_event = (req, res, next) => {
       is_cover_charge_added,
       cover_charge,
       status,
-      banner_id
+      banner_id,
+      point
     };
 
     EventModel(eventData)
@@ -609,6 +617,8 @@ exports.update_event = async (req, res, next) => {
   } else {
     try {
 
+      
+
 
     // Trim values to remove extra spaces
     const seller_id = req.body.seller_id !== undefined && req.body.seller_id !== null ? req.body.seller_id.toString().trim() : null;
@@ -635,6 +645,14 @@ exports.update_event = async (req, res, next) => {
     const cover_charge = req.body.cover_charge.trim();
     const status = req.body.status.trim();
     const banner_id = req.body.banner_id ? req.body.banner_id.trim() : null;
+    const point = req.body.point ? req.body.point.trim() : 0;
+
+    if(type == "loyalty"){
+      if (point == '' || point == 0) {
+        res.status(400).send({ status: false, message: "Please enter point", data: null  });
+        return;
+      }  
+    }
 
     const eventData = {
       seller_id: new ObjectId(seller_id),
@@ -659,7 +677,8 @@ exports.update_event = async (req, res, next) => {
       is_cover_charge_added,
       cover_charge,
       status,
-      banner_id
+      banner_id,
+      point
     }; 
 
       // Check if image is not undefined

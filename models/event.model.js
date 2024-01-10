@@ -90,6 +90,9 @@ const schema = new mongoose.Schema(
       ref: "Banner",
       required: false,  
     },
+    point: {
+      type: Number,
+    },   
   },
   {
     timestamps: true,

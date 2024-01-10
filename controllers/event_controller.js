@@ -1,4 +1,5 @@
 const EventModel = require("../models/event.model");
+const EventGuestModel = require("../models/event_guest.model");
 const LoyalityOrderItem = require("../models/loyalty_order_item.model");
 const mongoose = require("mongoose");
 const { ObjectId } = require('mongoose').Types;
@@ -42,6 +43,14 @@ exports.create_event = (req, res, next) => {
       }  
     }
 
+
+
+    const guest_ids = req.body.guest_ids; 
+
+    
+
+
+
     const eventData = {
       seller_id: new ObjectId(seller_id),
       primary_number,
@@ -72,7 +81,7 @@ exports.create_event = (req, res, next) => {
 
     EventModel(eventData)
       .save()
-      .then((result) => {
+      .then(async(result) => {
         if (result) {
           // Get the host (domain and port)
           const protocol = req.protocol;
@@ -82,6 +91,25 @@ exports.create_event = (req, res, next) => {
           const baseURL = `${protocol}://${host}`;
           const imageUrl = baseURL + '/uploads/events/' + result.image;
           console.log("result",result)
+
+         
+          const jsonArray = JSON.parse(guest_ids);
+          if(type == "loyalty"){
+            if(jsonArray.length > 0){
+              for(item of jsonArray){
+                var eventguestdata = {
+                  "event_id" : result._id,
+                  "guest_id" : item
+               }
+                 await EventGuestModel(eventguestdata).save();
+              }
+            }
+          }
+
+
+
+
+
           res.status(201).send({ status: true, message: 'Event created',  data: {
             ...result.toObject(),
             image: imageUrl,

@@ -132,6 +132,10 @@ router.get("/get-booked-service-items", auth,serviceController.get_booked_servic
 // approve service payment API
 router.post("/approve-service-payment", auth,serviceController.approve_service_payment);
 
+// get guest loyality points API
+router.get("/get-guest-loyality-points",serviceController.get_guest_loyalty_points);
+
+
 
 router.post("/validator-event",validatorEventController.create_validator_event);
 router.put("/validator-event/:id",validatorEventController.update_validator_event);
@@ -395,7 +399,7 @@ router.put("/close-event-by-seller",auth,bookingController.close_event_by_seller
 router.put("/close-menu-counter-by-validator",auth,menuController.close_menu_counter_by_validator);
 
 // event participated guests
-router.get("/get-event-participated-guests",auth,sellerController.get_event_participating_guests);
+router.get("/get-event-participated-guests",sellerController.get_event_participating_guests);
 
 //  active city events
 router.get("/get-active-city-events",auth, guestController.get_active_city_events);

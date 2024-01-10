@@ -90,7 +90,7 @@ router.get("/validator_by_user_id/:id",auth,validatorController.get_validator_by
 router.delete("/validator/:id", auth, validatorController.delete_validator);
 router.delete("/validator", auth, validatorController.delete_validators);
 
-router.post("/event", upload.single('image'), eventController.create_event);
+router.post("/event", auth,upload.single('image'), eventController.create_event);
 router.put("/event/:id",auth, upload.single('image'),eventController.update_event);
 router.get("/event", auth,eventController.get_events);
 router.get("/search_event/:keyword",auth,eventController.search_events);
@@ -399,7 +399,7 @@ router.put("/close-event-by-seller",auth,bookingController.close_event_by_seller
 router.put("/close-menu-counter-by-validator",auth,menuController.close_menu_counter_by_validator);
 
 // event participated guests
-router.get("/get-event-participated-guests",auth,sellerController.get_event_participating_guests);
+router.get("/get-event-participated-guests",sellerController.get_event_participating_guests);
 
 //  active city events
 router.get("/get-active-city-events",auth, guestController.get_active_city_events);

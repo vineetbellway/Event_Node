@@ -868,7 +868,7 @@ exports.book_menu_items = async (req, res, next) => {
           const batchResults = await Promise.all(batch.map(async (menuItem) => {
             const { _id, event_id, guest_id, menu_id, quantity } = menuItem;
     
-            if (!_id || !event_id || !guest_id || !menu_id || !quantity || !category_id) {
+            if (!_id || !event_id || !guest_id || !menu_id || !quantity) {
               return { status: false, message: "_id, event_id, guest_id,menu_id, or quantity missing", data: null };
             }
     

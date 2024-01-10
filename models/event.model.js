@@ -91,7 +91,7 @@ const schema = new mongoose.Schema(
       required: false,  
     },
     point: {
-      type: Number,
+      type: String,
     },   
   },
   {

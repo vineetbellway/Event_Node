@@ -374,7 +374,7 @@ exports.get_event_participating_guests = async (req, res) => {
           user_id: guest.user_id,
           full_name: (guest.full_name) ?? '',
           district: guest.district,
-          phone: (guest.user_data.code_phone) ?? '',
+          contact_number: (guest.user_data.code_phone) ?? '',
           state: guest.state,
           country: guest.country,
           status: guest.status,

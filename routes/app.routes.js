@@ -132,6 +132,10 @@ router.get("/get-booked-service-items", auth,serviceController.get_booked_servic
 // approve service payment API
 router.post("/approve-service-payment", auth,serviceController.approve_service_payment);
 
+// get guest loyality points API
+router.get("/get-guest-loyality-points",serviceController.get_guest_loyalty_points);
+
+
 
 router.post("/validator-event",validatorEventController.create_validator_event);
 router.put("/validator-event/:id",validatorEventController.update_validator_event);

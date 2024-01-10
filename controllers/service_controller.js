@@ -6,7 +6,7 @@ const mongoose = require("mongoose");
 const { baseStatus, userStatus } = require("../utils/enumerator");
 const EventModel = require("../models/event.model");
 const Guest = require("../models/guest.model");
-
+const Booking = require("../models/booking.model");
 
 exports.create_service = async (req, res, next) => {
   if (!req.body) {
@@ -1019,5 +1019,116 @@ exports.approve_service_payment = async (req, res, next) => {
       console.log("error", error);
       res.status(500).send({ status: false, message: error.toString() || "Internal Server Error", data: [] });
     }
+  }
+};
+
+
+exports.get_guest_loyalty_points = async (req, res) => {
+  try {
+    const guest_id = req.query.guest_id;
+    const event_id = req.query.event_id;
+
+    if (!guest_id) {
+      return res.status(400).json({ status: false, message: "Guest ID is required in the request body" });
+    }
+
+    const bookings = await Booking.aggregate([
+      {
+        $match: {
+          guest_id: mongoose.Types.ObjectId(guest_id),
+          status: 'active'
+        },
+      },
+      {
+        $lookup: {
+          from: 'bookingmenus',
+          localField: '_id',
+          foreignField: 'booking_id',
+          as: 'booked_menu_data',
+        },
+      },
+      {
+        $unwind: { path: "$booked_menu_data", preserveNullAndEmptyArrays: true },
+      },
+      {
+        $lookup: {
+          from: 'menus',
+          localField: 'booked_menu_data.menu_id',
+          foreignField: '_id',
+          as: 'menu_data',
+        },
+      },
+      {
+        $unwind: { path: "$menu_data", preserveNullAndEmptyArrays: true },
+      },
+      {
+        $sort: { createdAt: 1 }, // Sort by createdAt in ascending order
+      },
+    ]);
+
+    let total_loyalty_points = 0;
+    let event_data = null;
+
+    if (bookings && bookings.length > 0) {
+      for (const item of bookings) {
+        const eventId = item.event_id;
+
+        const eventDetails = await EventModel.findOne({ '_id': eventId });
+
+        if (eventDetails && eventDetails.status === 'active') {
+          event_data = eventDetails;
+          total_loyalty_points = eventDetails.point;
+          break;
+        }
+      }
+
+      if (event_data) {
+        const menu_payment_record = await ServiceItemPayments.aggregate([
+          {
+            $lookup: {
+              from: 'serviceitembookings',
+              localField: '_id',
+              foreignField: 'payment_id',
+              as: 'booking_data',
+            },
+          },
+          {
+            $match: {
+              "booking_data.event_id": mongoose.Types.ObjectId(event_data._id),
+              "booking_data.guest_id": mongoose.Types.ObjectId(guest_id),
+            },
+          },
+          {
+            $sort: { 'createdAt': -1 },
+          },
+        ]);
+
+        if (menu_payment_record.length > 0) {
+          let total = 0;
+
+          for (const p_item of menu_payment_record) {
+            if (p_item.total_points !== undefined) {
+              total += p_item.total_points;
+            }
+          }
+
+          total_loyalty_points -= total;
+        }
+      }
+
+      return res.status(200).json({
+        status: true,
+        message: "Data found",
+        data: { "total_loyalty_points": total_loyalty_points, 'event_data': event_data },
+      });
+    } else {
+      return res.status(200).json({ status: false, message: "No data found", data: null });
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    return res.status(500).json({
+      status: false,
+      message: error.toString() || "Internal Server Error",
+    });
   }
 };

@@ -28,9 +28,6 @@ const schema = new mongoose.Schema(
       type: String,
       default: baseStatus.active,
     },
-    total_stock: {
-      type: String,
-    },
     validator_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

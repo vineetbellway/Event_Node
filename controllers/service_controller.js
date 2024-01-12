@@ -391,7 +391,6 @@ exports.delete_services = async (req, res) => {
 exports.get_service_by_event_id = async (req, res) => {
   try {
     const event_id = req.params.id;
-    const guest_id = req.params.guest_id;
 
     // Fetch all Services
     const serviceResults = await Service.aggregate([

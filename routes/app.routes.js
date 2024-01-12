@@ -115,7 +115,7 @@ router.get("/service/:id",auth,serviceController.get_service);
 router.put("/service/:id",auth, serviceController.update_service);
 router.delete("/service/:id",auth,serviceController.delete_service);
 router.delete("/service",auth, serviceController.delete_services);
-router.get("/service-by-event-id/:id",serviceController.get_service_by_event_id);
+router.get("/service-by-event-id/:id",auth,serviceController.get_service_by_event_id);
 
 // manage service item API
 router.post("/manage-service-item",auth,serviceController.manage_service_item);

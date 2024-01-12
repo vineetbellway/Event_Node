@@ -133,7 +133,7 @@ router.get("/get-booked-service-items", auth,serviceController.get_booked_servic
 router.post("/approve-service-payment",auth,serviceController.approve_service_payment);
 
 // get guest loyality points API
-router.get("/get-guest-loyality-points",serviceController.get_guest_loyalty_points);
+router.get("/get-guest-loyality-points",auth,serviceController.get_guest_loyalty_points);
 
 
 

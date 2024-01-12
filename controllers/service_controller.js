@@ -1033,6 +1033,8 @@ exports.get_guest_loyalty_pointsold = async (req, res) => {
   }
 };
 
+
+
 exports.get_guest_loyalty_points = async (req, res) => {
   try {
     const guest_id = req.query.guest_id;
@@ -1042,23 +1044,22 @@ exports.get_guest_loyalty_points = async (req, res) => {
     }
 
     let total_loyalty_points = 0; // Initialize total_loyalty_points here
-    let event_data = null;
-
+    let event_data = []; // Initialize event_data as an array
 
     // Your existing logic for aggregating service payment records
-    const service_payment_record = await ServiceItemPayments.aggregate([
+    const service_booking_record = await BookedServiceItem.aggregate([
       {
         $lookup: {
-          from: 'serviceitembookings',
-          localField: '_id',
-          foreignField: 'payment_id',
-          as: 'booking_data',
+          from: 'serviceitempayments',
+          localField: 'payment_id',
+          foreignField: '_id',
+          as: 'payment_data',
         },
       },
       {
         $match: {
-          "booking_data.guest_id": new mongoose.Types.ObjectId(guest_id),
-          "is_approved" : "yes"
+          "guest_id": new mongoose.Types.ObjectId(guest_id),
+          "payment_data.is_approved": "yes"
         },
       },
       {
@@ -1066,21 +1067,27 @@ exports.get_guest_loyalty_points = async (req, res) => {
       },
     ]);
 
-    console.log("service_payment_record",service_payment_record)
+    if (service_booking_record.length > 0) {
+      // Use Promise.all to handle multiple asynchronous operations concurrently
+      await Promise.all(service_booking_record.map(async (p_item) => {
+        const payment_data = p_item.payment_data;
+        const event_id = p_item.event_id;
 
-    if (service_payment_record.length > 0) {
-      let total = 0;
+        const event_record = await EventModel.findById(event_id);
 
-      
+        event_data.push({
+          event_id: event_id,
+          point: event_record.point,
+        });
 
-      for (const p_item of service_payment_record) {
-        console.log("p_item",p_item.booking_data)
-        if (p_item.total_points !== undefined) {
-          total += p_item.total_points;
-        }
-      }
+        total_loyalty_points += payment_data[0].total_points;
+        total_loyalty_points = event_record.point - total_loyalty_points;
+      }));
 
-      total_loyalty_points = total;
+      // Calculate the total loyalty points
+      event_data.forEach(event => {
+  
+      });
     }
 
     return res.status(200).json({
@@ -1097,5 +1104,4 @@ exports.get_guest_loyalty_points = async (req, res) => {
     });
   }
 };
-
 

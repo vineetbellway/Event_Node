@@ -109,7 +109,7 @@ router.delete("/menu", auth, menuController.delete_menus);
 
 
 
-router.post("/service",auth,serviceController.create_service);
+router.post("/service",serviceController.create_service);
 router.get("/service",auth,serviceController.get_services);
 router.get("/service/:id",auth,serviceController.get_service);
 router.put("/service/:id",auth, serviceController.update_service);

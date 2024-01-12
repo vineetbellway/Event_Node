@@ -109,13 +109,13 @@ router.delete("/menu", auth, menuController.delete_menus);
 
 
 
-router.post("/service",serviceController.create_service);
-router.get("/service",serviceController.get_services);
-router.get("/service/:id",serviceController.get_service);
-router.put("/service/:id", serviceController.update_service);
-router.delete("/service/:id",serviceController.delete_service);
-router.delete("/service", serviceController.delete_services);
-router.get("/service-by-event-id/:id",serviceController.get_service_by_event_id);
+router.post("/service",auth,serviceController.create_service);
+router.get("/service",auth,serviceController.get_services);
+router.get("/service/:id",auth,serviceController.get_service);
+router.put("/service/:id",auth, serviceController.update_service);
+router.delete("/service/:id",auth,serviceController.delete_service);
+router.delete("/service",auth, serviceController.delete_services);
+router.get("/service-by-event-id/:id",auth,serviceController.get_service_by_event_id);
 
 // manage service item API
 router.post("/manage-service-item",serviceController.manage_service_item);
@@ -133,7 +133,7 @@ router.get("/get-booked-service-items", auth,serviceController.get_booked_servic
 router.post("/approve-service-payment",serviceController.approve_service_payment);
 
 // get guest loyality points API
-router.get("/get-guest-loyality-points",auth,serviceController.get_guest_loyalty_points);
+router.get("/get-guest-loyality-points",serviceController.get_guest_loyalty_points);
 
 
 

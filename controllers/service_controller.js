@@ -392,23 +392,13 @@ exports.get_service_by_event_id = async (req, res) => {
   try {
     const event_id = req.params.id;
 
+
     // Fetch all Services
     const serviceResults = await Service.aggregate([
       {
         $match: {
           event_id: new mongoose.Types.ObjectId(event_id),
         },
-      },
-      {
-        $lookup: {
-          from: "categories",
-          localField: "category_id",
-          foreignField: "_id",
-          as: "category_data",
-        },
-      },
-      {
-        $unwind: "$category_data",
       },
       {
         $project: {

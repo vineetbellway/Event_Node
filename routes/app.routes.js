@@ -118,7 +118,7 @@ router.delete("/service",auth, serviceController.delete_services);
 router.get("/service-by-event-id/:id",auth,serviceController.get_service_by_event_id);
 
 // manage service item API
-router.post("/manage-service-item",serviceController.manage_service_item);
+router.post("/manage-service-item",auth,serviceController.manage_service_item);
 
 // get service items API
 router.get("/get-service-items",auth,serviceController.get_service_items);
@@ -130,7 +130,7 @@ router.post("/book-service-items", auth,serviceController.book_service_items);
 router.get("/get-booked-service-items", auth,serviceController.get_booked_service_items);
 
 // approve service payment API
-router.post("/approve-service-payment",serviceController.approve_service_payment);
+router.post("/approve-service-payment",auth,serviceController.approve_service_payment);
 
 // get guest loyality points API
 router.get("/get-guest-loyality-points",serviceController.get_guest_loyalty_points);

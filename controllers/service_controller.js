@@ -406,6 +406,7 @@ exports.get_service_by_event_id = async (req, res) => {
           event_id: 1,
           name: 1,
           point: 1,
+          total_stock: 1,
           status: 1,
           is_limited: 1,
           limited_count: 1,

@@ -1134,7 +1134,7 @@ exports.get_guest_loyalty_points = async (req, res) => {
       
 
       for (const p_item of service_payment_record) {
-        console.log("p_item",p_item)
+        console.log("p_item",p_item.booking_data)
         if (p_item.total_points !== undefined) {
           total += p_item.total_points;
         }

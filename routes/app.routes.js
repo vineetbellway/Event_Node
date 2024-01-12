@@ -124,7 +124,7 @@ router.post("/manage-service-item",serviceController.manage_service_item);
 router.get("/get-service-items",auth,serviceController.get_service_items);
 
 // book service items API
-router.post("/book-service-items", serviceController.book_service_items);
+router.post("/book-service-items", auth,serviceController.book_service_items);
 
 // get booked service items API
 router.get("/get-booked-service-items", auth,serviceController.get_booked_service_items);

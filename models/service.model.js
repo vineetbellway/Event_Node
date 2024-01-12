@@ -14,7 +14,7 @@ const schema = new mongoose.Schema(
       type: String,
     },
     point: {
-      type: Number,
+      type: String,
     },
     is_limited: {
       type: String,

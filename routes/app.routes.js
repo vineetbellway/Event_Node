@@ -102,38 +102,38 @@ router.delete("/event",auth,  eventController.delete_events);
 router.post("/menu",auth,menuController.create_menu);
 router.put("/menu/:id", auth, menuController.update_menu);
 router.get("/menu", auth,menuController.get_menus);
-router.get("/menu_by_event_id/:id/:guest_id",auth,menuController.get_menu_by_event_id);
+router.get("/menu_by_event_id/:id/:guest_id",menuController.get_menu_by_event_id);
 router.get("/menu/:id", auth,menuController.get_menu);
 router.delete("/menu/:id", auth, menuController.delete_menu);
 router.delete("/menu", auth, menuController.delete_menus);
 
 
 
-router.post("/service",auth,serviceController.create_service);
-router.get("/service",auth,serviceController.get_services);
-router.get("/service/:id",auth,serviceController.get_service);
-router.put("/service/:id",auth, serviceController.update_service);
-router.delete("/service/:id", auth,serviceController.delete_service);
-router.delete("/service",auth, serviceController.delete_services);
-//router.get("/service_by_event_id/:id/:guest_id",auth,serviceController.get_service_by_event_id);
+router.post("/service",serviceController.create_service);
+router.get("/service",serviceController.get_services);
+router.get("/service/:id",serviceController.get_service);
+router.put("/service/:id", serviceController.update_service);
+router.delete("/service/:id",serviceController.delete_service);
+router.delete("/service", serviceController.delete_services);
+router.get("/service-by-event-id/:id/:guest_id",auth,serviceController.get_service_by_event_id);
 
 // manage service item API
-router.post("/manage-service-item",auth,serviceController.manage_service_item);
+router.post("/manage-service-item",serviceController.manage_service_item);
 
 // get service items API
 router.get("/get-service-items",auth,serviceController.get_service_items);
 
 // book service items API
-router.post("/book-service-items",auth, serviceController.book_service_items);
+router.post("/book-service-items", serviceController.book_service_items);
 
 // get booked service items API
 router.get("/get-booked-service-items", auth,serviceController.get_booked_service_items);
 
 // approve service payment API
-router.post("/approve-service-payment", auth,serviceController.approve_service_payment);
+router.post("/approve-service-payment",serviceController.approve_service_payment);
 
 // get guest loyality points API
-router.get("/get-guest-loyality-points",serviceController.get_guest_loyalty_points);
+router.get("/get-guest-loyality-points",auth,serviceController.get_guest_loyalty_points);
 
 
 

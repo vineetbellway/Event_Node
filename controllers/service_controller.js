@@ -394,7 +394,7 @@ exports.get_service_by_event_id = async (req, res) => {
     const guest_id = req.params.guest_id;
 
     // Fetch all Services
-    const menuResults = await Menu.aggregate([
+    const serviceResults = await Service.aggregate([
       {
         $match: {
           event_id: new mongoose.Types.ObjectId(event_id),
@@ -407,9 +407,6 @@ exports.get_service_by_event_id = async (req, res) => {
           foreignField: "_id",
           as: "category_data",
         },
-      },
-      {
-        $unwind: "$uom_data",
       },
       {
         $unwind: "$category_data",
@@ -432,49 +429,7 @@ exports.get_service_by_event_id = async (req, res) => {
       },
     ]);
 
-    // Fetch all menu items selected by the guest
-    const selectedMenuItems = await MenuItem.find({
-      guest_id: guest_id,
-      event_id: event_id,
-      quantity: { $gt: 0 },
-    }).populate('menu_id');
-
-    // Filter menu items based on the selected limited item's category
-    const filteredResults = menuResults.filter(item => {
-      const menuRecord = selectedMenuItems.find(selectedItem => {
-        return (
-          selectedItem.menu_id
-        
-        );
-      });
-
-      return !menuRecord || (item.is_limited === "yes" && menuRecord.menu_id._id.toString() === item._id.toString());
-    });
-
-    const selectedMenuItems2 = await BookedMenuItem.find({
-      guest_id: guest_id,
-      event_id: event_id,
-    }).populate('menu_id');
-
-
-    console.log("selectedMenuItems2",selectedMenuItems2)
-
-     // Filter menu items based on the selected limited item's category
-     const filteredResults2 = filteredResults.filter(item => {
-      const menuRecord = selectedMenuItems2.find(selectedItem => {
-        return (
-          selectedItem.menu_id &&
-          selectedItem.menu_id.category_id.toString() === item.category_id.toString()
-        );
-      });
-
-      return !menuRecord || (item.is_limited === "yes" && menuRecord.menu_id._id.toString() === item._id.toString());
-    });
-
-    console.log("filteredResults2",filteredResults2)
-   
-    var finalResponse = (selectedMenuItems2.length == 0) ? filteredResults : filteredResults2;
-
+    var finalResponse = serviceResults;
     if (finalResponse.length > 0) {
       return res.status(200).send({
         status: true,
@@ -707,13 +662,14 @@ exports.book_service_items = async (req, res, next) => {
 
 
       // Delete records from the ServiceItem model
-      const deleteConditions = {
+     /* const deleteConditions = {
         event_id: { $in: results.map(item => item.event_id) },
         service_id: { $in: results.map(item => item.service_id) },
         guest_id: { $in: results.map(item => item.guest_id) },
       };
   
-      await ServiceItem.deleteMany(deleteConditions);
+      await ServiceItem.deleteMany(deleteConditions);*/
+      
       res.status(200).send({ status: true, message: "Service booked successfully", data : { payment_id: payment_id,booked_data: results} });
   
 
@@ -908,13 +864,21 @@ exports.approve_service_payment = async (req, res, next) => {
 
         if (item && typeof item.quantity === 'number' && item.quantity > 0) {
           const service_id = item.service_id;
+
+       
           const serviceRecord = await Service.findById(service_id);
+
+          console.log("serviceRecord",serviceRecord);
        
            // Update limited count in Menu collection
 
-           const newCount = serviceRecord.limited_count - item.quantity;
+           if(serviceRecord.is_limited == "yes"){
+             
+            const newCount = serviceRecord.limited_count - item.quantity;
     
-           await Service.findByIdAndUpdate(service_id, { $set: { limited_count: newCount } });
+            await Service.findByIdAndUpdate(service_id, { $set: { limited_count: newCount } });
+           }
+
            
 
           if (serviceRecord) {
@@ -1023,7 +987,7 @@ exports.approve_service_payment = async (req, res, next) => {
 };
 
 
-exports.get_guest_loyalty_points = async (req, res) => {
+exports.get_guest_loyalty_pointsold = async (req, res) => {
   try {
     const guest_id = req.query.guest_id;
     const event_id = req.query.event_id;
@@ -1132,3 +1096,70 @@ exports.get_guest_loyalty_points = async (req, res) => {
     });
   }
 };
+
+exports.get_guest_loyalty_points = async (req, res) => {
+  try {
+    const guest_id = req.query.guest_id;
+
+    if (!guest_id) {
+      return res.status(400).json({ status: false, message: "Guest ID is required in the request body" });
+    }
+
+    let total_loyalty_points = 0; // Initialize total_loyalty_points here
+    let event_data = null;
+
+
+    // Your existing logic for aggregating service payment records
+    const service_payment_record = await ServiceItemPayments.aggregate([
+      {
+        $lookup: {
+          from: 'serviceitembookings',
+          localField: '_id',
+          foreignField: 'payment_id',
+          as: 'booking_data',
+        },
+      },
+      {
+        $match: {
+          "booking_data.guest_id": new mongoose.Types.ObjectId(guest_id),
+          "is_approved" : "yes"
+        },
+      },
+      {
+        $sort: { 'createdAt': -1 },
+      },
+    ]);
+
+    console.log("service_payment_record",service_payment_record)
+
+    if (service_payment_record.length > 0) {
+      let total = 0;
+
+      
+
+      for (const p_item of service_payment_record) {
+        console.log("p_item",p_item)
+        if (p_item.total_points !== undefined) {
+          total += p_item.total_points;
+        }
+      }
+
+      total_loyalty_points = total;
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: "Data found",
+      data: { "total_loyalty_points": total_loyalty_points, 'event_data': event_data },
+    });
+
+  } catch (error) {
+    console.error("Error:", error);
+    return res.status(500).json({
+      status: false,
+      message: error.toString() || "Internal Server Error",
+    });
+  }
+};
+
+

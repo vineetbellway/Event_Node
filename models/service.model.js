@@ -13,11 +13,6 @@ const schema = new mongoose.Schema(
     name: {
       type: String,
     },
-    category_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Category",
-      required: true,
-    },
     point: {
       type: Number,
     },

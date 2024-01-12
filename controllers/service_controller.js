@@ -27,13 +27,7 @@ exports.create_service = async (req, res, next) => {
         }
       }
 
-      if(req.body.limited_count > req.body.total_stock){
-        res.status(400).send({
-          status: false,
-          message: "Item count should not be greater than total stock",
-          data:null
-        });
-      }
+   
 
       const countServiceInEvent = await Service.countDocuments({
         'event_id': req.body.event_id,
@@ -104,25 +98,11 @@ exports.get_services = async (req, res) => {
         },
       },
       {
-        $lookup: {
-          from: "categories",
-          localField: "category_id",
-          foreignField: "_id",
-          as: "category_data",
-        },
-      },
-      {
-        $unwind: "$category_data", // Unwind to access the category_data
-      },
-      {
         $project: {
           _id: 1,
           event_id:1,
           name: 1,
-          category_id:1,
-          total_stock:1,
           point:1,
-          category: "$category_data.name",
           status:1,
           is_limited:1,
           limited_count:1,
@@ -179,23 +159,11 @@ exports.get_service = async (req, res) => {
           },
         },
         {
-          $lookup: {
-            from: "categories",
-            localField: "category_id",
-            foreignField: "_id",
-            as: "category_data",
-          },
-        },
-        {
-          $unwind: "$category_data", // Unwind to access the category_data
-        },
-        {
           $project: {
             _id: 1,
             event_id:1,
             name: 1,
             category_id:1,
-            total_stock:1,
             point:1,
             category: "$category_data.name",
             status:1,
@@ -269,13 +237,7 @@ exports.update_service = async (req, res, next) => {
             }
           }
     
-          if (req.body.limited_count > req.body.total_stock) {
-            res.status(400).send({
-              status: false,
-              message: "Limited count should not be greater than total stock",
-              data: null,
-            });
-          }
+
   
         Service.findByIdAndUpdate(id, req.body, { new: true })
             .then((result) => {
@@ -406,7 +368,6 @@ exports.get_service_by_event_id = async (req, res) => {
           event_id: 1,
           name: 1,
           point: 1,
-          total_stock: 1,
           status: 1,
           is_limited: 1,
           limited_count: 1,
@@ -715,23 +676,11 @@ exports.get_booked_service_items = async (req, res) => {
           },
         },
         {
-          $lookup: {
-            from: "categories",
-            localField: "category_id",
-            foreignField: "_id",
-            as: "category_data",
-          },
-        },
-        {
-          $unwind: "$category_data", // Unwind to access the category_data
-        },
-        {
           $project: {
             _id: 1,
             event_id: 1,
             name: 1,
             category_id: 1,
-            total_stock: 1,
             point: 1,
             category: "$category_data.name",
             status: 1,

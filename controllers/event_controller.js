@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 const { ObjectId } = require('mongoose').Types;
 const moment = require("moment");
 const { baseStatus, userStatus } = require("../utils/enumerator");
+const Booking = require("../models/booking.model");
 
 
 exports.create_event = (req, res, next) => {
@@ -103,6 +104,19 @@ exports.create_event = (req, res, next) => {
                   "point" : point
                }
                  await EventGuestModel(eventguestdata).save();
+
+
+              var bookingData = {
+                'event_id': result._id,
+                'guest_id': item,
+                'point' : point,
+                'status' : "active"
+              };
+
+              await Booking(bookingData).save();
+
+
+
               }
             }
           }

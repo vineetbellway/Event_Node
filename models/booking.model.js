@@ -21,7 +21,7 @@ const schema = new mongoose.Schema(
     },
     payment_mode: {
       type: String,
-      required: true,
+     /* required: true,*/
     },
     status: {
       type: String,
@@ -31,7 +31,10 @@ const schema = new mongoose.Schema(
     },
     amount:{
       type: Number,
-  }
+    },
+    point: {
+      type: String,
+    },
   },
   {
     timestamps: true,

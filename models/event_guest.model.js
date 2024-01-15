@@ -15,6 +15,9 @@ const schema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    point: {
+      type: String,
+    },
   },
   {
     timestamps: true,

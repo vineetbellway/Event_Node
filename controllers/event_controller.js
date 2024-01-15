@@ -99,7 +99,8 @@ exports.create_event = (req, res, next) => {
               for(item of jsonArray){
                 var eventguestdata = {
                   "event_id" : result._id,
-                  "guest_id" : item
+                  "guest_id" : item,
+                  "point" : point
                }
                  await EventGuestModel(eventguestdata).save();
               }

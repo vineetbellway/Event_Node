@@ -661,10 +661,9 @@ exports.get_validator_events_list = async (req, res) => {
   const validator_id = req.query.validator_id;
   const status = req.query.status;
 
-
   try {
     const validator = await User.findById(validator_id);
-    console.log("validator_id",validator)
+    console.log("validator_id", validator);
     if (!validator) {
       return res.status(200).send({
         status: false,
@@ -672,68 +671,78 @@ exports.get_validator_events_list = async (req, res) => {
         data: null,
       });
     }
-  
-    const validator_events = await EventValidator.find({ validator_id, status: { $eq: status } });
 
+    const validator_events = await EventValidator.find({
+      validator_id,
+      status: { $eq: status },
+    });
 
     if (validator_events && validator_events.length > 0) {
-      const all_validator_events_list = await Promise.all(validator_events.map(async (validatorEventData) => {
-          const eventDetails = await EventModel.findById(validatorEventData.event_id);
-          
+      const all_validator_events_list = await Promise.all(
+        validator_events.map(async (validatorEventData) => {
+          const eventDetails = await EventModel.findById(
+            validatorEventData.event_id
+          );
+
           // Get the host (domain and port)
           const protocol = req.protocol;
-          const host = req.get('host');
+          const host = req.get("host");
 
           // Combine protocol, host, and any other parts of the base URL you need
           const baseURL = `${protocol}://${host}`;
-        
+
           var validator_role = validatorEventData.role;
 
-          if(eventDetails){
-            return {
-              role: validator_role,
-              event_data: {
-                _id: eventDetails._id,
-                seller_id: eventDetails.seller_id,
-                primary_number: eventDetails.primary_number,
-                secondary_number: eventDetails.secondary_number,
-                type: eventDetails.type,
-                image: baseURL + '/uploads/events/' + eventDetails.image,
-                name: eventDetails.name,
-                venue: eventDetails.venue,
-                country: eventDetails.country,
-                state: eventDetails.state,
-                city: eventDetails.city,
-                start_time: eventDetails.start_time,
-                end_time: eventDetails.end_time,
-                coupon_name: eventDetails.coupon_name,
-                tax_name: eventDetails.tax_name,
-                tax_percent: eventDetails.tax_percent,
-                amount: eventDetails.amount,
-                instructions: eventDetails.instructions,
-                transportation_charge: eventDetails.transportation_charge,
-                hire_charge: eventDetails.hire_charge,
-                labour_charge: eventDetails.labour_charge,
-                commision_charge: eventDetails.commision_charge,
-                others: eventDetails.others,
-                status: eventDetails.status,
-                createdAt: eventDetails.createdAt,
-                updatedAt: eventDetails.updatedAt,
-                __v: eventDetails.__v,
-
-              }
+          if (eventDetails) {
+            if (eventDetails.status != "expired") {
+              return {
+                role: validator_role,
+                event_data: {
+                  _id: eventDetails._id,
+                  seller_id: eventDetails.seller_id,
+                  primary_number: eventDetails.primary_number,
+                  secondary_number: eventDetails.secondary_number,
+                  type: eventDetails.type,
+                  image: baseURL + "/uploads/events/" + eventDetails.image,
+                  name: eventDetails.name,
+                  venue: eventDetails.venue,
+                  country: eventDetails.country,
+                  state: eventDetails.state,
+                  city: eventDetails.city,
+                  start_time: eventDetails.start_time,
+                  end_time: eventDetails.end_time,
+                  coupon_name: eventDetails.coupon_name,
+                  tax_name: eventDetails.tax_name,
+                  tax_percent: eventDetails.tax_percent,
+                  amount: eventDetails.amount,
+                  instructions: eventDetails.instructions,
+                  transportation_charge: eventDetails.transportation_charge,
+                  hire_charge: eventDetails.hire_charge,
+                  labour_charge: eventDetails.labour_charge,
+                  commision_charge: eventDetails.commision_charge,
+                  others: eventDetails.others,
+                  status: eventDetails.status,
+                  createdAt: eventDetails.createdAt,
+                  updatedAt: eventDetails.updatedAt,
+                  __v: eventDetails.__v,
+                },
+              };
+            }
           }
-          
-          
-           
-          };
-       }));
+        })
+      );
 
-      if (all_validator_events_list.length > 0) {
+      // Filter out null values from the array
+      const filteredList = all_validator_events_list.filter(
+        (item) => item !== undefined
+      );
+
+      if (filteredList.length > 0) {
+        console.log("d",filteredList)
         res.status(200).send({
           status: true,
           message: "Data found",
-          data: all_validator_events_list,
+          data: filteredList,
         });
       } else {
         res.status(200).send({
@@ -758,6 +767,7 @@ exports.get_validator_events_list = async (req, res) => {
     });
   }
 };
+
 
 
 exports.get_event_validator_detail = async (req, res) => {

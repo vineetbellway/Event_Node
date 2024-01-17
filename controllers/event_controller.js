@@ -30,8 +30,13 @@ exports.create_event = (req, res, next) => {
     const hire_charge = req.body.hire_charge.trim();
     const labour_charge = req.body.labour_charge.trim();
     const commision_charge = req.body.commision_charge.trim();
-    const is_cover_charge_added = req.body.is_cover_charge_added.trim();
-    const cover_charge = req.body.cover_charge.trim();
+    const is_cover_charge_added = (req.body.is_cover_charge_added!='') ?  req.body.is_cover_charge_added.trim() : 'no';
+    
+    
+ 
+
+    
+    const cover_charge = (req.body.cover_charge!='') ?  req.body.cover_charge.trim() : '';
     const others = req.body.others.trim();
     const status = req.body.status.trim();
     const banner_id = req.body.banner_id ? req.body.banner_id.trim() : null;
@@ -94,8 +99,9 @@ exports.create_event = (req, res, next) => {
           console.log("result",result)
 
          
-          const jsonArray = JSON.parse(guest_ids);
+         
           if(type == "loyalty"){
+            const jsonArray = JSON.parse(guest_ids);
             if(jsonArray.length > 0){
               for(item of jsonArray){
                 var eventguestdata = {
@@ -134,6 +140,7 @@ exports.create_event = (req, res, next) => {
         }
       })
       .catch((error) => {
+        console.log("error",error)
         res.send({
           status: false,
           message: error.toString() ?? 'Error',

@@ -321,48 +321,124 @@ exports.get_menu_by_event_id = async (req, res) => {
       },
     ]);
 
-    // Fetch all menu items selected by the guest
-    const selectedMenuItems = await MenuItem.find({
-      guest_id: guest_id,
-      event_id: event_id,
-      quantity: { $gt: 0 },
-    }).populate('menu_id');
 
-    // Filter menu items based on the selected limited item's category
-    const filteredResults = menuResults.filter(item => {
-      const menuRecord = selectedMenuItems.find(selectedItem => {
-        return (
-          selectedItem.menu_id &&
-          selectedItem.menu_id.category_id.toString() === item.category_id.toString()
-        );
-      });
+      // Check if the event exists
+      const event = await EventModel.findById(event_id);
+      if (!event) {
+        return res.status(404).send({
+          status: false,
+          message: "Event not found",
+          data: null,
+        });
+      }
 
-      return !menuRecord || (item.is_limited === "yes" && menuRecord.menu_id._id.toString() === item._id.toString());
-    });
-
-    const selectedMenuItems2 = await BookedMenuItem.find({
-      guest_id: guest_id,
-      event_id: event_id,
-    }).populate('menu_id');
-
-
-    console.log("selectedMenuItems2",selectedMenuItems2)
-
-     // Filter menu items based on the selected limited item's category
-     const filteredResults2 = filteredResults.filter(item => {
-      const menuRecord = selectedMenuItems2.find(selectedItem => {
-        return (
-          selectedItem.menu_id &&
-          selectedItem.menu_id.category_id.toString() === item.category_id.toString()
-        );
-      });
-
-      return !menuRecord || (item.is_limited === "yes" && menuRecord.menu_id._id.toString() === item._id.toString());
-    });
-
-    console.log("filteredResults2",filteredResults2)
    
-    var finalResponse = (selectedMenuItems2.length == 0) ? filteredResults : filteredResults2;
+
+   
+
+      var is_cover_charge_added = event.is_cover_charge_added;
+      console.log("is_cover_charge_added",is_cover_charge_added)
+      if(is_cover_charge_added == "no"){
+        // Fetch all menu items selected by the guest
+        const selectedMenuItems = await MenuItem.find({
+          guest_id: guest_id,
+          event_id: event_id,
+          quantity: { $gt: 0 },
+        }).populate('menu_id');
+
+
+
+        // Filter menu items based on the selected limited item's category
+        const filteredResults = menuResults.filter(item => {
+          const menuRecord = selectedMenuItems.find(selectedItem => {
+            console.log("s",selectedItem.menu_id.is_limited)
+            var is_limited = selectedItem.menu_id.is_limited;
+            if(is_limited == 'yes'){
+              return (
+                selectedItem.menu_id &&
+                selectedItem.menu_id.category_id.toString() === item.category_id.toString()
+              );
+            } else {
+              return (
+                selectedItem.menu_id 
+              );
+            }
+           
+          });
+
+          return !menuRecord || (menuRecord.menu_id._id.toString() === item._id.toString());
+        });
+
+
+
+     
+
+        const selectedMenuItems2 = await BookedMenuItem.find({
+          guest_id: guest_id,
+          event_id: event_id,
+        }).populate('menu_id');
+
+
+
+        // Filter menu items based on the selected limited item's category
+        const filteredResults2 = filteredResults.filter(item => {
+          const menuRecord = selectedMenuItems2.find(selectedItem => {
+            return (
+              selectedItem.menu_id &&
+              selectedItem.menu_id.category_id.toString() === item.category_id.toString()
+            );
+          });
+
+          return !menuRecord || (item.is_limited === "yes" && menuRecord.menu_id._id.toString() === item._id.toString());
+        });
+
+        var finalResponse = (selectedMenuItems2.length == 0) ? filteredResults : filteredResults2;
+      } else {
+
+        // Fetch all menu items selected by the guest
+        const selectedMenuItems = await MenuItem.find({
+          guest_id: guest_id,
+          event_id: event_id,
+          quantity: { $gt: 0 },
+        }).populate('menu_id');
+
+        // Filter menu items based on the selected limited item's category
+        const filteredResults = menuResults.filter(item => {
+          const menuRecord = selectedMenuItems.find(selectedItem => {
+            return (
+              selectedItem.menu_id 
+            );
+          });
+
+          return !menuRecord || ( menuRecord.menu_id._id.toString() === item._id.toString());
+        });
+
+
+        const selectedMenuItems2 = await BookedMenuItem.find({
+          guest_id: guest_id,
+          event_id: event_id,
+        }).populate('menu_id');
+
+
+
+        // Filter menu items based on the selected limited item's category
+        const filteredResults2 = filteredResults.filter(item => {
+          const menuRecord = selectedMenuItems2.find(selectedItem => {
+            return (
+              selectedItem.menu_id 
+            );
+          });
+
+          return !menuRecord || (menuRecord.menu_id._id.toString() === item._id.toString());
+        });
+
+        var finalResponse = (selectedMenuItems2.length == 0) ? filteredResults : filteredResults2;
+
+      }
+
+      
+   
+   
 
     if (finalResponse.length > 0) {
       return res.status(200).send({
@@ -378,6 +454,7 @@ exports.get_menu_by_event_id = async (req, res) => {
       });
     }
   } catch (error) {
+    console.log("error",error)
     res.status(500).send({
       status: false,
       message: error.toString() || "Internal Server Error",

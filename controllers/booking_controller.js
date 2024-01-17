@@ -1684,6 +1684,105 @@ const close_event_by_seller = async (req, res) => {
   }
 };
 
+const get_booked_menu_list = async (req, res) => {
+  try {
+    // Extracting parameters from the request
+    const event_id = req.query.event_id;
+    const guest_id = req.query.guest_id;
+
+    // Validate request parameters
+    if (!guest_id && event_id) {
+      return res.status(400).json({
+        status: false,
+        message: "Guest id and event id are required in the request body",
+      });
+    }
+
+    // Check if the event exists
+    const event = await EventModel.findById(event_id);
+    if (!event) {
+      return res.status(404).send({
+        status: false,
+        message: "Event not found",
+        data: null,
+      });
+    }
+
+    // MongoDB aggregation pipeline for fetching booked menu data
+    const bookingPipeline = [
+      {
+        $lookup: {
+          from: "events",
+          localField: "event_id",
+          foreignField: "_id",
+          as: "event_data",
+        },
+      },
+      {
+        $lookup: {
+          from: "guests",
+          localField: "guest_id",
+          foreignField: "user_id",
+          as: "guest_data",
+        },
+      },
+      {
+        $lookup: {
+          from: "menus",
+          localField: "event_id",
+          foreignField: "event_id",
+          as: "booked_menu_data",
+        },
+      },
+      {
+        $sort: { createdAt: -1 }, // Sort by createdAt in descending order
+      },
+      {
+        $match: {
+          "event_id": new mongoose.Types.ObjectId(event_id),
+          "guest_id": new mongoose.Types.ObjectId(guest_id),
+          "status": "active",
+        },
+      },
+      {
+        $unwind: "$booked_menu_data", // Unwind the array for direct access
+      },
+      {
+        $replaceRoot: { newRoot: "$booked_menu_data" }, // Replace root with booked_menu_data
+      },
+    ];
+
+    // Execute the aggregation pipeline
+    const result = await Booking.aggregate(bookingPipeline);
+
+    if (result && result.length > 0) {
+      // Send success response with booked menu data
+      res.status(200).json({
+        status: true,
+        message: "Data found",
+        data: result,
+      });
+    } else {
+      // Send 404 response if no guests are found
+      res.status(404).json({
+        status: false,
+        message: "No guests found",
+        data: [],
+      });
+    }
+  } catch (error) {
+    // Handle errors during the try block
+    console.log("error", error);
+    res.status(500).json({
+      status: false,
+      message: error.toString() || "Internal Server Error",
+    });
+  }
+};
+
+
+
+
 
 
 module.exports = {
@@ -1699,6 +1798,7 @@ module.exports = {
   get_guest_coupon_balance,
   get_pending_guest_list,
   get_approved_booking_cost,
-  close_event_by_seller
+  close_event_by_seller,
+  get_booked_menu_list
 
 }; 

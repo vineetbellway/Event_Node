@@ -405,6 +405,10 @@ router.get("/get-event-participated-guests",sellerController.get_event_participa
 router.get("/get-active-city-events",auth, guestController.get_active_city_events);
 
 
+// get booked menu list API
+router.get("/get-booked-menu-list",auth, bookingController.get_booked_menu_list);
+
+
 cron.schedule("* * * * *", function () {
   //  console.log("Cron job is running");
     // bookingController.disableSellerServices();

@@ -315,13 +315,25 @@ exports.add_event_validator = async(req, res, next) => {
     try {
 
       var eventRecord = await EventModel.findById(req.body.event_id);
-      if(eventRecord.is_closed == "yes"){
-         res.status(200).send({
-          status: false,
-          message: "Event is closed",
-          data:null
-        });
+
+      if(eventRecord){
+        if(eventRecord.is_closed == "yes"){
+         return  res.status(200).send({
+           status: false,
+           message: "Event is closed",
+           data:null
+         });
+       }
+      } else {
+          return res.status(200).send({
+           status: false,
+           message: "Event not found",
+           data:null
+         });
+       
       }
+
+      
 
 
    
@@ -570,17 +582,21 @@ exports.get_not_expired_event_validators_list = async (req, res) => {
 
 exports.manage_event_validator_status = async (req, res) => {
   try {
-    const { event_id, status, validator_id } = req.body;
-    console.log("here")
+    const { event_id, status, validator_id,role } = req.body;
+
     if (!event_id || !status || !validator_id) {
-      return res.status(400).json({ status: false, message: "event id, validator id, and status are required in the request body" });
+      return res.status(400).json({ status: false, message: "event id, validator id, and role status are required in the request body" });
     }
 
     const result = await EventValidator.findOneAndUpdate(
-      { event_id: event_id, validator_id: validator_id },
-      { status: status },
+      { event_id: event_id, validator_id: validator_id  },
+      { status: status, role:role },
       { new: true } // Returns the modified document
     );
+
+    console.log("event_id",event_id)
+
+    console.log("validator_id",validator_id)
 
     if (!result) {
       return res.status(200).json({ status: false, message: "Event validator not found" });
@@ -669,47 +685,44 @@ exports.get_validator_events_list = async (req, res) => {
 
           // Combine protocol, host, and any other parts of the base URL you need
           const baseURL = `${protocol}://${host}`;
-          var validator_status = validatorEventData.status;
-          console.log("validator_status",validator_status)
+        
+          var validator_role = validatorEventData.role;
+          
           
             return {
-          
-          
-              _id: eventDetails._id,
-              seller_id: eventDetails.seller_id,
-              primary_number: eventDetails.primary_number,
-              secondary_number: eventDetails.secondary_number,
-              type: eventDetails.type,
-              image: baseURL + '/uploads/events/' + eventDetails.image,
-              name: eventDetails.name,
-              venue: eventDetails.venue,
-              country: eventDetails.country,
-              state: eventDetails.state,
-              city: eventDetails.city,
-              start_time: eventDetails.start_time,
-              end_time: eventDetails.end_time,
-              coupon_name: eventDetails.coupon_name,
-              tax_name: eventDetails.tax_name,
-              tax_percent: eventDetails.tax_percent,
-              amount: eventDetails.amount,
-              instructions: eventDetails.instructions,
-              transportation_charge: eventDetails.transportation_charge,
-              hire_charge: eventDetails.hire_charge,
-              labour_charge: eventDetails.labour_charge,
-              commision_charge: eventDetails.commision_charge,
-              others: eventDetails.others,
-              status: eventDetails.status,
-              createdAt: eventDetails.createdAt,
-              updatedAt: eventDetails.updatedAt,
-              __v: eventDetails.__v,
-            
-          };
-          
+              role: validator_role,
+              event_data: {
+                _id: eventDetails._id,
+                seller_id: eventDetails.seller_id,
+                primary_number: eventDetails.primary_number,
+                secondary_number: eventDetails.secondary_number,
+                type: eventDetails.type,
+                image: baseURL + '/uploads/events/' + eventDetails.image,
+                name: eventDetails.name,
+                venue: eventDetails.venue,
+                country: eventDetails.country,
+                state: eventDetails.state,
+                city: eventDetails.city,
+                start_time: eventDetails.start_time,
+                end_time: eventDetails.end_time,
+                coupon_name: eventDetails.coupon_name,
+                tax_name: eventDetails.tax_name,
+                tax_percent: eventDetails.tax_percent,
+                amount: eventDetails.amount,
+                instructions: eventDetails.instructions,
+                transportation_charge: eventDetails.transportation_charge,
+                hire_charge: eventDetails.hire_charge,
+                labour_charge: eventDetails.labour_charge,
+                commision_charge: eventDetails.commision_charge,
+                others: eventDetails.others,
+                status: eventDetails.status,
+                createdAt: eventDetails.createdAt,
+                updatedAt: eventDetails.updatedAt,
+                __v: eventDetails.__v,
 
-        
-      
-       
-      }));
+              }
+          };
+       }));
 
       if (all_validator_events_list.length > 0) {
         res.status(200).send({

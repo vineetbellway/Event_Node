@@ -679,6 +679,7 @@ exports.get_validator_events_list = async (req, res) => {
     if (validator_events && validator_events.length > 0) {
       const all_validator_events_list = await Promise.all(validator_events.map(async (validatorEventData) => {
           const eventDetails = await EventModel.findById(validatorEventData.event_id);
+          
           // Get the host (domain and port)
           const protocol = req.protocol;
           const host = req.get('host');
@@ -687,8 +688,8 @@ exports.get_validator_events_list = async (req, res) => {
           const baseURL = `${protocol}://${host}`;
         
           var validator_role = validatorEventData.role;
-          
-          
+
+          if(eventDetails){
             return {
               role: validator_role,
               event_data: {
@@ -721,6 +722,10 @@ exports.get_validator_events_list = async (req, res) => {
                 __v: eventDetails.__v,
 
               }
+          }
+          
+          
+           
           };
        }));
 

@@ -11,6 +11,7 @@ const momentTimeZone = require('moment-timezone');
 const MenuItemBookings = require("../models/booked_menu_item.model");
 const MenuItemPayments = require("../models/menu_item_payments.model");
 const Menu = require("../models/menu.model");
+const MenuItem = require("../models/menu_item.model");
 // It will book event by guest
 
 const book = async (req, res, next) => {
@@ -1757,16 +1758,23 @@ const get_booked_menu_list = async (req, res) => {
 
     if (result && result.length > 0) {
       // Send success response with booked menu data
+      for(item of result){
+         var  menu_id = item._id;
+         
+         var menuItemRecord = await MenuItem.findOne({"menu_id": menu_id, "event_id": event_id, "guest_id": guest_id});
+         item.quantity = menuItemRecord ?  menuItemRecord.quantity : '';
+      }
+
       res.status(200).json({
         status: true,
         message: "Data found",
         data: result,
       });
     } else {
-      // Send 404 response if no guests are found
-      res.status(404).json({
+      // Send 404 response if no bookings are found
+      res.status(200).json({
         status: false,
-        message: "No guests found",
+        message: "No booked menus found",
         data: [],
       });
     }
@@ -1776,6 +1784,7 @@ const get_booked_menu_list = async (req, res) => {
     res.status(500).json({
       status: false,
       message: error.toString() || "Internal Server Error",
+      data:null
     });
   }
 };

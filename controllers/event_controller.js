@@ -383,27 +383,30 @@ exports.search_events = async (req, res) => {
 
           // Update image URLs for each event in the data array
           result.data = result.data.map(event => {
-          const eventImageUrl = baseURL + '/uploads/events/' + event.image;
-          var banner_data =   event.banner_data[0];
-          var bannerImageUrl = '';
-          if(banner_data){
-            var bannerImageUrl = baseURL + '/uploads/banners/' + banner_data.image;
-            return {
-              ...event,
-              image: eventImageUrl,
-              banner_data: {
-                ...banner_data,
-                image:bannerImageUrl
+            if(event.status!='expired'){
+              const eventImageUrl = baseURL + '/uploads/events/' + event.image;
+              var banner_data =   event.banner_data[0];
+              var bannerImageUrl = '';
+              if(banner_data){
+                var bannerImageUrl = baseURL + '/uploads/banners/' + banner_data.image;
+                return {
+                  ...event,
+                  image: eventImageUrl,
+                  banner_data: {
+                    ...banner_data,
+                    image:bannerImageUrl
 
-              },
-            };
-          } else {
-            return {
-              ...event,
-              image: eventImageUrl,
-              banner_data: null,
-            };
-          }            
+                  },
+                };
+              } else {
+                return {
+                  ...event,
+                  image: eventImageUrl,
+                  banner_data: null,
+                };
+              }  
+            }
+                        
         });         
 
         res.status(200).send({

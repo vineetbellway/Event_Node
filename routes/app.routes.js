@@ -370,6 +370,7 @@ router.get("/get-guest-list-for-banner",auth, bannerController.get_guest_list_fo
 // book menu items API
 router.post("/book-menu-items",auth, menuController.book_menu_items);
 
+
 // get booked menu items API
 router.get("/get-booked-menu-items",auth, menuController.get_booked_menu_items);
 
@@ -406,7 +407,11 @@ router.get("/get-active-city-events",auth, guestController.get_active_city_event
 
 
 // get booked menu list API
-router.get("/get-booked-menu-list",auth, bookingController.get_booked_menu_list);
+router.get("/get-booked-menu-list", bookingController.get_booked_menu_list);
+
+
+// book event menu items API
+router.post("/book-event-menu-items",auth, bookingController.book_event_menu_items);
 
 
 cron.schedule("* * * * *", function () {

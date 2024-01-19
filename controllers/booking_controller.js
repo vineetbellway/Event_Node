@@ -1789,6 +1789,44 @@ const get_booked_menu_list = async (req, res) => {
   }
 };
 
+const book_event_menu_items = async (req, res, next) => {
+  if (!req.body) {
+    res.status(400).send({
+      status: false,
+      message: "body missing",
+    });
+  } else {
+    try {
+      const amount = req.body.amount;
+      if (result) {
+        var bookingMenu = req.body.menu_list;
+        if(bookingMenu.length > 0){
+           // Save booking menu data
+            for (const item of bookingMenu) {
+              var bookingMenuData = {
+                "menu_id": item.menu_id,
+                "quantity": item.quantity,
+              };          
+          
+
+              await BookingMenu(bookingMenuData).save();
+            }
+        }
+        res.status(200).send({ status: true, message: "success", data: result });
+      } else {
+        res.status(404).send({ status: false, message: "Not created" });
+      }
+    } catch (error) {
+      console.log("error", error);
+      res.status(500).send({
+        status: false,
+        message: "failure",
+        error: error.toString() ?? "Internal Server Error",
+      });
+    }
+  }
+};
+
 
 
 
@@ -1808,6 +1846,7 @@ module.exports = {
   get_pending_guest_list,
   get_approved_booking_cost,
   close_event_by_seller,
-  get_booked_menu_list
+  get_booked_menu_list,
+  book_event_menu_items
 
 }; 

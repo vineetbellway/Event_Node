@@ -102,7 +102,7 @@ router.delete("/event",auth,  eventController.delete_events);
 router.post("/menu",auth,menuController.create_menu);
 router.put("/menu/:id", auth, menuController.update_menu);
 router.get("/menu", auth,menuController.get_menus);
-router.get("/menu_by_event_id/:id/:guest_id",auth,menuController.get_menu_by_event_id);
+router.get("/menu_by_event_id/:id/:guest_id",menuController.get_menu_by_event_id);
 router.get("/menu/:id", auth,menuController.get_menu);
 router.delete("/menu/:id", auth, menuController.delete_menu);
 router.delete("/menu", auth, menuController.delete_menus);
@@ -400,18 +400,18 @@ router.put("/close-event-by-seller",auth,bookingController.close_event_by_seller
 router.put("/close-menu-counter-by-validator",auth,menuController.close_menu_counter_by_validator);
 
 // event participated guests
-router.get("/get-event-participated-guests",sellerController.get_event_participating_guests);
+router.get("/get-event-participated-guests",auth, sellerController.get_event_participating_guests);
 
 //  active city events
 router.get("/get-active-city-events",auth, guestController.get_active_city_events);
 
 
 // get booked menu list API
-router.get("/get-booked-menu-list", bookingController.get_booked_menu_list);
+router.get("/get-booked-menu-list",auth, bookingController.get_booked_menu_list);
 
 
 // book event menu items API
-router.post("/book-event-menu-items",auth, bookingController.book_event_menu_items);
+router.post("/book-event-menu-items", auth,bookingController.book_event_menu_items);
 
 
 cron.schedule("* * * * *", function () {

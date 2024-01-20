@@ -338,103 +338,150 @@ exports.get_menu_by_event_id = async (req, res) => {
 
       var is_cover_charge_added = event.is_cover_charge_added;
       console.log("is_cover_charge_added",is_cover_charge_added)
-      if(is_cover_charge_added == "no"){
-        // Fetch all menu items selected by the guest
-        const selectedMenuItems = await MenuItem.find({
-          guest_id: guest_id,
-          event_id: event_id,
-          quantity: { $gt: 0 },
-        }).populate('menu_id');
-
-
-
-        // Filter menu items based on the selected limited item's category
-        const filteredResults = menuResults.filter(item => {
-          const menuRecord = selectedMenuItems.find(selectedItem => {
-            console.log("s",selectedItem.menu_id.is_limited)
-            var is_limited = selectedItem.menu_id.is_limited;
-            if(is_limited == 'yes'){
+      console.log("event",event);
+      if(event.type == "food_event"){
+        if(is_cover_charge_added == "no"){
+          // Fetch all menu items selected by the guest
+          const selectedMenuItems = await MenuItem.find({
+            guest_id: guest_id,
+            event_id: event_id,
+            quantity: { $gt: 0 },
+          }).populate('menu_id');
+  
+  
+  
+          // Filter menu items based on the selected limited item's category
+          const filteredResults = menuResults.filter(item => {
+            const menuRecord = selectedMenuItems.find(selectedItem => {
+              console.log("s",selectedItem.menu_id.is_limited)
+              var is_limited = selectedItem.menu_id.is_limited;
+              if(is_limited == 'yes'){
+                return (
+                  selectedItem.menu_id &&
+                  selectedItem.menu_id.category_id.toString() === item.category_id.toString()
+                );
+              } else {
+                return (
+                  selectedItem.menu_id 
+                );
+              }
+             
+            });
+  
+            return !menuRecord || (menuRecord.menu_id._id.toString() === item._id.toString());
+          });
+  
+  
+  
+       
+  
+          const selectedMenuItems2 = await BookedMenuItem.find({
+            guest_id: guest_id,
+            event_id: event_id,
+          }).populate('menu_id');
+  
+  
+  
+          // Filter menu items based on the selected limited item's category
+          const filteredResults2 = filteredResults.filter(item => {
+            const menuRecord = selectedMenuItems2.find(selectedItem => {
               return (
                 selectedItem.menu_id &&
                 selectedItem.menu_id.category_id.toString() === item.category_id.toString()
               );
-            } else {
+            });
+  
+            return !menuRecord || (item.is_limited === "yes" && menuRecord.menu_id._id.toString() === item._id.toString());
+          });
+  
+          var finalResponse = (selectedMenuItems2.length == 0) ? filteredResults : filteredResults2;
+        } else {
+  
+          // Fetch all menu items selected by the guest
+          const selectedMenuItems = await MenuItem.find({
+            guest_id: guest_id,
+            event_id: event_id,
+            quantity: { $gt: 0 },
+          }).populate('menu_id');
+  
+          // Filter menu items based on the selected limited item's category
+          const filteredResults = menuResults.filter(item => {
+            const menuRecord = selectedMenuItems.find(selectedItem => {
               return (
                 selectedItem.menu_id 
               );
-            }
-           
+            });
+  
+            return !menuRecord || ( menuRecord.menu_id._id.toString() === item._id.toString());
           });
-
-          return !menuRecord || (menuRecord.menu_id._id.toString() === item._id.toString());
-        });
-
-
-
-     
-
-        const selectedMenuItems2 = await BookedMenuItem.find({
-          guest_id: guest_id,
-          event_id: event_id,
-        }).populate('menu_id');
-
-
-
-        // Filter menu items based on the selected limited item's category
-        const filteredResults2 = filteredResults.filter(item => {
-          const menuRecord = selectedMenuItems2.find(selectedItem => {
-            return (
-              selectedItem.menu_id &&
-              selectedItem.menu_id.category_id.toString() === item.category_id.toString()
-            );
+  
+  
+          const selectedMenuItems2 = await BookedMenuItem.find({
+            guest_id: guest_id,
+            event_id: event_id,
+          }).populate('menu_id');
+  
+  
+  
+          // Filter menu items based on the selected limited item's category
+          const filteredResults2 = filteredResults.filter(item => {
+            const menuRecord = selectedMenuItems2.find(selectedItem => {
+              return (
+                selectedItem.menu_id 
+              );
+            });
+  
+            return !menuRecord || (menuRecord.menu_id._id.toString() === item._id.toString());
           });
-
-          return !menuRecord || (item.is_limited === "yes" && menuRecord.menu_id._id.toString() === item._id.toString());
-        });
-
-        var finalResponse = (selectedMenuItems2.length == 0) ? filteredResults : filteredResults2;
+  
+          var finalResponse = (selectedMenuItems2.length == 0) ? filteredResults : filteredResults2;
+  
+        }
       } else {
-
-        // Fetch all menu items selected by the guest
-        const selectedMenuItems = await MenuItem.find({
-          guest_id: guest_id,
-          event_id: event_id,
-          quantity: { $gt: 0 },
-        }).populate('menu_id');
-
-        // Filter menu items based on the selected limited item's category
-        const filteredResults = menuResults.filter(item => {
-          const menuRecord = selectedMenuItems.find(selectedItem => {
-            return (
-              selectedItem.menu_id 
-            );
+          console.log("inside this")
+          // Fetch all menu items selected by the guest
+          const selectedMenuItems = await MenuItem.find({
+            guest_id: guest_id,
+            event_id: event_id,
+            quantity: { $gt: 0 },
+          }).populate('menu_id');
+  
+          // Filter menu items based on the selected limited item's category
+          const filteredResults = menuResults.filter(item => {
+            const menuRecord = selectedMenuItems.find(selectedItem => {
+              return (
+                selectedItem.menu_id 
+              );
+            });
+  
+            return !menuRecord || ( menuRecord.menu_id._id.toString() === item._id.toString());
           });
-
-          return !menuRecord || ( menuRecord.menu_id._id.toString() === item._id.toString());
-        });
-
-
-        const selectedMenuItems2 = await BookedMenuItem.find({
-          guest_id: guest_id,
-          event_id: event_id,
-        }).populate('menu_id');
-
-
-
-        // Filter menu items based on the selected limited item's category
-        const filteredResults2 = filteredResults.filter(item => {
-          const menuRecord = selectedMenuItems2.find(selectedItem => {
-            return (
-              selectedItem.menu_id 
-            );
+          
+          console.log("filteredResults",filteredResults)
+  
+          const selectedMenuItems2 = await BookedMenuItem.find({
+            guest_id: guest_id,
+            event_id: event_id,
+          }).populate('menu_id');
+  
+  
+  
+          // Filter menu items based on the selected limited item's category
+          const filteredResults2 = filteredResults.filter(item => {
+            const menuRecord = selectedMenuItems2.find(selectedItem => {
+              return (
+                selectedItem.menu_id 
+              );
+            });
+  
+            return !menuRecord || (menuRecord.menu_id._id.toString() === item._id.toString());
           });
-
-          return !menuRecord || (menuRecord.menu_id._id.toString() === item._id.toString());
-        });
-
-        var finalResponse = (selectedMenuItems2.length == 0) ? filteredResults : filteredResults2;
-
+  
+          var finalResponse = (selectedMenuItems2.length == 0) ? filteredResults : filteredResults2;
+  
+        
       }
+      
 
       
    

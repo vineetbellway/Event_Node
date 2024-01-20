@@ -1729,9 +1729,9 @@ const get_booked_menu_list = async (req, res) => {
       },
       {
         $lookup: {
-          from: "menus",
-          localField: "event_id",
-          foreignField: "event_id",
+          from: "bookingmenus",
+          localField: "_id",
+          foreignField: "booking_id",
           as: "booked_menu_data",
         },
       },
@@ -1744,31 +1744,43 @@ const get_booked_menu_list = async (req, res) => {
           "guest_id": new mongoose.Types.ObjectId(guest_id),
           "status": "active",
         },
-      },
-      {
-        $unwind: "$booked_menu_data", // Unwind the array for direct access
-      },
-      {
-        $replaceRoot: { newRoot: "$booked_menu_data" }, // Replace root with booked_menu_data
-      },
+      }
     ];
 
     // Execute the aggregation pipeline
     const result = await Booking.aggregate(bookingPipeline);
 
+
     if (result && result.length > 0) {
-      // Send success response with booked menu data
-      for(item of result){
-         var  menu_id = item._id;
-         
-         var menuItemRecord = await MenuItem.findOne({"menu_id": menu_id, "event_id": event_id, "guest_id": guest_id});
-         item.quantity = menuItemRecord ?  menuItemRecord.quantity : '';
-      }
+
+      console.log("result",result);
+         // Refine the response to include only necessary information
+      const refinedData = await Promise.all(result.map(async (item) => {
+        const bookedMenuData = await Promise.all(item.booked_menu_data.map(async (bookedMenuRecord) => {
+          const menuRecord = await Menu.findById(bookedMenuRecord.menu_id);
+          return {
+            
+            ...menuRecord.toObject(), // Convert Mongoose document to plain JavaScript object
+            'quantity': bookedMenuRecord.quantity,
+          };
+        }));
+
+        return bookedMenuData; // Return the array of refined menu data directly
+      }));
+
+
+      console.log("refinedData",refinedData)
+
+      // Flatten the array of arrays into a single array
+      const flattenedData = refinedData.flat();
+
+
+       
 
       res.status(200).json({
         status: true,
         message: "Data found",
-        data: result,
+        data: flattenedData,
       });
     } else {
       // Send 404 response if no bookings are found
@@ -1798,24 +1810,48 @@ const book_event_menu_items = async (req, res, next) => {
   } else {
     try {
       const amount = req.body.amount;
-      if (result) {
+      const booking_id = req.body.booking_id;
+      
         var bookingMenu = req.body.menu_list;
         if(bookingMenu.length > 0){
-           // Save booking menu data
-            for (const item of bookingMenu) {
-              var bookingMenuData = {
+           // update  booking menu data
+          for (const item of bookingMenu) {
+            var bookingMenuData = {
+              "booking_id": booking_id,
+              "menu_id": item.menu_id,
+              "quantity": item.quantity,
+            };
+          
+            // Check if a record with the same booking_id already exists
+            const existingBooking = await BookingMenu.findOne({ booking_id: booking_id,menu_id: item.menu_id });
+
+            
+
+
+          
+            if (existingBooking) {
+              // If the booking_id already exists, update the existing record
+              await BookingMenu.updateOne({ booking_id: booking_id,menu_id: item.menu_id }, { $set: bookingMenuData });
+            } else {
+              // If the booking_id doesn't exist, insert a new record
+              await BookingMenu(bookingMenuData).save();
+               // add booking
+              /*var menuPaymentData = {
+                "booking_id": booking_id,
                 "menu_id": item.menu_id,
                 "quantity": item.quantity,
-              };          
-          
+                'amount' : amount
+              };
 
-              await BookingMenu(bookingMenuData).save();
+             await MenuItemPayments(menuPaymentData).save();*/
+
+
             }
+          }
+          
         }
-        res.status(200).send({ status: true, message: "success", data: result });
-      } else {
-        res.status(404).send({ status: false, message: "Not created" });
-      }
+        res.status(200).send({ status: true, message: "success" });
+      
     } catch (error) {
       console.log("error", error);
       res.status(500).send({

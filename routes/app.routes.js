@@ -407,7 +407,7 @@ router.get("/get-active-city-events",auth, guestController.get_active_city_event
 
 
 // get booked menu list API
-router.get("/get-booked-menu-list",auth,bookingController.get_booked_menu_list);
+router.get("/get-booked-menu-list",auth, bookingController.get_booked_menu_list);
 
 
 // book event menu items API

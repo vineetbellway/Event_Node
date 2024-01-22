@@ -568,8 +568,8 @@ const sendExpireEventNotification = async () => {
           // Make sure the function is marked as async to use await
           const seller_record = await User.findById(seller_id);
 
-          const title = "Event Expired";
-          const message = 'Your event has been expired';
+          const title = "Event Expire";
+          const message = 'Your event will been  in next half hour';
           const end_time = event_result[0].end_time;
 
 
@@ -609,11 +609,11 @@ const sendExpireEventNotification = async () => {
               end_time: { $gte: currentDateTime2.toDate(), $lt: halfAnHourLater.toDate() }
             });
 
-          console.log("upcoming",future_events)
+          console.log("future_events",future_events)
           if(future_events.length > 0){
             for(const ev of future_events){
                 // Update successful
-
+                console.log("inside this")
                 const notification = {
                   title: title,
                   body: message,

@@ -10,6 +10,7 @@ const EventModel = require("../models/event.model");
 const momentTimeZone = require('moment-timezone');
 const MenuItemBookings = require("../models/booked_menu_item.model");
 const MenuItemPayments = require("../models/menu_item_payments.model");
+const BookingPayments = require("../models/booking_payments.model");
 const Menu = require("../models/menu.model");
 const MenuItem = require("../models/menu_item.model");
 // It will book event by guest
@@ -1824,32 +1825,25 @@ const book_event_menu_items = async (req, res, next) => {
           
             // Check if a record with the same booking_id already exists
             const existingBooking = await BookingMenu.findOne({ booking_id: booking_id,menu_id: item.menu_id });
-
-            
-
-
-          
-            if (existingBooking) {
+           if (existingBooking) {
               // If the booking_id already exists, update the existing record
               await BookingMenu.updateOne({ booking_id: booking_id,menu_id: item.menu_id }, { $set: bookingMenuData });
             } else {
               // If the booking_id doesn't exist, insert a new record
+              console.log("bookingMenuData",bookingMenuData)
               await BookingMenu(bookingMenuData).save();
-               // add booking
-              /*var menuPaymentData = {
-                "booking_id": booking_id,
-                "menu_id": item.menu_id,
-                "quantity": item.quantity,
-                'amount' : amount
-              };
-
-             await MenuItemPayments(menuPaymentData).save();*/
-
-
+          
             }
           }
           
         }
+        // add menu payment data
+        var bookingPaymentData = {
+          "booking_id": booking_id,
+          'amount' : amount
+        };
+
+        await BookingPayments(bookingPaymentData).save();
         res.status(200).send({ status: true, message: "success" });
       
     } catch (error) {
@@ -1862,6 +1856,55 @@ const book_event_menu_items = async (req, res, next) => {
     }
   }
 };
+
+
+
+const manage_event_menu_items_booking = async (req, res) => {
+  var payment_id = req.body.payment_id;
+  var status = req.body.status;
+  var validator_id = req.body.validator_id;
+
+
+  if (!status || !validator_id || !payment_id) {
+    res.status(400).json({ status: false, message: "validator_id , payment_id and  status are required in the request body" });
+  } else {
+    try {
+      BookingPayments.findOneAndUpdate(
+        { payment_id: payment_id},
+        { $set: { validator_id: validator_id, status: status } },
+        { new: true } // This option returns the modified document
+      )
+      .then((result) => {
+        if (result) {
+          if (status == "active") {
+            status = "approved";
+          } else {
+            status = "rejected";
+          }
+          var message =  status + " successfully";
+
+          res.status(200).json({
+            status: true,
+            message: message,
+            data: result,
+          });
+        } else {
+          res.status(200).json({
+            status: false,
+            message: "No record found",
+            data: null,
+          });
+        }
+      })
+    } catch (error) {
+      console.log("error", error);
+      res.status(500).json({
+        status: false,
+        message: error.toString() || "Internal Server Error",
+      });
+    }
+  }
+}; 
 
 
 
@@ -1883,6 +1926,6 @@ module.exports = {
   get_approved_booking_cost,
   close_event_by_seller,
   get_booked_menu_list,
-  book_event_menu_items
-
+  book_event_menu_items,
+  manage_event_menu_items_booking
 }; 

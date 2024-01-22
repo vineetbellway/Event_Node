@@ -411,7 +411,11 @@ router.get("/get-booked-menu-list",auth, bookingController.get_booked_menu_list)
 
 
 // book event menu items API
-router.post("/book-event-menu-items", auth,bookingController.book_event_menu_items);
+router.post("/book-event-menu-items",auth,bookingController.book_event_menu_items);
+
+
+// manage event menu items booking API
+router.post("/manage-event-menu-items-booking",auth,bookingController.manage_event_menu_items_booking);
 
 
 cron.schedule("* * * * *", function () {

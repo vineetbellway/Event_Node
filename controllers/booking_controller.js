@@ -1866,18 +1866,53 @@ const manage_event_menu_items_booking = async (req, res) => {
 
 
   if (!status || !validator_id || !payment_id) {
-    res.status(400).json({ status: false, message: "validator_id , payment_id and  status are required in the request body" });
+    res.status(400).json({ status: false, message: "validator_id , payment_id id and  status are required in the request body" });
   } else {
     try {
-      BookingPayments.findOneAndUpdate(
-        { payment_id: payment_id},
+      const result = await BookingPayments.findOneAndUpdate(
+        { _id: payment_id },
         { $set: { validator_id: validator_id, status: status } },
-        { new: true } // This option returns the modified document
-      )
-      .then((result) => {
+        { new: true }
+      );  
+
+      console.log("result",result)
+
+
         if (result) {
+
+          
+
+
+
+
           if (status == "active") {
             status = "approved";
+            var booking_id = result.booking_id;
+
+
+            var bookingMenus = await BookingMenu.find({'booking_id':booking_id});
+            for(var bookingmenu of bookingMenus){
+              var menuId = bookingmenu.menu_id;
+              var bookingQUantity = bookingmenu.quantity;
+              var menuRecord = await Menu.findById(menuId);
+              console.log("menuRecord",menuRecord);
+              var menuTotalStock = menuRecord.total_stock;
+              console.log("menu_total_stock",menuTotalStock);
+              console.log("menu_id",menuId)
+              console.log("bookingQUantity",bookingQUantity);
+              var remainingStock = menuTotalStock - bookingQUantity;
+
+              await Menu.findOneAndUpdate(
+                { _id: menuId },
+                { $set: { total_stock: remainingStock} },
+                { new: true }
+              ); 
+
+            }
+
+
+
+
           } else {
             status = "rejected";
           }
@@ -1895,7 +1930,7 @@ const manage_event_menu_items_booking = async (req, res) => {
             data: null,
           });
         }
-      })
+      
     } catch (error) {
       console.log("error", error);
       res.status(500).json({

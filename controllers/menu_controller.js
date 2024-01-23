@@ -338,7 +338,7 @@ exports.get_menu_by_event_id = async (req, res) => {
 
       var is_cover_charge_added = event.is_cover_charge_added;
      console.log("is_cover_charge_added",is_cover_charge_added)
-   //   console.log("event",event);
+      console.log("event",event);
       var event_type = event.type;
       if(event_type == "food_event"){
         if(is_cover_charge_added == "no"){
@@ -405,7 +405,7 @@ exports.get_menu_by_event_id = async (req, res) => {
             quantity: { $gt: 0 },
           }).populate('menu_id');
 
-          console.log("selectedMenuItems",selectedMenuItems)
+          console.log("filteredResults",selectedMenuItems)
 
          
   
@@ -453,8 +453,8 @@ exports.get_menu_by_event_id = async (req, res) => {
           ]);
 
 
-          console.log("selectedApprovedBooking",selectedApprovedBooking);
-          return false;
+          //console.log("selectedApprovedBooking",selectedApprovedBooking);
+         // return false;
          
         
   
@@ -462,7 +462,7 @@ exports.get_menu_by_event_id = async (req, res) => {
   
           // Filter menu items based on the selected limited item's category
           const filteredResults2 = filteredResults.filter(item => {
-            const menuRecord = selectedMenuItems2.find(selectedItem => {
+            const menuRecord = selectedApprovedBooking.find(selectedItem => {
               return (
                 selectedItem.menu_id 
               );
@@ -471,7 +471,7 @@ exports.get_menu_by_event_id = async (req, res) => {
             return !menuRecord || (menuRecord.menu_id._id.toString() === item._id.toString());
           });
   
-          var finalResponse = (selectedMenuItems2.length == 0) ? filteredResults : filteredResults2;
+          var finalResponse = (selectedApprovedBooking.length == 0) ? filteredResults : filteredResults2;
   
         }
       } else if(event_type == "loyalty") {

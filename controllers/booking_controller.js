@@ -1762,7 +1762,7 @@ const get_booked_menu_list = async (req, res) => {
           return {
             
             ...menuRecord.toObject(), // Convert Mongoose document to plain JavaScript object
-            'quantity': bookedMenuRecord.quantity,
+            'menu_quantity': bookedMenuRecord.quantity,
           };
         }));
 

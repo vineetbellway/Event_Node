@@ -337,8 +337,8 @@ exports.get_menu_by_event_id = async (req, res) => {
    
 
       var is_cover_charge_added = event.is_cover_charge_added;
-     /* console.log("is_cover_charge_added",is_cover_charge_added)
-      console.log("event",event);*/
+     console.log("is_cover_charge_added",is_cover_charge_added)
+   //   console.log("event",event);
       var event_type = event.type;
       if(event_type == "food_event"){
         if(is_cover_charge_added == "no"){
@@ -404,6 +404,10 @@ exports.get_menu_by_event_id = async (req, res) => {
             event_id: event_id,
             quantity: { $gt: 0 },
           }).populate('menu_id');
+
+          console.log("selectedMenuItems",selectedMenuItems)
+
+         
   
           // Filter menu items based on the selected limited item's category
           const filteredResults = menuResults.filter(item => {
@@ -415,12 +419,44 @@ exports.get_menu_by_event_id = async (req, res) => {
   
             return !menuRecord || ( menuRecord.menu_id._id.toString() === item._id.toString());
           });
+
+          console.log("filteredResults",filteredResults)
+
+
+          // get approved bookings 
   
   
-          const selectedMenuItems2 = await BookedMenuItem.find({
+          const selectedMenuItems2old = await BookedMenuItem.find({
             guest_id: guest_id,
             event_id: event_id,
           }).populate('menu_id');
+
+
+          const selectedApprovedBooking = await BookedMenuItem.aggregate([
+            
+            {
+              $lookup: {
+                from: 'menuitempayments',  // Replace with the actual collection name for BookingPayment
+                localField: '_id',  // Replace with the actual field name in BookingMenu schema
+                foreignField: 'payment_id',  // Replace with the actual field name in BookingPayment schema
+                as: 'menuitempayments',
+              },
+            },
+
+            {
+              $match: {
+                "menuitempayments.is_approved": "yes",
+                guest_id: guest_id,
+                event_id: event_id,
+              },
+            },
+          ]);
+
+
+          console.log("selectedApprovedBooking",selectedApprovedBooking);
+          return false;
+         
+        
   
   
   

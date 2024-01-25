@@ -103,7 +103,7 @@ router.post("/menu",auth,menuController.create_menu);
 router.put("/menu/:id", auth, menuController.update_menu);
 router.get("/menu", auth,menuController.get_menus);
 router.get("/menu_by_event_id/:id/:guest_id",auth, menuController.get_menu_by_event_id);
-
+router.get("/menu_by_event_id_for_entry_food_event/:id/:guest_id",auth, menuController.get_menu_by_event_id_for_entry_food_event);
 
 router.get("/menu_by_event_id_before_entry_food_event/:id/:guest_id",menuController.get_menu_by_event_id_before_entry_food_event);
 router.get("/menu_by_event_id_3_weeks_ago/:id/:guest_id",menuController.get_menu_by_event_id_3_weeks_ago);

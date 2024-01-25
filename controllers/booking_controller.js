@@ -70,16 +70,36 @@ const book = async (req, res, next) => {
 
         if(bookingMenu.length > 0){
            // Save booking menu data
-            for (const item of bookingMenu) {
+
+           for (const [key, value] of Object.entries(bookingMenu)) {
+   
+
               var bookingMenuData = {
                 "booking_id": result._id,
-                "menu_id": item.menu_id,
-                "quantity": item.quantity,
+                "menu_id": value.menu_id,
+                "quantity": value.quantity,
               };          
           
 
-              await BookingMenu(bookingMenuData).save();
+              const result2 =   await BookingMenu(bookingMenuData).save();
+              if(key == 0){
+                 // add menu payment data
+                var bookingPaymentData = {
+                  "booking_id": result2._id,
+                  'amount' : event_record.amount,
+                  "status"  : status
+                };
+                await BookingPayments(bookingPaymentData).save();
+              }
+              
+
+
+
             }
+
+            
+
+            
         }
 
        

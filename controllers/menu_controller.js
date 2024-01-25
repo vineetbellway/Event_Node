@@ -337,8 +337,8 @@ exports.get_menu_by_event_id = async (req, res) => {
    
 
       var is_cover_charge_added = event.is_cover_charge_added;
-      console.log("is_cover_charge_added",is_cover_charge_added)
-      console.log("event",event);
+    //  console.log("is_cover_charge_added",is_cover_charge_added)
+     console.log("event",event);
       if(event.type == "food_event"){
         if(is_cover_charge_added == "no"){
           // Fetch all menu items selected by the guest
@@ -401,26 +401,17 @@ exports.get_menu_by_event_id = async (req, res) => {
               
             });
 
-            console.log("menu name",item.name);
-            console.log("menu is limited",item.is_limited);
-            var allData = [];
+        
             if(item.is_limited =="no"){
-             // allData.push(menuRecord);
               return menuRecord;
              
             } else {
-
-              
-                var menuRecordNoLimited =  !menuRecord || (item.is_limited === "yes" &&  item.limited_count > 0 && menuRecord.menu_id._id.toString() === item._id.toString() &&
+             var menuRecordNoLimited =  !menuRecord || (item.is_limited === "yes" &&  item.limited_count > 0 && menuRecord.menu_id._id.toString() === item._id.toString() &&
                 menuRecord.menu_id.category_id.toString() === item.category_id.toString());
-            //  allData.push(menuRecordNoLimited);
             return menuRecordNoLimited;
             
             }
-            console.log("allData",allData)
-            //return allData;
-            
-           // return !menuRecord || (item.is_limited === "no" && !menuRecord.menu_id);
+      
 
             
           });
@@ -429,6 +420,8 @@ exports.get_menu_by_event_id = async (req, res) => {
   
           var finalResponse = (selectedMenuItems2.length == 0) ? filteredResults : filteredResults2;
         } else {
+
+          console.log("cover charge enabled");
   
           // Fetch all menu items selected by the guest
           const selectedMenuItems = await MenuItem.find({
@@ -464,20 +457,25 @@ exports.get_menu_by_event_id = async (req, res) => {
               );
             });
   
-            return !menuRecord || (menuRecord.menu_id._id.toString() === item._id.toString());
+            return menuRecord;
           });
+
+          console.log("filteredResults",filteredResults);
+          console.log("filteredResults2",filteredResults2);
   
           var finalResponse = (selectedMenuItems2.length == 0) ? filteredResults : filteredResults2;
   
         }
       } else {
-          console.log("inside this")
+         
           // Fetch all menu items selected by the guest
           const selectedMenuItems = await MenuItem.find({
             guest_id: guest_id,
             event_id: event_id,
             quantity: { $gt: 0 },
           }).populate('menu_id');
+
+          console.log
   
           // Filter menu items based on the selected limited item's category
           const filteredResults = menuResults.filter(item => {

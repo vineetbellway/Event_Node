@@ -642,28 +642,32 @@ exports.get_menu_by_event_id_for_entry_food_event = async (req, res) => {
               );
             });
   
-            return !menuRecord || ( menuRecord.menu_id._id.toString() === item._id.toString());
+            return menuRecord;
           });
           
         
   
-          const selectedMenuItems2 = await BookingMenu.find({
-            guest_id: guest_id,
-            event_id: event_id,
-          }).populate('menu_id');
+          const selectedMenuItems2 = await BookingMenu.find().populate('menu_id');
+
+          console.log("selectedMenuItems2",selectedMenuItems2)
   
   
   
           // Filter menu items based on the selected limited item's category
           const filteredResults2 = filteredResults.filter(item => {
+            console.log("filteredResults",filteredResults)
             const menuRecord = selectedMenuItems2.find(selectedItem => {
               return (
                 selectedItem.menu_id 
               );
             });
   
-            return !menuRecord || (menuRecord.menu_id._id.toString() === item._id.toString());
+            return menuRecord;
           });
+
+          //console.log("selectedMenuItems2",selectedMenuItems2);
+          //console.log("filteredResults",filteredResults);
+         // console.log("filteredResults2",filteredResults2);
   
           var finalResponse = (selectedMenuItems2.length == 0) ? filteredResults : filteredResults2;
   

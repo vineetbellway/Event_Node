@@ -7,6 +7,8 @@ const { baseStatus, userStatus } = require("../utils/enumerator");
 const EventModel = require("../models/event.model");
 const Guest = require("../models/guest.model");
 const Booking = require("../models/booking.model");
+const EventGuestModel = require("../models/event_guest.model");
+
 
 exports.create_service = async (req, res, next) => {
   if (!req.body) {
@@ -523,14 +525,24 @@ exports.book_service_items = async (req, res, next) => {
    
 
     if(serviceItems.length > 0){
+      
       var event_record = await EventModel.findById(serviceItems[0].event_id);
+      console.log("event_record",event_record)
+      if(event_record){
+        if(event_record.status == "expired"){
+          res.status(400).send({ status: false, message: "Event is expired", data: null });
+          return;
+        }
+        
+      } else {
+        res.status(200).send({ status: false, message: "Event not found", data: null });
+        return;
+      }
+     
      
     }
 
-    if(event_record.status == "expired"){
-      res.status(400).send({ status: false, message: "Event is expired", data: null });
-      return;
-    }
+   
 
 
     const paymentData = {
@@ -1043,10 +1055,44 @@ exports.get_guest_loyalty_points = async (req, res) => {
       return res.status(400).json({ status: false, message: "Guest ID is required in the request body" });
     }
 
-    let total_loyalty_points = 0; // Initialize total_loyalty_points here
-    let event_data = []; // Initialize event_data as an array
+    var event_guest_record = await EventGuestModel.aggregate([
+      {
+        $match: { "guest_id":  new mongoose.Types.ObjectId(guest_id) } // Match documents where guest_id matches
+      },
+      {
+        $lookup: {
+          from: "events", // The collection you're looking up against
+          localField: "event_id", // Field from the current collection
+          foreignField: "_id", // Field from the referenced collection
+          as: "event" // Name of the field that will contain the matched event document
+        }
+      },
+      {
+        $unwind: "$event" // Unwind the array created by $lookup to work with single documents
+      },
+      {
+        $match: { "event.status": "active" } // Filter based on the status of the event
+      }
+    ]);
 
-    // Your existing logic for aggregating service payment records
+    let total_loyalty_points = 0;
+    let event_data = [];
+
+    if (event_guest_record.length > 0) {
+      const uniqueEventIds = [...new Set(event_guest_record.map(item => item.event_id))];
+      
+      for (const eventId of uniqueEventIds) {
+        const eventRecords = event_guest_record.filter(item => item.event_id === eventId);
+        const lastRecord = eventRecords[eventRecords.length - 1]; // Get the last record
+        total_loyalty_points += parseInt(lastRecord.point);
+        event_data.push({
+          event_id: eventId,
+          point: parseInt(lastRecord.point)
+        });
+      }
+    }
+
+    // Add logic for service booking records
     const service_booking_record = await BookedServiceItem.aggregate([
       {
         $lookup: {
@@ -1068,32 +1114,30 @@ exports.get_guest_loyalty_points = async (req, res) => {
     ]);
 
     if (service_booking_record.length > 0) {
-      // Use Promise.all to handle multiple asynchronous operations concurrently
-      await Promise.all(service_booking_record.map(async (p_item) => {
+      for (const p_item of service_booking_record) {
         const payment_data = p_item.payment_data;
         const event_id = p_item.event_id;
-
         const event_record = await EventModel.findById(event_id);
-
         event_data.push({
           event_id: event_id,
-          point: event_record.point,
+          point: event_record.point - parseInt(payment_data[0].total_points)
         });
-
-        total_loyalty_points += payment_data[0].total_points;
-        total_loyalty_points = event_record.point - total_loyalty_points;
-      }));
-
-      // Calculate the total loyalty points
-      event_data.forEach(event => {
-  
-      });
+        total_loyalty_points -= parseInt(payment_data[0].total_points);
+      }
     }
+
+        // Remove duplicate event IDs and keep only the last occurrence
+        const uniqueEventData = {};
+        event_data.forEach(event => {
+          uniqueEventData[event.event_id.toString()] = event;
+        });
+        event_data = Object.values(uniqueEventData);
+    
 
     return res.status(200).json({
       status: true,
       message: "Data found",
-      data: { "total_loyalty_points": total_loyalty_points, 'event_data': event_data },
+      data: { total_loyalty_points, event_data }
     });
 
   } catch (error) {
@@ -1104,4 +1148,5 @@ exports.get_guest_loyalty_points = async (req, res) => {
     });
   }
 };
+
 

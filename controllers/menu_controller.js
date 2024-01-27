@@ -266,7 +266,7 @@ exports.get_menu = async (req, res) => {
   }
 };
 
-exports.get_menu_by_event_id = async (req, res) => {
+exports.get_menu_by_event_id_working_code_on_25_jan = async (req, res) => {
   try {
     const event_id = req.params.id;
     const guest_id = req.params.guest_id;
@@ -549,7 +549,7 @@ exports.get_menu_by_event_id = async (req, res) => {
   }
 };
 
-exports.get_menu_by_event_id_local = async (req, res) => {
+exports.get_menu_by_event_id = async (req, res) => {
   try {
     const event_id = req.params.id;
     const guest_id = req.params.guest_id;
@@ -643,12 +643,12 @@ exports.get_menu_by_event_id_local = async (req, res) => {
   
   
           // Filter menu items based on the selected limited item's category
-          const filteredResults = menuResults.filter(item => {
+          const filteredResultsold = menuResults.filter(item => {
             const menuRecord = selectedMenuItems.find(selectedItem => {
            
               var is_limited = selectedItem.menu_id.is_limited;
               
-              if(is_limited == 'yes'){
+              if(item.is_limited == 'yes'){
                 
                   return (
                     selectedItem.menu_id &&
@@ -674,6 +674,39 @@ exports.get_menu_by_event_id_local = async (req, res) => {
   
             
           });
+
+          const filteredResults = menuResults.filter(item => {
+            const menuRecord = selectedMenuItems.find(selectedItem => {
+              //console.log("s",selectedItem.menu_id.is_limited)
+              var is_limited = selectedItem.menu_id.is_limited;
+              
+              if(item.is_limited == 'yes'){
+                
+                  return (
+                    selectedItem.menu_id &&
+                    selectedItem.menu_id.category_id.toString() === item.category_id.toString()
+                  );
+                
+                
+              }
+             
+            });
+
+            
+           /* if(item.is_limited =="no"){
+              console.log("item no limited",item);
+              return menuRecord;
+             
+            } else {
+              console.log("item",item);
+              return !menuRecord || (menuRecord.menu_id._id.toString() === item._id.toString());
+            }*/
+
+            return !menuRecord || (menuRecord.menu_id._id.toString() === item._id.toString());
+  
+            
+          });
+  
   
   
   

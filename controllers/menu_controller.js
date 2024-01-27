@@ -266,7 +266,7 @@ exports.get_menu = async (req, res) => {
   }
 };
 
-exports.get_menu_by_event_id_working_code_of_25_jan = async (req, res) => {
+exports.get_menu_by_event_id = async (req, res) => {
   try {
     const event_id = req.params.id;
     const guest_id = req.params.guest_id;
@@ -549,7 +549,7 @@ exports.get_menu_by_event_id_working_code_of_25_jan = async (req, res) => {
   }
 };
 
-exports.get_menu_by_event_id = async (req, res) => {
+exports.get_menu_by_event_id_local = async (req, res) => {
   try {
     const event_id = req.params.id;
     const guest_id = req.params.guest_id;

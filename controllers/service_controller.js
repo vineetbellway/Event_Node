@@ -1122,29 +1122,46 @@ exports.get_guest_loyalty_points = async (req, res) => {
       }
     ]);
 
+    console.log('service_booking_record',service_booking_record)
+
     if (service_booking_record.length > 0) {
       console.log("total_loyalty_points before",total_loyalty_points);
       var sum = 0;
+      const eventPointSumMap = {}; // Map to store the total points for each event ID
+
     
       for (const p_item of service_booking_record) {
-        console.log("p_item",p_item)
+       /* console.log("p_item",p_item)*/
         const payment_data = p_item.payment_data;
         const event_id = p_item.event_id;
         const event_record = await EventModel.findById(event_id);
-        console.log("payment_id",payment_data[0]._id)
+       /* console.log("payment_id",payment_data[0]._id)*/
+      //  console.log("payment_data",payment_data[0])
+      const total_points = parseInt(payment_data[0].total_points);
+
+        var quantity = p_item.quantity;
+        console.log("event_id",event_id);
+        console.log("quantity",quantity);
+        // Initialize the sum for the event ID if not already present
+    if (!eventPointSumMap[event_id]) {
+      eventPointSumMap[event_id] = 0;
+  }
+  eventPointSumMap[event_id] += total_points;
+  const point = event_record.point - eventPointSumMap[event_id];
+
        
         console.log("point",payment_data[0].total_points)
         sum = sum + parseInt(payment_data[0].total_points);
         event_data.push({
           event_id: event_id,
-          point: event_record.point - sum
+          point: point
         });
         
       }
 
-      console.log("total_loyalty_points after",total_loyalty_points);
+     // console.log("total_loyalty_points after",total_loyalty_points);
 
-      console.log("sum",sum);
+     // console.log("sum",sum);
 
       total_loyalty_points -= sum;
 
@@ -1155,6 +1172,11 @@ exports.get_guest_loyalty_points = async (req, res) => {
     
 
     console.log("event data",event_data)
+    const uniqueEventData = {};
+    event_data.forEach(event => {
+      uniqueEventData[event.event_id.toString()] = event;
+    });
+    event_data = Object.values(uniqueEventData);
 
     return res.status(200).json({
       status: true,

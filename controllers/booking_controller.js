@@ -78,6 +78,7 @@ const book = async (req, res, next) => {
                 "booking_id": result._id,
                 "menu_id": value.menu_id,
                 "quantity": value.quantity,
+              
               };          
           
 
@@ -87,7 +88,9 @@ const book = async (req, res, next) => {
                 var bookingPaymentData = {
                   "booking_id": result2._id,
                   'amount' : event_record.amount,
-                  "status"  : status
+                  "status"  : status,
+                  "payment_mode" : payment_mode,
+                  "transaction_id" : transaction_id
                 };
                 await BookingPayments(bookingPaymentData).save();
               }
@@ -645,6 +648,7 @@ const sendExpireEventNotification = async () => {
 
               // Add notification to the guest
               var type = 'app';
+              console.log("guest id",bookingData.guest_id);
               addNotification(bookingData.guest_id, bookingData.guest_id, title, message, type);
 
               // Send push notification to the guest
@@ -795,6 +799,7 @@ const sendExpiredEventNotification = async () => {
 
               // Add notification to the guest
               var type = 'app';
+              console.log("guest id",bookingData.guest_id);
               addNotification(bookingData.guest_id, bookingData.guest_id, title, message, type);
 
               // Send push notification to the guest
@@ -1772,39 +1777,61 @@ const get_booked_menu_list = async (req, res) => {
     const result = await Booking.aggregate(bookingPipeline);
 
 
+    
     if (result && result.length > 0) {
+      const refinedData = await Promise.all(
+        result.map(async (item) => {
+          const groupedMenuData = {};
 
-      console.log("result",result);
-         // Refine the response to include only necessary information
-      const refinedData = await Promise.all(result.map(async (item) => {
-        const bookedMenuData = await Promise.all(item.booked_menu_data.map(async (bookedMenuRecord) => {
-          const menuRecord = await Menu.findById(bookedMenuRecord.menu_id);
-          return {
-            
-            ...menuRecord.toObject(), // Convert Mongoose document to plain JavaScript object
-            'menu_quantity': bookedMenuRecord.quantity,
-          };
-        }));
+          for (const bookedMenuRecord of item.booked_menu_data) {
+            const menuRecord = await Menu.findById(bookedMenuRecord.menu_id);
 
-        return bookedMenuData; // Return the array of refined menu data directly
-      }));
+            // Check if paymentRecord status is active
+            const paymentRecord = await BookingPayments.findById(
+              bookedMenuRecord.payment_id
+            );
 
+            if (paymentRecord && paymentRecord.status === 'active') {
+              const menuKey = `${menuRecord.name}_${menuRecord._id}`;
 
-      console.log("refinedData",refinedData)
+              if (groupedMenuData[menuKey]) {
+                // If the menu item already exists, add the quantity
+                groupedMenuData[menuKey].menu_quantity += bookedMenuRecord.quantity;
+              } else {
+                // If the menu item doesn't exist, create a new entry
+                groupedMenuData[menuKey] = {
+                  ...menuRecord.toObject(),
+                  menu_quantity: bookedMenuRecord.quantity,
+                };
+              }
+            }
+          }
 
-      // Flatten the array of arrays into a single array
+          return Object.values(groupedMenuData); // Return an array of unique menu data
+        })
+      );
+
       const flattenedData = refinedData.flat();
+      console.log("flattenedData",flattenedData)
+      if(flattenedData.length > 0){
+        res.status(200).json({
+          status: true,
+          message: "Data found",
+          data: flattenedData,
+        });
 
+      } else {
+        res.status(200).json({
+          status: false,
+          message: "No booked menus found",
+          data: [],
+        });
+      }
 
-       
-
-      res.status(200).json({
-        status: true,
-        message: "Data found",
-        data: flattenedData,
-      });
-    } else {
-      // Send 404 response if no bookings are found
+      
+    } 
+      
+      else {
       res.status(200).json({
         status: false,
         message: "No booked menus found",
@@ -1832,39 +1859,73 @@ const book_event_menu_items = async (req, res, next) => {
     try {
       const amount = req.body.amount;
       const booking_id = req.body.booking_id;
+      var payment_mode = req.body.payment_mode;
+      var transaction_id = req.body.transaction_id;
       
         var bookingMenu = req.body.menu_list;
+
+        if(payment_mode == "upi"){
+          var status = "active";
+        } else {
+          var status = "pending";
+        }
+
+
+
+
         if(bookingMenu.length > 0){
            // update  booking menu data
-          for (const item of bookingMenu) {
+
+           // add menu payment data
+           var bookingPaymentData = {
+            'amount' : amount,
+            "status"  : status,
+            "payment_mode" : payment_mode,
+            "transaction_id" : transaction_id
+
+          };
+         var paymentResponse =  await BookingPayments(bookingPaymentData).save();
+         var paymentId = paymentResponse._id;
+
+           for (const [key, value] of Object.entries(bookingMenu)) {
+
+            if(key == 0){
+             
+            console.log("paymentResponse",paymentResponse)
+           }
+
+
+
             var bookingMenuData = {
               "booking_id": booking_id,
-              "menu_id": item.menu_id,
-              "quantity": item.quantity,
+              "menu_id": value.menu_id,
+              "quantity": value.quantity,
+              "payment_id" : paymentId,
             };
+
+             await BookingMenu(bookingMenuData).save();
           
             // Check if a record with the same booking_id already exists
-            const existingBooking = await BookingMenu.findOne({ booking_id: booking_id,menu_id: item.menu_id });
+            const existingBooking = await BookingMenu.findOne({ booking_id: booking_id,menu_id: value.menu_id });
            if (existingBooking) {
               // If the booking_id already exists, update the existing record
-              await BookingMenu.updateOne({ booking_id: booking_id,menu_id: item.menu_id }, { $set: bookingMenuData });
+              //await BookingMenu.updateOne({ booking_id: booking_id,menu_id: value.menu_id }, { $set: bookingMenuData });
             } else {
               // If the booking_id doesn't exist, insert a new record
               console.log("bookingMenuData",bookingMenuData)
-              await BookingMenu(bookingMenuData).save();
+              
+               await BookingMenu(bookingMenuData).save();
+            
           
             }
           }
+          return res.status(200).send({ status: true, message: "success" , data : {payment_id : paymentId} });
           
         }
-        // add menu payment data
-        var bookingPaymentData = {
-          "booking_id": booking_id,
-          'amount' : amount
-        };
+        return res.status(200).send({ status: true, message: "success" , data : "" });
+      
 
-        await BookingPayments(bookingPaymentData).save();
-        res.status(200).send({ status: true, message: "success" });
+        
       
     } catch (error) {
       console.log("error", error);
@@ -1879,65 +1940,53 @@ const book_event_menu_items = async (req, res, next) => {
 
 
 
-const manage_event_menu_items_booking = async (req, res) => {
+const approve_event_menu_items_booking = async (req, res) => {
   var payment_id = req.body.payment_id;
-  var status = req.body.status;
   var validator_id = req.body.validator_id;
 
 
-  if (!status || !validator_id || !payment_id) {
+  if (!validator_id || !payment_id) {
     res.status(400).json({ status: false, message: "validator_id , payment_id id and  status are required in the request body" });
   } else {
     try {
       const result = await BookingPayments.findOneAndUpdate(
         { _id: payment_id },
-        { $set: { validator_id: validator_id, status: status } },
+        { $set: { validator_id: validator_id, status: "active" } },
         { new: true }
       );  
 
-      console.log("result",result)
-
 
         if (result) {
-
-          
-
-
-
-
-          if (status == "active") {
-            status = "approved";
-            var booking_id = result.booking_id;
-
-
-            var bookingMenus = await BookingMenu.find({'booking_id':booking_id});
-            for(var bookingmenu of bookingMenus){
-              var menuId = bookingmenu.menu_id;
-              var bookingQUantity = bookingmenu.quantity;
-              var menuRecord = await Menu.findById(menuId);
-              console.log("menuRecord",menuRecord);
-              var menuTotalStock = menuRecord.total_stock;
-              console.log("menu_total_stock",menuTotalStock);
-              console.log("menu_id",menuId)
-              console.log("bookingQUantity",bookingQUantity);
-              var remainingStock = menuTotalStock - bookingQUantity;
-
-              await Menu.findOneAndUpdate(
-                { _id: menuId },
-                { $set: { total_stock: remainingStock} },
-                { new: true }
-              ); 
-
+            console.log("result",result)
+            if(result.status == 'active'){
+              var message =  "Booking is already approved";
+            } else {
+              var payment_id = result._id;
+              var bookingMenus = await BookingMenu.find({'payment_id':payment_id});
+              if(bookingMenus.length > 0){
+                for(var bookingmenu of bookingMenus){
+                  var menuId = bookingmenu.menu_id;
+                  console.log("menu name",bookingmenu.name)
+                  var bookingQUantity = bookingmenu.quantity;
+                  var menuRecord = await Menu.findById(menuId);
+                  console.log("menuRecord",menuRecord);
+                  var menuTotalStock = menuRecord.total_stock;
+                  console.log("menu_total_stock",menuTotalStock);
+                  console.log("menu_id",menuId)
+                  console.log("bookingQUantity",bookingQUantity);
+                  var remainingStock = menuTotalStock - bookingQUantity;
+    
+                  await Menu.findOneAndUpdate(
+                    { _id: menuId },
+                    { $set: { total_stock: remainingStock} },
+                    { new: true }
+                  ); 
+    
+                }
+              }
+              var message =  "Booking approved successfully";
             }
-
-
-
-
-          } else {
-            status = "rejected";
-          }
-          var message =  status + " successfully";
-
+            
           res.status(200).json({
             status: true,
             message: message,
@@ -1982,5 +2031,5 @@ module.exports = {
   close_event_by_seller,
   get_booked_menu_list,
   book_event_menu_items,
-  manage_event_menu_items_booking
+  approve_event_menu_items_booking
 }; 

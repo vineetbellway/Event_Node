@@ -15,6 +15,10 @@ const schema = new mongoose.Schema(
       ref: "Menu",
       required: true,
     },
+     payment_id: {
+        type: mongoose.Schema.Types.ObjectID,
+        ref: "BookingPayments",
+    },
     quantity: {
       type: Number,
     },

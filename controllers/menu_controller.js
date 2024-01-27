@@ -643,44 +643,14 @@ exports.get_menu_by_event_id = async (req, res) => {
   
   
           // Filter menu items based on the selected limited item's category
-          const filteredResultsold = menuResults.filter(item => {
-            const menuRecord = selectedMenuItems.find(selectedItem => {
-           
-              var is_limited = selectedItem.menu_id.is_limited;
-              
-              if(item.is_limited == 'yes'){
-                
-                  return (
-                    selectedItem.menu_id &&
-                    selectedItem.menu_id.category_id.toString() === item.category_id.toString()
-                  );
-                
-                
-              } else {
-                return (
-                  selectedItem.menu_id 
-                );
-              }
-             
-            });
-
-            console.log("item is limited",item.is_limited)
-            if(item.is_limited =="no"){
-              return menuRecord;
-             
-            } else {
-              return !menuRecord || (menuRecord.menu_id._id.toString() === item._id.toString());
-            }
-  
-            
-          });
+         
 
           const filteredResults = menuResults.filter(item => {
             const menuRecord = selectedMenuItems.find(selectedItem => {
               //console.log("s",selectedItem.menu_id.is_limited)
               var is_limited = selectedItem.menu_id.is_limited;
               
-              if(item.is_limited == 'yes'){
+              if(item.is_limited == 'yes' && item.limited_count > 0){
                 
                   return (
                     selectedItem.menu_id &&
@@ -716,11 +686,9 @@ exports.get_menu_by_event_id = async (req, res) => {
             guest_id: guest_id,
             event_id: event_id,
           }).populate('menu_id');
-  
-  
-  
-          // Filter menu items based on the selected limited item's category
-          const filteredResults2 = filteredResults.filter(item => {
+
+
+          const filteredResults2new = filteredResults.filter(item => {
             const menuRecord = selectedMenuItems2.find(selectedItem => {
               var is_limited = selectedItem.menu_id.is_limited;
               var limited_count = selectedItem.menu_id.limited_count;
@@ -749,7 +717,54 @@ exports.get_menu_by_event_id = async (req, res) => {
             
           });
 
-         // console.log("filteredResults2",filteredResults2)
+
+          const filteredResults2 = filteredResults.filter(async(item) => {x
+
+            const menuRecord = await selectedMenuItems2.find( async(selectedItem) => {
+              var is_limited = selectedItem.menu_id.is_limited;
+              var limited_count = selectedItem.menu_id.limited_count;
+              var payment_id = selectedItem.payment_id;
+            //  console.log("payment_id",payment_id);
+              var payment_record = await MenuItemPayments.findById(payment_id);
+            //  console.log("payment_record",payment_record);
+              if(payment_record.is_approved && payment_record.is_approved == "yes"){
+                  return (
+                    selectedItem.menu_id &&
+                    selectedItem.menu_id.category_id.toString() === item.category_id.toString()
+                );
+              } else {
+                return (
+                  selectedItem.menu_id 
+              );
+              }
+              
+             
+          });
+          
+
+
+        
+            if(item.is_limited =="no"){
+              return menuRecord;
+             
+            } else {
+             var menuRecordNoLimited =  !menuRecord || (item.is_limited === "yes" &&  item.limited_count > 0 && menuRecord.menu_id._id.toString() === item._id.toString() &&
+                menuRecord.menu_id.category_id.toString() === item.category_id.toString());
+             //  console.log("menuRecordNoLimited",menuRecordNoLimited)
+            return menuRecordNoLimited;
+            
+            }
+      
+
+            
+          });
+          
+
+  
+  
+
+       //  console.log("selectedMenuItems2",selectedMenuItems2)
+          console.log("filteredResults2",filteredResults2)
   
           var finalResponse = (selectedMenuItems2.length == 0) ? filteredResults : filteredResults2;
         } else {

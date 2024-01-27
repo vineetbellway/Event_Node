@@ -152,7 +152,7 @@ exports.search_subscription_plans = async (req, res) => {
     var myAggregate = SubscriptionPlan.aggregate([
       {
         $match: {
-          $or: [{ name: regex }, { coupon_name: regex }],
+          $or: [{ name: regex }],
         },
       },
     ]);

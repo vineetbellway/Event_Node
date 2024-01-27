@@ -18,10 +18,17 @@ const schema = new mongoose.Schema(
         type: String,
         default: baseStatus.pending,
     },
-    booking_id: {
+
+   /* booking_id: {
         type: mongoose.Schema.Types.ObjectID,
         ref: "Booking",
         required: true,
+    },*/
+    payment_mode: {
+      type: String,
+    },
+    transaction_id:{
+        type: String,
     },
   },
   {

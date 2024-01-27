@@ -103,7 +103,7 @@ router.post("/menu",auth,menuController.create_menu);
 router.put("/menu/:id", auth, menuController.update_menu);
 router.get("/menu", auth,menuController.get_menus);
 router.get("/menu_by_event_id/:id/:guest_id",auth, menuController.get_menu_by_event_id);
-router.get("/menu_by_event_id_for_entry_food_event/:id/:guest_id",auth, menuController.get_menu_by_event_id_for_entry_food_event);
+router.get("/menu_by_event_id_for_entry_food_event/:id/:guest_id", menuController.get_menu_by_event_id_for_entry_food_event);
 
 router.get("/menu_by_event_id_before_entry_food_event/:id/:guest_id",menuController.get_menu_by_event_id_before_entry_food_event);
 router.get("/menu_by_event_id_3_weeks_ago/:id/:guest_id",menuController.get_menu_by_event_id_3_weeks_ago);
@@ -216,7 +216,7 @@ router.post("/approve-guest-consumption/:id", loyalityController.approve_guest_c
 
 // book event/loyalty
 
-router.post("/book", auth,bookingController.book);
+router.post("/book",bookingController.book);
 
 // get bookings by payment mode
 
@@ -235,7 +235,7 @@ router.post("/manage-bookings", bookingController.manage_bookings);
 router.post("/give-feedback",auth,  feedbackController.give_feedback);
 
 // get notifications api
-router.get("/get-notifications",auth,  notificationController.get_notifications);
+router.get("/get-notifications",  notificationController.get_notifications);
 
 // get unread notifications count api
 router.get("/get-unread-notifications-count", auth, notificationController.get_unread_notifications_count);
@@ -413,15 +413,15 @@ router.get("/get-active-city-events",auth, guestController.get_active_city_event
 
 
 // get booked menu list API
-router.get("/get-booked-menu-list",auth, bookingController.get_booked_menu_list);
+router.get("/get-booked-menu-list", bookingController.get_booked_menu_list);
 
 
 // book event menu items API
-router.post("/book-event-menu-items",auth,bookingController.book_event_menu_items);
+router.post("/book-event-menu-items",bookingController.book_event_menu_items);
 
 
 // manage event menu items booking API
-router.post("/manage-event-menu-items-booking",auth,bookingController.manage_event_menu_items_booking);
+router.post("/approve-event-menu-items-booking",bookingController.approve_event_menu_items_booking);
 
 
 cron.schedule("* * * * *", function () {
@@ -429,7 +429,7 @@ cron.schedule("* * * * *", function () {
     // bookingController.disableSellerServices();
    //bookingController.sendEventNotification();
 //bookingController.sendExpireEventNotification();
-  //bookingController.sendExpiredEventNotification();
+ // bookingController.sendExpiredEventNotification();
 });
 
 

@@ -1111,28 +1111,50 @@ exports.get_guest_loyalty_points = async (req, res) => {
       {
         $sort: { 'createdAt': -1 },
       },
+      {
+        $group: {
+          _id: "$payment_id", // Group by payment_id
+          data: { $first: "$$ROOT" } // Keep the first document encountered for each payment_id
+        }
+      },
+      {
+        $replaceRoot: { newRoot: "$data" } // Replace the document structure to its original form
+      }
     ]);
 
     if (service_booking_record.length > 0) {
+      console.log("total_loyalty_points before",total_loyalty_points);
+      var sum = 0;
+    
       for (const p_item of service_booking_record) {
+        console.log("p_item",p_item)
         const payment_data = p_item.payment_data;
         const event_id = p_item.event_id;
         const event_record = await EventModel.findById(event_id);
+        console.log("payment_id",payment_data[0]._id)
+       
+        console.log("point",payment_data[0].total_points)
+        sum = sum + parseInt(payment_data[0].total_points);
         event_data.push({
           event_id: event_id,
-          point: event_record.point - parseInt(payment_data[0].total_points)
+          point: event_record.point - sum
         });
-        total_loyalty_points -= parseInt(payment_data[0].total_points);
+        
       }
+
+      console.log("total_loyalty_points after",total_loyalty_points);
+
+      console.log("sum",sum);
+
+      total_loyalty_points -= sum;
+
+     
     }
 
         // Remove duplicate event IDs and keep only the last occurrence
-        const uniqueEventData = {};
-        event_data.forEach(event => {
-          uniqueEventData[event.event_id.toString()] = event;
-        });
-        event_data = Object.values(uniqueEventData);
     
+
+    console.log("event data",event_data)
 
     return res.status(200).json({
       status: true,

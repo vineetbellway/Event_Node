@@ -7,6 +7,8 @@ const { baseStatus, userStatus } = require("../../utils/enumerator");
 exports.get_sellers = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
+  var search_key = req.query.search_key;
+  const sanitizedSearchKey = search_key.trim(); 
   const myCustomLabels = {
     totalDocs: "totalDocs",
     docs: "data",
@@ -37,14 +39,56 @@ exports.get_sellers = async (req, res) => {
       {
         $unwind: "$user",
       },
+      {
+        $match: {
+          $or: [
+            { "contact_name": { $regex: search_key, $options: "i" } },
+            { "user.code_phone": { $regex: search_key, $options: "i" } },
+            {
+              "user.code_phone": {
+                $regex: new RegExp(`^(\\+${sanitizedSearchKey}|0?${sanitizedSearchKey})$`, 'i')
+              }
+            },
+            // Add more conditions if needed
+          ],
+        },
+      },
+     {
+        $project: {
+          _id: 1,
+          user_id:1,
+          contact_name: 1,
+          code_phone: "$user.code_phone",
+          code: "$user.code",
+          contact_number: "$user.phone",
+          company_name: 1,
+          address: 1,
+          email: 1,
+          district: 1,
+          state: 1,
+          country: 1,
+          pan: 1,
+          fssai: 1,
+          status:1,
+          fssai: 1,
+          createdAt:1,
+          updatedAt: 1,
+          __v: 1,
+        }
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+
     ]);
     await Seller.aggregatePaginate(myAggregate, options)
       .then((result) => {
+        
         if (result) {
           res.status(200).send({
             status: true,
             message: "success",
-            result,
+            result
           });
         }
       })
@@ -85,6 +129,30 @@ exports.get_seller = async (req, res) => {
         {
           $unwind: "$user",
         },
+        {
+          $project: {
+            _id: 1,
+            user_id:1,
+            full_name:1,
+            contact_name: 1,
+            code_phone: "$user.code_phone",
+            code: "$user.code",
+            contact_number: "$user.phone",
+            company_name: 1,
+            address: 1,
+            email: 1,
+            district: 1,
+            state: 1,
+            country: 1,
+            pan: 1,
+            fssai: 1,
+            status:1,
+            fssai: 1,
+            createdAt:1,
+            updatedAt: 1,
+            __v: 1,
+          }
+        },
       ])
         .then((result) => {
           if (result) {
@@ -117,9 +185,14 @@ exports.update_seller = (req, res, next) => {
   } else {
     try {
       Seller.findByIdAndUpdate(id, req.body, { new: true })
-        .then((result) => {
+        .then(async(result) => {
           if (result) {
-            res.status(201).send({
+            var contact_number = req.body.contact_number;
+            // update phone ,code and code_phone
+            var user_id = result.user_id;
+            await User.findByIdAndUpdate(user_id, { $set: { phone: contact_number,code: code,code_phone: code_phone } });
+
+            res.status(200).send({
               status: true,
               message: "Updated",
               data: result,

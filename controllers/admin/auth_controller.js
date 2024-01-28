@@ -1,5 +1,6 @@
 const User = require("../../models/user.model");
 const { baseStatus, userStatus } = require("../../utils/enumerator");
+const fs = require("fs");
 
 
 exports.login = async (req, res, next) => {
@@ -154,6 +155,135 @@ exports.add_image = async (req, res, next) => {
     return res.status(400).send({
       status: false,
       message: "param id missing",
+    });
+  }
+};
+
+exports.changePassword = async (req, res) => {
+  try {
+    const { current_password, new_password } = req.body;
+    const adminPasswordFromEnv = process.env.ADMIN_PASSWORD;
+
+    // Check if admin password from env is available
+    if (!adminPasswordFromEnv) {
+      return res.status(500).json({
+        status: false,
+        message: "Admin password from environment variable not found",
+      });
+    }
+
+    
+    // Check if the current password matches the one in the environment variable
+    if (current_password !== adminPasswordFromEnv) {
+      return res.status(400).json({
+        status: false,
+        message: "Current password is incorrect",
+      });
+    }
+
+    // Update the admin password in the environment variable
+    process.env.ADMIN_PASSWORD = new_password;
+
+
+    // Read the contents of the .env file
+    const envFile = fs.readFileSync(".env", "utf8");
+
+    // Replace the old password with the new password in the .env file contents
+    const updatedEnvFile = envFile.replace(
+      /ADMIN_PASSWORD=.*/,
+      `ADMIN_PASSWORD=${new_password}`
+    );
+
+    // Write the updated contents back to the .env file
+    fs.writeFileSync(".env", updatedEnvFile);
+
+    res.status(200).json({
+      status: true,
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: error.toString() || "Internal Server Error",
+    });
+  }
+};
+
+exports.getProfile = async (req, res) => {  
+  try {
+    const adminEmailFromEnv = process.env.ADMIN_EMAIL;
+    const adminNameFromEnv = process.env.ADMIN_NAME;
+    var adminData = {};
+    adminData.email = adminEmailFromEnv;
+    adminData.name = adminNameFromEnv;
+    res.status(200).json({
+      status: true,
+      message: "Data found successfully",
+      data:adminData
+
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: error.toString() || "Internal Server Error",
+    });
+  }
+};
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const { email, name } = req.body;
+    const adminEmailFromEnv = process.env.ADMIN_EMAIL;
+    const adminNameFromEnv = process.env.ADMIN_NAME;
+
+    // Check if admin email and name from env are available
+    if (!adminEmailFromEnv || !adminNameFromEnv) {
+      return res.status(500).json({
+        status: false,
+        message: "Admin email or name from environment variable not found",
+      });
+    }
+
+   
+
+    // Update the admin email and name in the environment variables
+    process.env.ADMIN_EMAIL = email;
+    process.env.ADMIN_NAME = name;
+
+    // Read the contents of the .env file
+    const envFile = fs.readFileSync(".env", "utf8");
+
+    // Replace the old email with the new email in the .env file contents
+    const updatedEnvFile = envFile
+      .replace(/ADMIN_EMAIL=.*/, `ADMIN_EMAIL=${email}`)
+      .replace(/ADMIN_NAME=.*/, `ADMIN_NAME=${name}`);
+
+    // Write the updated contents back to the .env file
+    fs.writeFileSync(".env", updatedEnvFile);
+
+    res.status(200).json({
+      status: true,
+      message: "Profile updated successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: error.toString() || "Internal Server Error",
+    });
+  }
+};
+
+exports.logout = async (req, res) => {
+  try {
+
+    res.status(200).json({
+      status: true,
+      message: "Logout successful",
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: error.toString() || "Internal Server Error",
     });
   }
 };

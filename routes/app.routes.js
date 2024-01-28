@@ -56,6 +56,8 @@ const bannerController = require("../controllers/banner_controller");
 const reportController = require("../controllers/report_controller");
 const menuConsumptionController = require("../controllers/menu_consumption_controller");
 const serviceController = require("../controllers/service_controller");
+const businessSettingController = require("../controllers/business_setting_controller");
+
 
 
 router.post("/user", auth,userController.login);
@@ -214,9 +216,9 @@ router.get("/get-guest-consumptions", loyalityController.get_guest_consumptions)
 router.post("/approve-guest-consumption/:id", loyalityController.approve_guest_consumption);
 
 
-// book event/loyalty
+// book event
 
-router.post("/book",bookingController.book);
+router.post("/book",auth, bookingController.book);
 
 // get bookings by payment mode
 
@@ -226,16 +228,16 @@ router.get("/get-bookings-by-payment-mode",auth, bookingController.get_bookings_
 router.get("/get-bookings", auth , bookingController.get_bookings);
 
 // get booking detail
-router.get("/get-booking-detail",  bookingController.get_booking_detail);
+router.get("/get-booking-detail",auth,  bookingController.get_booking_detail);
 
 // manage bookings
-router.post("/manage-bookings", bookingController.manage_bookings);
+router.post("/manage-bookings", auth,bookingController.manage_bookings);
 
 // give feedback
 router.post("/give-feedback",auth,  feedbackController.give_feedback);
 
 // get notifications api
-router.get("/get-notifications",  notificationController.get_notifications);
+router.get("/get-notifications",auth,  notificationController.get_notifications);
 
 // get unread notifications count api
 router.get("/get-unread-notifications-count", auth, notificationController.get_unread_notifications_count);
@@ -413,23 +415,26 @@ router.get("/get-active-city-events",auth, guestController.get_active_city_event
 
 
 // get booked menu list API
-router.get("/get-booked-menu-list", bookingController.get_booked_menu_list);
+router.get("/get-booked-menu-list", auth,bookingController.get_booked_menu_list);
 
 
 // book event menu items API
-router.post("/book-event-menu-items",bookingController.book_event_menu_items);
+router.post("/book-event-menu-items",auth,bookingController.book_event_menu_items);
 
 
 // manage event menu items booking API
-router.post("/approve-event-menu-items-booking",bookingController.approve_event_menu_items_booking);
+router.post("/approve-event-menu-items-booking",auth,bookingController.approve_event_menu_items_booking);
 
 
-cron.schedule("* * * * *", function () {
+router.get("/get-business-settings/:key",auth,businessSettingController.getSettingByKey);
+
+
+cron.schedule("* * * * *", function() {
   //  console.log("Cron job is running");
     // bookingController.disableSellerServices();
    //bookingController.sendEventNotification();
-//bookingController.sendExpireEventNotification();
- // bookingController.sendExpiredEventNotification();
+    bookingController.sendExpireEventNotification();
+    bookingController.sendExpiredEventNotification();
 });
 
 

@@ -552,6 +552,22 @@ const  get_booking_detail = async (req, res) => {
 
 
 const sendExpireEventNotification = async () => {
+  const currentDateTime = new Date();
+  const year = currentDateTime.getFullYear();
+  const month = ('0' + (currentDateTime.getMonth() + 1)).slice(-2);
+  const day = ('0' + currentDateTime.getDate()).slice(-2);
+  const hours = ('0' + currentDateTime.getHours()).slice(-2);
+  const minutes = ('0' + currentDateTime.getMinutes()).slice(-2);
+  const seconds = ('0' + currentDateTime.getSeconds()).slice(-2);
+  
+  const currentDateTimeFormatted = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000Z`;
+  const startDateTime = new Date(currentDateTimeFormatted);
+  // console.log("startDateTime",startDateTime);
+  
+   const endDateTime = new Date(currentDateTimeFormatted);
+   endDateTime.setMinutes(endDateTime.getMinutes() + 30); // Add 30 minutes
+  // console.log("endDateTime",endDateTime);
+
   try {
     const result = await Booking.aggregate([
       {
@@ -575,13 +591,19 @@ const sendExpireEventNotification = async () => {
           as: 'guest_data',
         },
       },
+      {
+      $match: {
+        "event_data.end_time": endDateTime
+      }
+    }
     ]);
+   // console.log("result",result);
 
     if (result && result.length > 0) {
       for (const bookingData of result) {
         const guest_result = bookingData.guest_data;
         const event_result = bookingData.event_data;
-
+      
         var guest_id = guest_result[0].user_id;
 
         if (guest_result && event_result && event_result.length > 0) {
@@ -592,37 +614,28 @@ const sendExpireEventNotification = async () => {
           const seller_record = await User.findById(seller_id);
 
           const title = "Event Expire";
-          const message = 'Your event will been  in next half hour';
-          const end_time = event_result[0].end_time;
+          const message = 'Your event will be expired in next half hour';
 
 
           const seller_fcm_token = seller_record.fcm_token;
 
-          const currentDateTime = new Date();
-          const year = currentDateTime.getFullYear();
-          const month = ('0' + (currentDateTime.getMonth() + 1)).slice(-2);
-          const day = ('0' + currentDateTime.getDate()).slice(-2);
-          const hours = ('0' + currentDateTime.getHours()).slice(-2);
-          const minutes = ('0' + currentDateTime.getMinutes()).slice(-2);
-          const seconds = ('0' + currentDateTime.getSeconds()).slice(-2);
-          
-          const currentDateTimeFormatted = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000Z`;
+         
 
 
-          var now = moment().toDate();
+         /* var now = moment().toDate();
           const formattedCurrentDateTime = currentDateTime.toISOString();
-          console.log("formattedCurrentDateTime",currentDateTimeFormatted)
+          console.log("formattedCurrentDateTime",currentDateTimeFormatted)*/
           
-   
+    /*
           const startOfDay = new Date(currentDateTimeFormatted);
           console.log("startOfDay",startOfDay)
 
             // half an hour before end time Event
 
-          const endOfDay = new Date(currentDateTimeFormatted);
+             const endOfDay = new Date(currentDateTimeFormatted);
           endOfDay.setSeconds(endOfDay.getSeconds() + 1); // Add 1 second
           console.log("endOfDay",endOfDay)
-          const currentDateTime2 = moment();
+         const currentDateTime2 = moment();
             console.log("currentDateTime", currentDateTime2.format());
 
             const halfAnHourLater = moment(currentDateTime2).add(30, 'minutes');
@@ -630,55 +643,50 @@ const sendExpireEventNotification = async () => {
 
             const future_events = await EventModel.find({
               end_time: { $gte: currentDateTime2.toDate(), $lt: halfAnHourLater.toDate() }
+            });*/
+
+            const notification = {
+              title: title,
+              body: message,
+            };
+
+            const data = {
+              // Additional data to send with the notification, if needed.
+            };
+
+          // Add notification to the guest
+          var type = 'app';
+          console.log("guest id",bookingData.guest_id);
+          addNotification(bookingData.guest_id, bookingData.guest_id, title, message, type);
+
+          // Send push notification to the guest
+          sendPushNotification(guest_fcm_token, notification, data)
+            .then(() => {
+              console.log('Push notification sent successfully to guest.');
+            })
+            .catch((error) => {
+              console.error('Error sending push notification to guest:', error);
             });
 
-          console.log("future_events",future_events)
-          if(future_events.length > 0){
-            for(const ev of future_events){
-                // Update successful
-                console.log("inside this")
-                const notification = {
-                  title: title,
-                  body: message,
-                };
+            // Add notification to the seller
+          var type = 'app';
+          addNotification(seller_id, seller_id, title, message, type);
 
-                const data = {
-                  // Additional data to send with the notification, if needed.
-                };
-
-              // Add notification to the guest
-              var type = 'app';
-              console.log("guest id",bookingData.guest_id);
-              addNotification(bookingData.guest_id, bookingData.guest_id, title, message, type);
-
-              // Send push notification to the guest
-              sendPushNotification(guest_fcm_token, notification, data)
-                .then(() => {
-                  console.log('Push notification sent successfully to guest.');
-                })
-                .catch((error) => {
-                  console.error('Error sending push notification to guest:', error);
-                });
-
-                // Add notification to the seller
-              var type = 'app';
-              addNotification(seller_id, seller_id, title, message, type);
-
-              // Send push notification to the seller
-              sendPushNotification(seller_fcm_token, notification, data)
-                .then(() => {
-                  console.log('Push notification sent successfully to seller.');
-                })
-                .catch((error) => {
-                  console.error('Error sending push notification to seller:', error);
-                });
+          // Send push notification to the seller
+          sendPushNotification(seller_fcm_token, notification, data)
+            .then(() => {
+              console.log('Push notification sent successfully to seller.');
+            })
+            .catch((error) => {
+              console.error('Error sending push notification to seller:', error);
+            });
                
-            }
-          }
+            
+          
         }
       }
     } else {
-      console.log("No bookings found");
+     //   console.log("No bookings found");
     }
   } catch (error) {
     console.error(error.toString() || "Error");
@@ -686,6 +694,23 @@ const sendExpireEventNotification = async () => {
 };
 
 const sendExpiredEventNotification = async () => {
+
+  const currentDateTime = new Date();
+  const year = currentDateTime.getFullYear();
+  const month = ('0' + (currentDateTime.getMonth() + 1)).slice(-2);
+  const day = ('0' + currentDateTime.getDate()).slice(-2);
+  const hours = ('0' + currentDateTime.getHours()).slice(-2);
+  const minutes = ('0' + currentDateTime.getMinutes()).slice(-2);
+  const seconds = ('0' + currentDateTime.getSeconds()).slice(-2);
+  
+  const currentDateTimeFormatted = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000Z`;
+  
+  const startDateTime = new Date(currentDateTimeFormatted);
+ // console.log("startDateTime",startDateTime);
+ 
+  const endDateTime = new Date(currentDateTimeFormatted);
+  endDateTime.setSeconds(endDateTime.getSeconds() + 1); // Add 1 second
+  //console.log("endDateTime",endDateTime);
   try {
     const result = await Booking.aggregate([
       {
@@ -709,7 +734,16 @@ const sendExpiredEventNotification = async () => {
           as: 'guest_data',
         },
       },
+      {
+        $match: {
+          "event_data.end_time": { $gte: startDateTime, $lt: endDateTime }
+        }
+      }
     ]);
+
+   
+
+
 
     if (result && result.length > 0) {
       for (const bookingData of result) {
@@ -727,112 +761,79 @@ const sendExpiredEventNotification = async () => {
 
           const title = "Event Expired";
           const message = 'Your event has been expired';
-          const end_time = event_result[0].end_time;
-
-
+          
           const seller_fcm_token = seller_record.fcm_token;
+          var eventId = bookingData.event_id;
 
-          const currentDateTime = new Date();
-          const year = currentDateTime.getFullYear();
-          const month = ('0' + (currentDateTime.getMonth() + 1)).slice(-2);
-          const day = ('0' + currentDateTime.getDate()).slice(-2);
-          const hours = ('0' + currentDateTime.getHours()).slice(-2);
-          const minutes = ('0' + currentDateTime.getMinutes()).slice(-2);
-          const seconds = ('0' + currentDateTime.getSeconds()).slice(-2);
-          
-          const currentDateTimeFormatted = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000Z`;
+          const menuItemBookingResult = await MenuItemBookings.aggregate([
+            {
+              $match: {
+                guest_id: new mongoose.Types.ObjectId(guest_id),
+                event_id: new mongoose.Types.ObjectId(eventId),
+              },
+            },
+          ]);
 
-
-          var now = moment().toDate();
-          const formattedCurrentDateTime = currentDateTime.toISOString();
-          console.log("formattedCurrentDateTime",currentDateTimeFormatted)
-          
-   
-          const startOfDay = new Date(currentDateTimeFormatted);
-          console.log("startOfDay",startOfDay)
-
-          const endOfDay = new Date(currentDateTimeFormatted);
-          endOfDay.setSeconds(endOfDay.getSeconds() + 1); // Add 1 second
-          console.log("endOfDay",endOfDay)
-          const future_events = await EventModel.find({
-            end_time: { $gte: startOfDay, $lt: endOfDay }
-          });
-          console.log("future_events",future_events)
-          if(future_events.length > 0){
-            for(const ev of future_events){
-                  var eventId = ev._id;
-
-                  const menuItemBookingResult = await MenuItemBookings.aggregate([
-                    {
-                      $match: {
-                        guest_id: new mongoose.Types.ObjectId(guest_id),
-                        event_id: new mongoose.Types.ObjectId(eventId),
-                      },
-                    },
-                  ]);
-
-                  if(menuItemBookingResult.length > 0){
-                     for(itembooking of menuItemBookingResult){
-                        var payment_id = itembooking.payment_id;
-                         // Update amount in the menu item payment record
-                        await MenuItemPayments.findByIdAndUpdate(payment_id, { $set: { amount: 0 } });
-                     }
-                  }
-
-
-
-                  EventModel.findByIdAndUpdate(eventId, { 'status': 'expired' })
-                  .then(async () => {
-                    // Update successful
-                    await Booking.updateMany(
-                      { event_id: eventId },
-                      { $set: { 'status': 'expired' } }
-                    );
-                const notification = {
-                  title: title,
-                  body: message,
-                };
-
-                const data = {
-                  // Additional data to send with the notification, if needed.
-                };
-
-              // Add notification to the guest
-              var type = 'app';
-              console.log("guest id",bookingData.guest_id);
-              addNotification(bookingData.guest_id, bookingData.guest_id, title, message, type);
-
-              // Send push notification to the guest
-              sendPushNotification(guest_fcm_token, notification, data)
-                .then(() => {
-                  console.log('Push notification sent successfully to guest.');
-                })
-                .catch((error) => {
-                  console.error('Error sending push notification to guest:', error);
-                });
-
-                // Add notification to the seller
-              var type = 'app';
-              addNotification(seller_id, seller_id, title, message, type);
-
-              // Send push notification to the seller
-              sendPushNotification(seller_fcm_token, notification, data)
-                .then(() => {
-                  console.log('Push notification sent successfully to seller.');
-                })
-                .catch((error) => {
-                  console.error('Error sending push notification to seller:', error);
-                });
-                })
-              .catch((error) => {
-                console.error('Error updating event status:', error);
-              }); 
-            }
+          if(menuItemBookingResult.length > 0){
+              for(itembooking of menuItemBookingResult){
+                var payment_id = itembooking.payment_id;
+                  // Update amount in the menu item payment record
+                await MenuItemPayments.findByIdAndUpdate(payment_id, { $set: { amount: 0 } });
+              }
           }
-        }
+
+
+
+        EventModel.findByIdAndUpdate(eventId, { 'status': 'expired' })
+        .then(async () => {
+          // Update successful
+          await Booking.updateMany(
+            { event_id: eventId },
+            { $set: { 'status': 'expired' } }
+          );
+        const notification = {
+          title: title,
+          body: message,
+        };
+
+        const data = {
+          // Additional data to send with the notification, if needed.
+        };
+
+        // Add notification to the guest
+        var type = 'app';
+        // console.log("guest id",bookingData.guest_id);
+        addNotification(bookingData.guest_id, bookingData.guest_id, title, message, type);
+
+        // Send push notification to the guest
+        sendPushNotification(guest_fcm_token, notification, data)
+          .then(() => {
+            console.log('Push notification sent successfully to guest.');
+          })
+          .catch((error) => {
+            console.error('Error sending push notification to guest:', error);
+          });
+
+          // Add notification to the seller
+        var type = 'app';
+        addNotification(seller_id, seller_id, title, message, type);
+
+        // Send push notification to the seller
+        sendPushNotification(seller_fcm_token, notification, data)
+          .then(() => {
+            console.log('Push notification sent successfully to seller.');
+          })
+          .catch((error) => {
+            console.error('Error sending push notification to seller:', error);
+          });
+          })
+        .catch((error) => {
+          console.error('Error updating event status:', error);
+        }); 
+       }
       }
     } else {
-      console.log("No bookings found");
+      // console.log("No bookings found");
     }
   } catch (error) {
     console.error(error.toString() || "Error");
@@ -1831,7 +1832,7 @@ const get_booked_menu_list = async (req, res) => {
       
     } 
       
-      else {
+    else {
       res.status(200).json({
         status: false,
         message: "No booked menus found",
@@ -1869,64 +1870,33 @@ const book_event_menu_items = async (req, res, next) => {
         } else {
           var status = "pending";
         }
-
-
-
-
         if(bookingMenu.length > 0){
-           // update  booking menu data
 
            // add menu payment data
-           var bookingPaymentData = {
-            'amount' : amount,
-            "status"  : status,
-            "payment_mode" : payment_mode,
-            "transaction_id" : transaction_id
+            var bookingPaymentData = {
+              'amount' : amount,
+              "status"  : status,
+              "payment_mode" : payment_mode,
+              "transaction_id" : transaction_id
 
-          };
-         var paymentResponse =  await BookingPayments(bookingPaymentData).save();
-         var paymentId = paymentResponse._id;
-
-           for (const [key, value] of Object.entries(bookingMenu)) {
-
-            if(key == 0){
-             
-            console.log("paymentResponse",paymentResponse)
-           }
-
-
-
-            var bookingMenuData = {
-              "booking_id": booking_id,
-              "menu_id": value.menu_id,
-              "quantity": value.quantity,
-              "payment_id" : paymentId,
             };
+            var paymentResponse =  await BookingPayments(bookingPaymentData).save();
+            var paymentId = paymentResponse._id;
 
-             await BookingMenu(bookingMenuData).save();
-          
-            // Check if a record with the same booking_id already exists
-            const existingBooking = await BookingMenu.findOne({ booking_id: booking_id,menu_id: value.menu_id });
-           if (existingBooking) {
-              // If the booking_id already exists, update the existing record
-              //await BookingMenu.updateOne({ booking_id: booking_id,menu_id: value.menu_id }, { $set: bookingMenuData });
-            } else {
-              // If the booking_id doesn't exist, insert a new record
-              console.log("bookingMenuData",bookingMenuData)
-              
-               await BookingMenu(bookingMenuData).save();
-            
-          
+            for (const [key, value] of Object.entries(bookingMenu)) {
+              var bookingMenuData = {
+                "booking_id": booking_id,
+                "menu_id": value.menu_id,
+                "quantity": value.quantity,
+                "payment_id" : paymentId,
+              };
+
+              await BookingMenu(bookingMenuData).save();
             }
-          }
           return res.status(200).send({ status: true, message: "success" , data : {payment_id : paymentId} });
           
         }
         return res.status(200).send({ status: true, message: "success" , data : "" });
-      
-
-        
-      
     } catch (error) {
       console.log("error", error);
       res.status(500).send({

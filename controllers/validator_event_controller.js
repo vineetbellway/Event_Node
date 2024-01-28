@@ -585,7 +585,7 @@ exports.manage_event_validator_status = async (req, res) => {
     const { event_id, status, validator_id,role } = req.body;
 
     if (!event_id || !status || !validator_id) {
-      return res.status(400).json({ status: false, message: "event id, validator id, and role status are required in the request body" });
+      return res.status(400).json({ status: false, message: "event id, validator id, and role and status are required in the request body" });
     }
 
     const result = await EventValidator.findOneAndUpdate(

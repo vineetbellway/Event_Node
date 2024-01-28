@@ -1,10 +1,11 @@
-const admin = async (req, res, next) => {
-  if (req.header("username") && req.header("password")) {
-    const username = req.header("username");
+const admin_auth = async (req, res, next) => {
+  
+  if (req.header("email") && req.header("password")) {
+    const email = req.header("email");
     const password = req.header("password");
 
     if (
-      username == process.env.ADMIN_USERNAME &&
+      email == process.env.ADMIN_EMAIL &&
       password == process.env.ADMIN_PASSWORD
     ) {
       next();
@@ -22,4 +23,4 @@ const admin = async (req, res, next) => {
   }
 };
 
-module.exports = admin;
+module.exports = {admin_auth};

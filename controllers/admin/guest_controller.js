@@ -7,6 +7,9 @@ const { baseStatus, userStatus } = require("../../utils/enumerator");
 exports.get_guests = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
+  var search_key = req.query.search_key;
+  const sanitizedSearchKey = search_key.trim(); 
+
   const myCustomLabels = {
     totalDocs: "totalDocs",
     docs: "data",
@@ -41,6 +44,41 @@ exports.get_guests = async (req, res) => {
       },
       {
         $unwind: "$user",
+      },
+      {
+        $match: {
+          $or: [
+            { "contact_name": { $regex: search_key, $options: "i" } },
+            { "user.code_phone": { $regex: search_key, $options: "i" } },
+            {
+              "user.code_phone": {
+                $regex: new RegExp(`^(\\+${sanitizedSearchKey}|0?${sanitizedSearchKey})$`, 'i')
+              }
+            },
+            // Add more conditions if needed
+          ],
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          user_id:1,
+          full_name: 1,
+          code_phone: "$user.code_phone",
+          code: "$user.code",
+          phone: "$user.phone",
+          company_name: 1,
+          state: 1,
+          country: 1,
+          points: 1,
+          status:1,
+          createdAt:1,
+          updatedAt: 1,
+          __v: 1,
+        }
+      },
+      {
+        $sort: { createdAt: -1 },
       },
     ]);
     await Guest.aggregatePaginate(myAggregate, options)
@@ -90,6 +128,24 @@ exports.get_guest = async (req, res) => {
         {
           $unwind: "$user",
         },
+        {
+          $project: {
+            _id: 1,
+            user_id:1,
+            full_name: 1,
+            code_phone: "$user.code_phone",
+            code: "$user.code",
+            phone: "$user.phone",
+            company_name: 1,
+            state: 1,
+            country: 1,
+            points: 1,
+            status:1,
+            createdAt:1,
+            updatedAt: 1,
+            __v: 1,
+          }
+        },
       ])
         .then((result) => {
           if (result) {
@@ -122,9 +178,11 @@ exports.update_guest = (req, res, next) => {
   } else {
     try {
       Guest.findByIdAndUpdate(id, req.body, { new: true })
-        .then((result) => {
-          if (result) {
-            res.status(201).send({
+      .then(async(result) => {
+        if (result) {
+          var user_id = result.user_id;
+          await User.findByIdAndUpdate(user_id, { $set: { phone: contact_number,code: code,code_phone: code_phone } });
+            res.status(200).send({
               status: true,
               message: "Updated",
               data: result,

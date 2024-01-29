@@ -1923,7 +1923,20 @@ const book_event_menu_items = async (req, res, next) => {
               };
 
               await BookingMenu(bookingMenuData).save();
+
+               
             }
+
+            // Delete records from the menuItems model
+            const deleteConditions = {
+              event_id: { $in: bookingMenu.map(item => item.event_id) },
+              menu_id: { $in: bookingMenu.map(item => item.menu_id) },
+              guest_id: { $in: bookingMenu.map(item => item.guest_id) },
+            };
+    
+            await MenuItem.deleteMany(deleteConditions);
+
+            
           return res.status(200).send({ status: true, message: "success" , data : {payment_id : paymentId} });
           
         }

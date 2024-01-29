@@ -73,31 +73,31 @@ const book = async (req, res, next) => {
 
         if(bookingMenu.length > 0){
            // Save booking menu data
+           var bookingPaymentData = {
+            "booking_id": result2._id,
+            'amount' : (event_record.type == "food_event") ? event_record.amount : amount,
+            "status"  : status,
+            "payment_mode" : payment_mode,
+            "transaction_id" : transaction_id
+          };
+        var paymentResponse =   await BookingPayments(bookingPaymentData).save();
+        var paymentId = paymentResponse._id;
 
            for (const [key, value] of Object.entries(bookingMenu)) {
    
 
               var bookingMenuData = {
                 "booking_id": result._id,
+                'event_id': event_id,
                 'guest_id': guest_id,
                 "menu_id": value.menu_id,
                 "quantity": value.quantity,
+                "payment_id" : paymentId,
               
               };          
           
 
               const result2 =   await BookingMenu(bookingMenuData).save();
-              if(key == 0){
-                 // add menu payment data
-                var bookingPaymentData = {
-                  "booking_id": result2._id,
-                  'amount' : (event_record.type == "food_event") ? event_record.amount : amount,
-                  "status"  : status,
-                  "payment_mode" : payment_mode,
-                  "transaction_id" : transaction_id
-                };
-                await BookingPayments(bookingPaymentData).save();
-              }
               
 
 
@@ -1907,12 +1907,15 @@ const book_event_menu_items = async (req, res, next) => {
               "transaction_id" : transaction_id
 
             };
+            var bookingData = await Booking.findById(booking_id);
+         
             var paymentResponse =  await BookingPayments(bookingPaymentData).save();
             var paymentId = paymentResponse._id;
 
             for (const [key, value] of Object.entries(bookingMenu)) {
               var bookingMenuData = {
                 "booking_id": booking_id,
+                'event_id': bookingData.event_id,
                 "guest_id" : guest_id,
                 "menu_id": value.menu_id,
                 "quantity": value.quantity,

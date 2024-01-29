@@ -429,6 +429,9 @@ router.post("/approve-event-menu-items-booking",auth,bookingController.approve_e
 router.get("/get-business-settings/:key",auth,businessSettingController.getSettingByKey);
 
 
+router.get("/get-booking-detail-by-payment-id",auth,menuController.getBookingDetailByPaymentId);
+
+
 cron.schedule("* * * * *", function() {
   //  console.log("Cron job is running");
     // bookingController.disableSellerServices();

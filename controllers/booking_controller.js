@@ -168,7 +168,7 @@ const get_bookings = async (req, res) => {
     } else {
       match = {
         $match: {
-          "event_data.status": status, // Filter by event status
+          "status": status, // Filter by event status
         }
       };
     }
@@ -177,6 +177,7 @@ const get_bookings = async (req, res) => {
   if (!guest_id || !status) {
     res.status(400).json({ status: false, message: "Guest ID and status are required in the request body" });
   } else {
+    console.log("match",match)
     try {
       Booking.aggregate([
         {

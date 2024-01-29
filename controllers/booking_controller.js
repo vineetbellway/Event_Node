@@ -74,7 +74,7 @@ const book = async (req, res, next) => {
         if(bookingMenu.length > 0){
            // Save booking menu data
            var bookingPaymentData = {
-            "booking_id": result2._id,
+            "booking_id": result._id,
             'amount' : (event_record.type == "food_event") ? event_record.amount : amount,
             "status"  : status,
             "payment_mode" : payment_mode,

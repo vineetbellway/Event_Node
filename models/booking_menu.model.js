@@ -19,6 +19,11 @@ const schema = new mongoose.Schema(
         type: mongoose.Schema.Types.ObjectID,
         ref: "BookingPayments",
     },
+    event_id: {
+      type: mongoose.Schema.Types.ObjectID,
+      ref: "EventModel",
+      required: true,
+    },
     guest_id: {
       type: mongoose.Schema.Types.ObjectID,
       ref: "User",

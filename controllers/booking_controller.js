@@ -1421,7 +1421,7 @@ const get_pending_guest_list = async (req, res) => {
   if (!event_id) {
     res.status(400).json({
       status: false,
-      message: "Guest ID is required in the request body",
+      message: "event_id is required in the request body",
     });
   } else {
     try {

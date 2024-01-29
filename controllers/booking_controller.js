@@ -165,7 +165,7 @@ const get_bookings = async (req, res) => {
     } else {
       match = {
         $match: {
-          "event_data.status": "active", // Filter by event status
+          "event_data.status": status, // Filter by event status
         }
       };
     }
@@ -205,6 +205,7 @@ const get_bookings = async (req, res) => {
         },
       ])
       .then((result) => {
+        console.log("result",result)
         if (result && result.length > 0) {
           var booking_data = [];
 

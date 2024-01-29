@@ -76,6 +76,7 @@ const book = async (req, res, next) => {
 
               var bookingMenuData = {
                 "booking_id": result._id,
+                'guest_id': guest_id,
                 "menu_id": value.menu_id,
                 "quantity": value.quantity,
               
@@ -1862,6 +1863,7 @@ const book_event_menu_items = async (req, res, next) => {
       const booking_id = req.body.booking_id;
       var payment_mode = req.body.payment_mode;
       var transaction_id = req.body.transaction_id;
+      var guest_id = req.body.guest_id;
       
         var bookingMenu = req.body.menu_list;
 
@@ -1886,6 +1888,7 @@ const book_event_menu_items = async (req, res, next) => {
             for (const [key, value] of Object.entries(bookingMenu)) {
               var bookingMenuData = {
                 "booking_id": booking_id,
+                "guest_id" : guest_id,
                 "menu_id": value.menu_id,
                 "quantity": value.quantity,
                 "payment_id" : paymentId,

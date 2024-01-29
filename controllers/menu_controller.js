@@ -7,6 +7,7 @@ const { baseStatus, userStatus } = require("../utils/enumerator");
 const EventModel = require("../models/event.model");
 const Guest = require("../models/guest.model");
 const BookingMenu = require("../models/booking_menu.model");
+const BookingPayments = require("../models/booking_payments.model");
 
 exports.create_menu = async (req, res, next) => {
   if (!req.body) {
@@ -2554,7 +2555,7 @@ exports.get_menu_items = async (req, res) => {
         },
       },
     ]);
-  //  console.log("result",result);
+    console.log("result",result);
     //return false;
     if (result.length > 0) {
       let sum = 0;
@@ -3206,7 +3207,136 @@ exports.close_menu_counter_by_validator = async (req, res) => {
 };
 
 
+exports.getBookingDetailByPaymentId = async (req, res) => {
+  var payment_id = req.query.payment_id;
+  var search_key = req.query.search_key;
+  const sanitizedSearchKey = search_key.trim(); 
 
+  if (!payment_id) {
+    res.status(400).json({
+      status: false,
+      message: "payment ID is required in the request body",
+    });
+  } else {
+    try {
+      const pipeline = [
+       
+
+        {
+          $lookup: {
+            from: "bookingpayments",
+            localField: "payment_id",
+            foreignField: "_id",
+            as: "payment_data",
+          },
+        },
+
+        {
+          $match: {
+            payment_id: new mongoose.Types.ObjectId(payment_id),
+            "payment_data.status": "pending",
+             "payment_data.payment_mode": { $nin: ["upi"] } , 
+
+          },
+        },
+
+
+      
+        {
+          $lookup: {
+            from: "guests",
+            localField: "guest_id",
+            foreignField: "user_id",
+            as: "guest_data",
+          },
+        },
+       {
+          $lookup: {
+            from: "users",  // Assuming the contact number is in the "users" table
+            localField: "guest_data.user_id",  // Assuming "user_id" links to the "users" table
+            foreignField: "_id",
+            as: "user_data",
+          },
+        },
+       
+        {
+          $match: {
+            $or: [
+              { "guest_data.full_name": { $regex: search_key, $options: "i" } },
+              { "user_data.code_phone": { $regex: search_key, $options: "i" } },
+              {
+                "user_data.code_phone": {
+                  $regex: new RegExp(`^(\\+${sanitizedSearchKey}|0?${sanitizedSearchKey})$`, 'i')
+                }
+              },
+              // Add more conditions if needed
+            ],
+          },
+        },
+        
+        {
+          $sort: { createdAt: -1 },
+        },
+      ];
+
+      BookingMenu.aggregate(pipeline)
+        .then((result) => {
+          console.log("result", result);
+          var all_data = [];
+          if (result && result.length > 0) {
+            for (const booking of result) {
+             
+             
+                const guestRecord = booking.guest_data[0];
+                guestRecord.contact_number = booking.user_data[0].code_phone;
+                console.log("record",booking.payment_data[0])
+                all_data.push({
+                  "guest_data": { ...guestRecord },
+                  "booking_data": {
+                    _id: booking._id,
+                    event_id: booking.event_id,
+                    guest_id: booking.guest_id,
+                    payment_mode: booking.payment_data[0].payment_mode,
+                    status: booking.payment_data[0].status,
+                    transaction_id: booking.payment_data[0].transaction_id,
+                    amount: booking.payment_data[0].amount,
+                    createdAt: booking.createdAt,
+                    updatedAt: booking.updatedAt,
+                    __v: booking.__v,
+                  },
+                });
+              
+            }
+
+            res.status(200).json({
+              status: true,
+              message: "Data found",
+              data: all_data,
+            });
+          } else {
+            res.status(404).json({
+              status: false,
+              message: "No data found",
+              data: [],
+            });
+          }
+        })
+        .catch((error) => {
+          console.log("error", error);
+          res.status(500).json({
+            status: false,
+            message: error.toString() || "Internal Server Error",
+          });
+        });
+    } catch (error) {
+      console.log("error", error);
+      res.status(500).json({
+        status: false,
+        message: error.toString() || "Internal Server Error",
+      });
+    }
+  }
+};
 
 
 

@@ -19,6 +19,11 @@ const schema = new mongoose.Schema(
         type: mongoose.Schema.Types.ObjectID,
         ref: "BookingPayments",
     },
+    guest_id: {
+      type: mongoose.Schema.Types.ObjectID,
+      ref: "User",
+      required: true,
+  },
     quantity: {
       type: Number,
     },

@@ -28,7 +28,10 @@ const book = async (req, res, next) => {
       const transaction_id = req.body.transaction_id;
       const fcm_token = req.body.fcm_token;
       const event_id = req.body.event_id;
+      const amount = req.body.amount;
       var event_record = await EventModel.findById(event_id);
+
+    
 
  
 
@@ -57,7 +60,7 @@ const book = async (req, res, next) => {
         'payment_mode': payment_mode,
         'transaction_id': transaction_id,
         'fcm_token': fcm_token,
-        'amount' : event_record.amount,
+        'amount' : (event_record.type == "food_event") ? event_record.amount : amount,
        // 'coupon_balance' : coupon_balance,
         'status' : status
       };
@@ -88,7 +91,7 @@ const book = async (req, res, next) => {
                  // add menu payment data
                 var bookingPaymentData = {
                   "booking_id": result2._id,
-                  'amount' : event_record.amount,
+                  'amount' : (event_record.type == "food_event") ? event_record.amount : amount,
                   "status"  : status,
                   "payment_mode" : payment_mode,
                   "transaction_id" : transaction_id
@@ -1541,7 +1544,7 @@ const get_approved_booking_cost = async (req, res) => {
   if (!event_id) {
     res.status(400).json({
       status: false,
-      message: "Guest ID is required in the request body",
+      message: "event ID is required in the request body",
     });
   } else {
     try {
@@ -1581,7 +1584,7 @@ const get_approved_booking_cost = async (req, res) => {
           
               var event_record = await EventModel.findById(booking.event_id);
 
-              
+              console.log("event_record",)
 
               if(event_record.type == "food_event"){
                  if(event_record.is_cover_charge_added == "yes"){
@@ -1593,7 +1596,7 @@ const get_approved_booking_cost = async (req, res) => {
                     if (booking.payment_mode === "cash") {
                       totalCashBooking = event_record.cover_charge || 0;
                     }
-
+                    
                     if (booking.payment_mode === "card") {
                       totalCardBooking = event_record.cover_charge || 0;
                     }
@@ -1615,7 +1618,28 @@ const get_approved_booking_cost = async (req, res) => {
                 
 
                  
-              } else {
+              }
+              else if(event_record.type == "entry_food_event") {
+                // Calculate booking cost based on payment mode
+              
+                console.log("here")
+                if (booking.payment_mode === "counter_upi") {
+                  totalUPIBookingAmount += booking.amount || 0;
+                } 
+              
+
+                if (booking.payment_mode === "cash") {
+                  totalCashBooking += booking.amount || 0;
+                }
+
+                if (booking.payment_mode === "card") {
+                  totalCardBooking += booking.amount || 0;
+                }
+
+            }
+              
+              
+              else {
                   // Calculate booking cost based on payment mode
                 
 

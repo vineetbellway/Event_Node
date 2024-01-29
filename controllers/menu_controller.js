@@ -969,7 +969,7 @@ exports.get_menu_by_event_id_for_entry_food_event = async (req, res) => {
           const selectedMenuItems = await MenuItem.find({
             guest_id: guest_id,
             event_id: event_id,
-            quantity: { $gt: 0 },
+      
           }).populate('menu_id');
 
 

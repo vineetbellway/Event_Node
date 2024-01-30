@@ -344,8 +344,11 @@ router.get("/repated-guests-for-seller",auth,reportController.get_repeated_guest
 // get the number of guests attending events by a specific seller
 router.get("/number-guests-for-seller",auth,reportController.get_number_of_guests_for_seller);
 
-// get fns report
-router.get("/fns-report/:type",reportController.fns_moving_item_report);
+// get fns moving items report
+router.get("/fns-moving-items-report",reportController.fns_moving_item_report);
+
+// get guest potential report
+router.get("/guest-potential-report",reportController.guest_potential_report);
 
 
 // get event validator detail API

@@ -1,4 +1,6 @@
 const Seller = require("../../models/seller.model");
+const User = require("../../models/user.model");
+
 const mongoose = require("mongoose");
 const { baseStatus, userStatus } = require("../../utils/enumerator");
 
@@ -217,32 +219,31 @@ exports.update_seller = (req, res, next) => {
   }
 };
 
+
 exports.delete_seller = async (req, res) => {
-  var id = req.params.id;
+  const id = req.params.id;
   if (!id) {
     res.status(400).send({ status: false, message: "id missing" });
   } else {
     try {
-      await Seller.findOneAndDelete(id)
-        .then((result) => {
-          if (result) {
-            res.status(200).send({
-              status: true,
-              message: "deleted",
-              data: result,
-            });
-          }
-        })
-        .catch((error) => {
-          res.send({
-            status: false,
-            message: error.toString() ?? "Error",
-          });
+      const result = await Seller.findByIdAndUpdate(id, { status: "deleted" });
+      if (result) {
+        var user_id = result.user_id;
+        await User.findByIdAndUpdate(user_id, { $set: { status: "deleted" } });
+        res.status(200).send({
+          status: true,
+          message: "Deleted",
+          data: result,
         });
+      } else {
+        res.status(404).send({ status: false, message: "Not found" });
+      }
     } catch (error) {
+      console.log("error",error)
       res.status(500).send({
         status: false,
-        message: error.toString() ?? "Internal Server Error",
+        message: "failure",
+        error: error ?? "Internal Server Error",
       });
     }
   }

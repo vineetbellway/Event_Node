@@ -1,4 +1,6 @@
 const Guest = require("../../models/guest.model");
+const User = require("../../models/user.model");
+
 const mongoose = require("mongoose");
 const { baseStatus, userStatus } = require("../../utils/enumerator");
 
@@ -207,31 +209,26 @@ exports.update_guest = (req, res, next) => {
   }
 };
 
-exports.delete_guest = (req, res, next) => {
+exports.delete_guest = async (req, res) => {
   const id = req.params.id;
   if (!id) {
     res.status(400).send({ status: false, message: "id missing" });
   } else {
     try {
-      Guest.findByIdAndDelete(id)
-        .then((result) => {
-          if (result) {
-            res.status(201).send({
-              status: true,
-              message: "Deleted",
-              data: result,
-            });
-          } else {
-            res.status(404).send({ status: false, message: "Not deleted" });
-          }
-        })
-        .catch((error) => {
-          res.send({
-            status: false,
-            message: error.toString() ?? "Error",
-          });
+      const result = await Guest.findByIdAndUpdate(id, { status: "deleted" });
+      if (result) {
+        var user_id = result.user_id;
+        await User.findByIdAndUpdate(user_id, { $set: { status: "deleted" } });
+        res.status(200).send({
+          status: true,
+          message: "Deleted",
+          data: result,
         });
+      } else {
+        res.status(404).send({ status: false, message: "Not found" });
+      }
     } catch (error) {
+      console.log("error",error)
       res.status(500).send({
         status: false,
         message: "failure",

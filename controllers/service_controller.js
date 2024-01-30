@@ -622,13 +622,13 @@ exports.book_service_items = async (req, res, next) => {
 
 
       // Delete records from the ServiceItem model
-     /* const deleteConditions = {
+     const deleteConditions = {
         event_id: { $in: results.map(item => item.event_id) },
         service_id: { $in: results.map(item => item.service_id) },
         guest_id: { $in: results.map(item => item.guest_id) },
       };
   
-      await ServiceItem.deleteMany(deleteConditions);*/
+      await ServiceItem.deleteMany(deleteConditions);
       
       res.status(200).send({ status: true, message: "Service booked successfully", data : { payment_id: payment_id,booked_data: results} });
   

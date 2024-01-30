@@ -611,24 +611,19 @@ exports.delete_event = async (req, res) => {
     res.status(400).send({ status: false, message: "id missing" });
   } else {
     try {
-      await EventModel.findByIdAndDelete(id)
-        .then((result) => {
-          if (result) {
-            res.status(200).send({
-              status: true,
-              message: "deleted",
-              data: result,
-            });
-          } else {
-            
-          }
-        })
-        .catch((error) => {
-          res.send({
-            status: false,
-            message: error.toString() ?? "Error",
-          });
+      const result = await EventModel.findByIdAndUpdate(id, { status: "deleted" });
+      if (result) {
+        res.status(200).send({
+          status: true,
+          message: "Event deleted successfully",
+          data: result,
         });
+      } else {
+        res.status(404).send({
+          status: false,
+          message: "Event not found",
+        });
+      }
     } catch (error) {
       res.status(500).send({
         status: false,
@@ -637,6 +632,7 @@ exports.delete_event = async (req, res) => {
     }
   }
 };
+
 
 exports.delete_events = async (req, res) => {
   try {

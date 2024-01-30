@@ -454,7 +454,7 @@ exports.get_service_items = async (req, res) => {
         },
       },
     ]);
-  //  console.log("result",result);
+    console.log("result",result);
     //return false;
     if (result.length > 0) {
       let sum = 0;
@@ -479,6 +479,7 @@ exports.get_service_items = async (req, res) => {
 
 
       const filteredServiceList = new_result.filter((item) => item && typeof item.quantity === 'number' && item.quantity > 0);
+      console.log("filteredServiceList",filteredServiceList)
         res.status(200).send({
           status: true,
           message: "Data found",
@@ -627,6 +628,7 @@ exports.book_service_items = async (req, res, next) => {
         service_id: { $in: results.map(item => item.service_id) },
         guest_id: { $in: results.map(item => item.guest_id) },
       };
+
   
       await ServiceItem.deleteMany(deleteConditions);
       
@@ -1193,4 +1195,153 @@ exports.get_guest_loyalty_points = async (req, res) => {
   }
 };
 
+exports.get_guest_loyalty_events = async (req, res) => {
+  try {
+    const guest_id = req.query.guest_id;
 
+    if (!guest_id) {
+      return res.status(400).json({ status: false, message: "Guest ID is required in the request body" });
+    }
+
+    var event_guest_record = await EventGuestModel.aggregate([
+      {
+        $match: { "guest_id":  new mongoose.Types.ObjectId(guest_id) } // Match documents where guest_id matches
+      },
+      {
+        $lookup: {
+          from: "events", // The collection you're looking up against
+          localField: "event_id", // Field from the current collection
+          foreignField: "_id", // Field from the referenced collection
+          as: "event" // Name of the field that will contain the matched event document
+        }
+      },
+      {
+        $unwind: "$event" // Unwind the array created by $lookup to work with single documents
+      },
+      {
+        $match: { "event.status": "active" } // Filter based on the status of the event
+      }
+    ]);
+
+    let total_loyalty_points = 0;
+    let event_data = [];
+
+    if (event_guest_record.length > 0) {
+      const uniqueEventIds = [...new Set(event_guest_record.map(item => item.event_id))];
+      
+      for (const eventId of uniqueEventIds) {
+        const eventRecords = event_guest_record.filter(item => item.event_id === eventId);
+        const lastRecord = eventRecords[eventRecords.length - 1]; // Get the last record
+        total_loyalty_points += parseInt(lastRecord.point);
+        event_data.push({
+          event_id: eventId,
+          point: parseInt(lastRecord.point)
+        });
+      }
+    }
+
+    // Add logic for service booking records
+    const service_booking_record = await BookedServiceItem.aggregate([
+      {
+        $lookup: {
+          from: 'serviceitempayments',
+          localField: 'payment_id',
+          foreignField: '_id',
+          as: 'payment_data',
+        },
+      },
+      {
+        $match: {
+          "guest_id": new mongoose.Types.ObjectId(guest_id),
+          "payment_data.is_approved": "yes"
+        },
+      },
+      {
+        $sort: { 'createdAt': -1 },
+      },
+      {
+        $group: {
+          _id: "$payment_id", // Group by payment_id
+          data: { $first: "$$ROOT" } // Keep the first document encountered for each payment_id
+        }
+      },
+      {
+        $replaceRoot: { newRoot: "$data" } // Replace the document structure to its original form
+      }
+    ]);
+
+    console.log('service_booking_record',service_booking_record)
+
+    if (service_booking_record.length > 0) {
+      console.log("total_loyalty_points before",total_loyalty_points);
+      var sum = 0;
+      const eventPointSumMap = {}; // Map to store the total points for each event ID
+
+    
+      for (const p_item of service_booking_record) {
+       /* console.log("p_item",p_item)*/
+        const payment_data = p_item.payment_data;
+        const event_id = p_item.event_id;
+        const event_record = await EventModel.findById(event_id);
+       /* console.log("payment_id",payment_data[0]._id)*/
+      //  console.log("payment_data",payment_data[0])
+      const total_points = parseInt(payment_data[0].total_points);
+
+        var quantity = p_item.quantity;
+       
+        // Initialize the sum for the event ID if not already present
+    if (!eventPointSumMap[event_id]) {
+      eventPointSumMap[event_id] = 0;
+  }
+  eventPointSumMap[event_id] += total_points;
+  const point = event_record.point - eventPointSumMap[event_id];
+
+       
+        console.log("point",payment_data[0].total_points)
+        sum = sum + parseInt(payment_data[0].total_points);
+        
+        event_data.push({
+          event_id: event_id,
+        });
+        
+      }
+
+     // console.log("total_loyalty_points after",total_loyalty_points);
+
+     // console.log("sum",sum);
+
+      total_loyalty_points -= sum;
+
+     
+    }
+
+        // Remove duplicate event IDs and keep only the last occurrence
+    
+
+    console.log("event data",event_data)
+    const uniqueEventData = {};
+    event_data.forEach(event => {
+
+      uniqueEventData[event.event_id.toString()] = event;
+    });
+    event_data = Object.values(uniqueEventData);
+    var data = [];
+    if(event_data.length > 0){
+      for(item of event_data){
+          var event_details = await EventModel.findById(item.event_id);
+          data.push(event_details)
+      }
+    }
+    if(data.length > 0){
+      return res.status(200).json({status: true,message: "Data found",data});
+    } else {
+      return res.status(200).send({ status: true, message: "No Data found", data: [] });
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    return res.status(500).json({
+      status: false,
+      message: error.toString() || "Internal Server Error",
+    });
+  }
+};

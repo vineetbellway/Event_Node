@@ -344,6 +344,9 @@ router.get("/repated-guests-for-seller",auth,reportController.get_repeated_guest
 // get the number of guests attending events by a specific seller
 router.get("/number-guests-for-seller",auth,reportController.get_number_of_guests_for_seller);
 
+// get fns report
+router.get("/fns-report/:type",reportController.fns_moving_item_report);
+
 
 // get event validator detail API
 router.get("/get-event-validator-detail",auth,validatorEventController.get_event_validator_detail);
@@ -425,11 +428,14 @@ router.post("/book-event-menu-items",auth,bookingController.book_event_menu_item
 // manage event menu items booking API
 router.post("/approve-event-menu-items-booking",auth,bookingController.approve_event_menu_items_booking);
 
-
+// get business settings by key
 router.get("/get-business-settings/:key",auth,businessSettingController.getSettingByKey);
 
-
+// get booking detail of fnb event by payment id
 router.get("/get-booking-detail-by-payment-id",auth,menuController.getBookingDetailByPaymentId);
+
+// get guest loyality events API
+router.get("/get-guest-loyalty-events",auth,serviceController.get_guest_loyalty_events);
 
 
 cron.schedule("* * * * *", function() {

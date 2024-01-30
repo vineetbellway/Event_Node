@@ -111,7 +111,14 @@ exports.login = async (req, res, next) => {
 
       if (existingUser) {
         console.log("existingUser", existingUser);
-
+        
+        if(existingUser.status == "deleted"){
+          return res.send({
+            status: false,
+            message: "User not found",
+            data: null,
+          });
+        }
         // Update the existing user's device_type and device_token and fcm_token
         await User.findOneAndUpdate(
           { _id: existingUser.id },

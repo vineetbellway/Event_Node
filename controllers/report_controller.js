@@ -349,6 +349,9 @@ exports.fns_moving_item_report = async (req, res) => {
                 consumedQuantity: 1,
                 payment_data: 1,
               }
+            },
+            {
+              $sort: { consumedQuantity: type === "most" ? -1 : 1 } // Sort by consumedQuantity based on the type
             }
           ]);
       }
@@ -385,141 +388,175 @@ exports.fns_moving_item_report = async (req, res) => {
 
 exports.guest_potential_report = async (req, res) => {
   try {
-      const eventId = req.query.event_id;
-      const type  = req.query.type;
+    const eventId = req.query.event_id;
 
-   
+    // Find the event by eventId
+    const event = await EventModel.findById(eventId);
 
-      // Find the event by eventId
-      const event = await EventModel.findById(eventId);
-
-
-      if (!event) {
-          return res.status(200).json({ success: false, message: 'Event not found' , data :null });
-      }
-
-      if(event.type="food_event"){
-          // Perform aggregation to calculate fns report
-          var fnsMovingItemsReport = await BookedMenuItem.aggregate([
-            {
-              $lookup: {
-                from: 'menuitempayments',
-                localField: 'payment_id',
-                foreignField: '_id',
-                as: 'menu_item_payment_data',
-              },
-            },
-            {
-              $match: { "menu_item_payment_data.is_approved": "yes", event_id: new mongoose.Types.ObjectId(eventId) }
-            },
-            {
-              $lookup: {
-                from: 'menus',
-                localField: 'menu_id',
-                foreignField: '_id',
-                as: 'menu'
-              }
-            },
-            {
-              $unwind: '$menu'
-            },
-            {
-              $group: {
-                _id: {
-                  menuName: '$menu.name',
-                },
-                consumedQuantityNew: { $sum: 1 }, // Rename the field here
-              }
-            },
-            {
-              $project: {
-                _id: 0,
-                itemName: '$_id.menuName',
-                consumedQuantity: '$consumedQuantityNew', // Rename the field here
-              }
-            },
-            {
-              $sort: { consumedQuantity: type === "most" ? -1 : 1 } // Sort by consumedQuantity based on the type
-            }
-          ]);
-          
-          
-          
-
-      } else {
-         // Perform aggregation to calculate fns report
-          var fnsMovingItemsReport = await BookingMenu.aggregate([
-        
-            
-            {
-              $lookup: {
-                from: 'bookingpayments',
-                localField: 'payment_id',
-                foreignField: '_id',
-                as: 'menu_item_payment_data',
-              },
-            },
-            {
-              $match: { "menu_item_payment_data.status": "active" ,  event_id: new mongoose.Types.ObjectId(eventId) }
-            },
-            {
-              $lookup: {
-                from: 'menus',
-                localField: 'menu_id',
-                foreignField: '_id',
-                as: 'menu'
-              }
-            },
-            {
-              $unwind: '$menu'
-            },
-            {
-              $group: {
-                _id: {
-                  menuName: '$menu.name',
-                },
-                consumedQuantity: { $sum: '$quantity' },
-                payment_data: { $push: '$menu_item_payment_data' },
-              }
-            },
-            {
-              $project: {
-                _id: 0,
-                itemName: '$_id.menuName',
-                category: '$_id.category',
-                consumedQuantity: 1,
-                payment_data: 1,
-              }
-            }
-          ]);
-      }
-
-
-  
-     
-
-      console.log("fnsMovingItemsReport",fnsMovingItemsReport)
-
-      if(fnsMovingItemsReport.length > 0){
-          var allData = [];
-          for(var item of fnsMovingItemsReport){
-            console.log("item",item)
-                allData.push({ 
-                  "consumedQuantity": item.consumedQuantity,
-                  "itemName": item.itemName,
-              });
-          }
-          res.json({ success: true, message : "Data found",  data: allData });
-      } else {
-          res.json({ success: false, message : "No data found",  data: [] });
-      }
-  
-      
-    } catch (err) {
-      res.status(500).send({
-          status: false,
-          message: err.toString() || "Internal Server Error",
-          data: null,
-      });
+    if (!event) {
+      return res.status(200).json({ success: false, message: 'Event not found', data: null });
     }
+
+    let potentialReport;
+
+    if (event.type === "food_event") {
+   
+      potentialReport = await BookedMenuItem.aggregate([
+        {
+          $lookup: {
+            from: 'menuitempayments',
+            localField: 'payment_id',
+            foreignField: '_id',
+            as: 'menu_item_payment_data',
+          },
+        },
+        {
+          $match: { "menu_item_payment_data.is_approved": "yes", event_id: new mongoose.Types.ObjectId(eventId) }
+        },
+        {
+          $lookup: {
+            from: 'menus',
+            localField: 'menu_id',
+            foreignField: '_id',
+            as: 'menu'
+          }
+        },
+        {
+          $unwind: '$menu'
+        },
+        {
+          $lookup: {
+            from: 'guests',
+            localField: 'guest_id',
+            foreignField: 'user_id',
+            as: 'guest'
+          }
+        },
+        {
+          $unwind: '$guest'
+        },
+        {
+          $group: {
+            _id: {
+              guestId: '$guest_id',
+              guestName: '$guest.full_name',
+              menuName: '$menu.name',
+            },
+            consumedQuantity: { $sum: 1 }, // Count the occurrences of each item per guest
+          }
+        },
+        {
+          $project: {
+            _id: 0,
+            guestId: '$_id.guestId',
+            guestName: '$_id.guestName',
+            itemName: '$_id.menuName',
+            consumedQuantity: 1,
+          }
+        },
+        {
+          $sort: { consumedQuantity : -1  } 
+        }
+      ]);
+    } else {
+      potentialReport = await BookingMenu.aggregate([
+        {
+          $lookup: {
+            from: 'bookingpayments',
+            localField: 'payment_id',
+            foreignField: '_id',
+            as: 'menu_item_payment_data',
+          },
+        },
+        {
+          $match: { "menu_item_payment_data.status": "active" ,  event_id: new mongoose.Types.ObjectId(eventId) }
+        },
+        {
+          $lookup: {
+            from: 'menus',
+            localField: 'menu_id',
+            foreignField: '_id',
+            as: 'menu'
+          }
+        },
+        {
+          $unwind: '$menu'
+        },
+        {
+          $lookup: {
+            from: 'guests',
+            localField: 'guest_id',
+            foreignField: 'user_id',
+            as: 'guest'
+          }
+        },
+        {
+          $unwind: '$guest'
+        },
+        {
+          $group: {
+            _id: {
+              guestId: '$guest_id',
+              guestName: '$guest.full_name',
+              menuName: '$menu.name',
+            },
+            consumedQuantity: { $sum: 1 }, // Count the occurrences of each item per guest
+          }
+        },
+        {
+          $project: {
+            _id: 0,
+            guestId: '$_id.guestId',
+            guestName: '$_id.guestName',
+            itemName: '$_id.menuName',
+            consumedQuantity: 1,
+          }
+        },
+        {
+          $sort: { consumedQuantity : -1  } 
+        }
+      ]);
+    }
+
+    if (potentialReport.length > 0) {
+      res.json({ success: true, message: "Data found", data: potentialReport });
+    } else {
+      res.json({ success: false, message: "No data found", data: [] });
+    }
+
+  } catch (err) {
+    res.status(500).send({
+      status: false,
+      message: err.toString() || "Internal Server Error",
+      data: null,
+    });
+  }
+};
+
+exports.menu_audit_report = async (req, res) => {
+  try {
+    const sellerId = req.query.seller_id;
+
+     // Find the seller by sellerId
+     const seller = await Seller.findOne({ user_id: sellerId });
+    
+     if (!seller) {
+       return res.status(200).json({ success: false, message: 'Seller not found',data: null });
+     }
+
+    let menuAuditReport;
+
+    if (menuAuditReport.length > 0) {
+      res.json({ success: true, message: "Data found", data: menuAuditReport });
+    } else {
+      res.json({ success: false, message: "No data found", data: [] });
+    }
+
+  } catch (err) {
+    res.status(500).send({
+      status: false,
+      message: err.toString() || "Internal Server Error",
+      data: null,
+    });
+  }
 };

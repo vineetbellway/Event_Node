@@ -345,10 +345,16 @@ router.get("/repated-guests-for-seller",auth,reportController.get_repeated_guest
 router.get("/number-guests-for-seller",auth,reportController.get_number_of_guests_for_seller);
 
 // get fns moving items report
-router.get("/fns-moving-items-report",reportController.fns_moving_item_report);
+router.get("/fns-moving-items-report",auth,reportController.fns_moving_item_report);
 
 // get guest potential report
-router.get("/guest-potential-report",reportController.guest_potential_report);
+router.get("/guest-potential-report",auth,reportController.guest_potential_report);
+
+// get guest presence report
+//router.get("/guest-presence-report",reportController.guest_presence_report);
+
+// get menu audit report
+router.get("/menu-audit-report",reportController.menu_audit_report);
 
 
 // get event validator detail API
@@ -379,7 +385,7 @@ router.get("/get-menu-items",auth,menuController.get_menu_items);
 router.get("/get-guest-coupon-balance",auth,bookingController.get_guest_coupon_balance);
 
 // get guest list API
-router.get("/get-guest-list-for-banner",auth, bannerController.get_guest_list_for_banner);
+router.get("/get-guest-list-for-banner", bannerController.get_guest_list_for_banner);
 
 // book menu items API
 router.post("/book-menu-items",auth, menuController.book_menu_items);

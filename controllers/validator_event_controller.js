@@ -339,7 +339,7 @@ exports.add_event_validator = async(req, res, next) => {
    
 
      // Check if a validator already exists in same event
-     const existingRoleInEventValidator = await EventValidator.findOne({validator_id: req.body.validator_id , event_id: req.body.event_id });
+   /*  const existingRoleInEventValidator = await EventValidator.findOne({validator_id: req.body.validator_id , event_id: req.body.event_id });
 
      if (existingRoleInEventValidator) {
        return res.status(409).send({
@@ -347,7 +347,7 @@ exports.add_event_validator = async(req, res, next) => {
          message: "Validator is already added to event",
          data:null
        });
-     }
+     }*/
 
 
       EventValidator(req.body)
@@ -438,7 +438,10 @@ exports.get_event_validators_list = async (req, res) => {
     console.log("eventValidators",eventValidators)
     const allValidatorList = eventValidators
       .filter((val) => sellerDistrict === val.validator_data[0].district)
+    
       .map((val) => ({
+       
+        
         _id: val.validator_data[0]._id,
         user_id: val.validator_data[0].user_id, // Assuming this is the user_id from the 'validators' collection
         full_name: val.validator_data[0].full_name, // Assuming this is the full_name from the 'validators' collection
@@ -452,6 +455,8 @@ exports.get_event_validators_list = async (req, res) => {
         validator_status: val.status,
         //...eventValidators
       }));
+
+      console.log("allValidatorList",allValidatorList)
 
     if (allValidatorList.length > 0) {
       res.status(200).send({
@@ -837,7 +842,7 @@ exports.update_event_validator= async (req, res, next) => {
     }
 
     // Check if a validator already exists in the same event
-      const existingRoleInEventValidator = await EventValidator.findOne({
+    /*  const existingRoleInEventValidator = await EventValidator.findOne({
         validator_id: validatorId,
         event_id: eventId,
         _id: { $ne: eventValidatorId } // Exclude the current eventValidatorId
@@ -849,7 +854,7 @@ exports.update_event_validator= async (req, res, next) => {
         message: "Validator is already added to event",
         data:null
       });
-    }
+    }*/
 
     var eventValidatorUpdateData = {'role' : role, 'validator_id' : validatorId};
 

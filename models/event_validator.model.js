@@ -23,7 +23,7 @@ const schema = new mongoose.Schema(
     role: {
       type: String,
       enum: ['cashier', 'bar_attender', 'booker'], // Add your allowed roles
-      required: true,
+      /*required: true,*/
     },
     status: {
       type: String,

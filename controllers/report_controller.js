@@ -20,7 +20,7 @@ exports.get_item_sales_report = async (req, res) => {
         const event = await EventModel.findById(eventId);
 
         if (!event) {
-            return res.status(200).json({ success: false, message: 'Event not found' , data :null });
+            return res.status(200).json({ status: false, message: 'Event not found' , data :null });
           }
     
         // Perform aggregation to calculate item sales report
@@ -80,9 +80,9 @@ exports.get_item_sales_report = async (req, res) => {
                     "itemName": item.itemName
                 });
             }
-            res.json({ success: true, message : "Data found",  data: allData });
+            res.json({ status: true, message : "Data found",  data: allData });
         } else {
-            res.json({ success: false, message : "No data found",  data: [] });
+            res.json({ status: false, message : "No data found",  data: [] });
         }
     
         
@@ -105,7 +105,7 @@ exports.get_number_of_guests_for_event = async (req, res) => {
         const event = await EventModel.findById(eventId);
     
         if (!event) {
-          return res.status(200).json({ success: false, message: 'Event not found' , data :null });
+          return res.status(200).json({ status: false, message: 'Event not found' , data :null });
         }
     
         // Calculate the number of guests attending the event
@@ -129,7 +129,7 @@ exports.get_number_of_guests_for_event = async (req, res) => {
         
         const totalGuests = numberOfGuests.length > 0 ? numberOfGuests[0].totalGuests : 0;
     
-        res.json({ success: true, message : "Data found", data : [{ event: event.name, numberOfGuests: totalGuests }] });
+        res.json({ status: true, message : "Data found", data : [{ event: event.name, numberOfGuests: totalGuests }] });
       } catch (err) {
         res.status(500).send({
             status: false,
@@ -148,7 +148,7 @@ exports.get_repeated_guests_for_seller_attending_events = async (req, res) => {
         const sellerEvents = await EventModel.find({ seller_id: sellerId }, '_id');
     
         if (sellerEvents.length === 0) {
-          return res.json({ success: true, message: 'No events found for the seller',data:[] });
+          return res.json({ status: false, message: 'No events found for the seller',data:[] });
         }
     
         // Get event IDs associated with the seller's events
@@ -178,9 +178,9 @@ exports.get_repeated_guests_for_seller_attending_events = async (req, res) => {
           }
         ]);
         if(repeatedGuests.length > 0){
-            res.json({ success: true, message: 'Data found', repeatedGuests });
+            res.json({ status: true, message: 'Data found', repeatedGuests });
         } else {
-            res.json({ success: true, message: 'No data found', repeatedGuests });
+            res.json({ status: false, message: 'No data found', repeatedGuests });
         }
         
       } catch (err) {
@@ -200,7 +200,7 @@ exports.get_number_of_guests_for_seller = async (req, res) => {
         const seller = await Seller.findOne({ user_id: sellerId });
     
         if (!seller) {
-          return res.status(200).json({ success: false, message: 'Seller not found',data: null });
+          return res.status(200).json({ status: false, message: 'Seller not found',data: null });
         }
         
         // Find all events created by the seller
@@ -208,7 +208,7 @@ exports.get_number_of_guests_for_seller = async (req, res) => {
       
     
         if (sellerEvents.length == 0) {
-          return res.json({ success: true,message: 'Seller events not found', data :[{seller: seller.company_name, numberOfGuests: 0}] });
+          return res.json({ status: false,message: 'Seller events not found', data :[{seller: seller.company_name, numberOfGuests: 0}] });
         }
     
         // Get event IDs associated with the seller's events
@@ -236,9 +236,9 @@ exports.get_number_of_guests_for_seller = async (req, res) => {
     
         const totalGuests = numberOfGuests.length > 0 ? numberOfGuests[0].totalGuests : 0;
     
-        res.json({ success: true,message: 'Data found', data : [{seller: seller.company_name, numberOfGuests: totalGuests}] });
+        res.json({ status: true,message: 'Data found', data : [{seller: seller.company_name, numberOfGuests: totalGuests}] });
       } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+        res.status(500).json({ status: false, error: err.message });
       }
 };
 
@@ -254,7 +254,7 @@ exports.fns_moving_item_report = async (req, res) => {
 
 
       if (!event) {
-          return res.status(200).json({ success: false, message: 'Event not found' , data :null });
+          return res.status(200).json({ status: false, message: 'Event not found' , data :null });
       }
 
       if(event.type="food_event"){
@@ -371,9 +371,9 @@ exports.fns_moving_item_report = async (req, res) => {
                   "itemName": item.itemName,
               });
           }
-          res.json({ success: true, message : "Data found",  data: allData });
+          res.json({ status: true, message : "Data found",  data: allData });
       } else {
-          res.json({ success: false, message : "No data found",  data: [] });
+          res.json({ status: false, message : "No data found",  data: [] });
       }
   
       
@@ -394,7 +394,7 @@ exports.guest_potential_report = async (req, res) => {
     const event = await EventModel.findById(eventId);
 
     if (!event) {
-      return res.status(200).json({ success: false, message: 'Event not found', data: null });
+      return res.status(200).json({ status: false, message: 'Event not found', data: null });
     }
 
     let potentialReport;
@@ -519,9 +519,9 @@ exports.guest_potential_report = async (req, res) => {
     }
 
     if (potentialReport.length > 0) {
-      res.json({ success: true, message: "Data found", data: potentialReport });
+      res.json({ status: true, message: "Data found", data: potentialReport });
     } else {
-      res.json({ success: false, message: "No data found", data: [] });
+      res.json({ status: false, message: "No data found", data: [] });
     }
 
   } catch (err) {
@@ -541,7 +541,7 @@ exports.menu_audit_report = async (req, res) => {
      const seller = await Seller.findOne({ user_id: sellerId });
     
      if (!seller) {
-       return res.status(200).json({ success: false, message: 'Seller not found',data: null });
+       return res.status(200).json({ status: false, message: 'Seller not found',data: null });
      }
 
      // Find all events and event's menu created by the seller
@@ -586,9 +586,9 @@ exports.menu_audit_report = async (req, res) => {
     console.log("menus",menus.length)
 
     if (menus.length > 0) {
-      res.json({ success: true, message: "Data found", data: menus });
+      res.json({ status: true, message: "Data found", data: menus });
     } else {
-      res.json({ success: false, message: "No data found", data: [] });
+      res.json({ status: false, message: "No data found", data: [] });
     }
 
   } catch (err) {
@@ -608,7 +608,7 @@ exports.revenue_comparison_report = async (req, res) => {
     const event = await EventModel.findById(eventId);
 
     if (!event) {
-      return res.status(200).json({ success: false, message: 'Event not found', data: null });
+      return res.status(200).json({ status: false, message: 'Event not found', data: null });
     }
 
     let potentialReport;
@@ -676,9 +676,9 @@ exports.revenue_comparison_report = async (req, res) => {
     }
 
     if (potentialReport.length > 0) {
-      res.json({ success: true, message: "Data found", data: potentialReport });
+      res.json({ status: true, message: "Data found", data: potentialReport });
     } else {
-      res.json({ success: false, message: "No data found", data: [] });
+      res.json({ status: false, message: "No data found", data: [] });
     }
 
   } catch (err) {

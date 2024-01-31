@@ -7,9 +7,9 @@ const { baseStatus, userStatus } = require("../../utils/enumerator");
 
 exports.getCounts = async (req, res) => {
   try {
-    const totalSellers = await Seller.countDocuments();
-    const totalValidators = await Validator.countDocuments();
-    const totalGuests = await Guest.countDocuments();
+    const totalSellers = await Seller.countDocuments({ status: "active" });
+    const totalValidators = await Validator.countDocuments({ status: "active" });
+    const totalGuests = await Guest.countDocuments({ status: "active" });
 
     res.status(200).json({
       status: true,

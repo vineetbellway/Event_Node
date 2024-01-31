@@ -88,7 +88,7 @@ exports.get_validators = async (req, res) => {
           res.status(200).send({
             status: true,
             message: "success",
-            result,
+            data:result,
           });
         }
       })

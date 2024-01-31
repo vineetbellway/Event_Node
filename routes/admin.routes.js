@@ -35,6 +35,7 @@ const guestController = require("../controllers/admin/guest_controller");
 const validatorController = require("../controllers/admin/validator_controller");
 const businessSettingController = require("../controllers/admin/business_setting_controller");
 const dashboardController = require("../controllers/admin/dashboard_controller");
+const subscriptionPlanController = require("../controllers/subscription_plan_controller");
 
 // auth routes
 
@@ -77,6 +78,14 @@ router.delete("/validator/:id", admin_auth, validatorController.delete_validator
 
 router.post("/manage-business-settings",admin_auth,businessSettingController.manageSetting);
 router.get("/get-business-settings",admin_auth,businessSettingController.getAllSettings);
+
+// subscription plan routes
+
+router.post("/subscription_plan",admin_auth,subscriptionPlanController.create_subscription_plan);
+router.get("/subscription_plan",admin_auth,subscriptionPlanController.get_subscription_plans);
+router.get("/subscription_plan/:id",admin_auth,subscriptionPlanController.get_subscription_plan);
+router.put("/subscription_plan/:id",admin_auth,subscriptionPlanController.update_subscription_plan);
+router.delete("/subscription_plan/:id",admin_auth,subscriptionPlanController.delete_subscription_plan);
 
 
 module.exports = router;

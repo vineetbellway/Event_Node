@@ -7,26 +7,24 @@ const checkSellerMemberShipPlanStatus = async (req, res, next) => {
     try {        
         Membership.findOne({seller_id: seller_id},{status: 'active'})
           .then((result) => {
-             // console.log("result",result)
             if(result){
-             // console.log("inside this");  
               next();
             } else {
-                res.send({
+                return res.send({
                     status: false,
                     message: "Please purchase memembership plan to access this feature",
                 }); 
             }            
           })
           .catch((error) => {
-            res.send({
+            return res.send({
               status: false,
               message: error.toString() ?? "Error",
             });
           });
     } catch (error) {
         console.log("error",error);
-        res.status(500).send({
+        return res.status(500).send({
           status: false,
           message: "failure",
           error: error ?? "Internal Server Error",

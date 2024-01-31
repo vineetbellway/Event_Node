@@ -102,15 +102,12 @@ router.delete("/event/:id",auth,  eventController.delete_event);
 router.delete("/event",auth,  eventController.delete_events);
 
 router.post("/menu",auth,menuController.create_menu);
-router.put("/menu/:id", auth, menuController.update_menu);
+router.put("/menu/:id",auth, menuController.update_menu);
 router.get("/menu", auth,menuController.get_menus);
 router.get("/menu_by_event_id/:id/:guest_id",auth, menuController.get_menu_by_event_id);
 router.get("/menu_by_event_id_for_entry_food_event/:id/:guest_id",auth, menuController.get_menu_by_event_id_for_entry_food_event);
-
 router.get("/menu_by_event_id_before_entry_food_event/:id/:guest_id",menuController.get_menu_by_event_id_before_entry_food_event);
 router.get("/menu_by_event_id_3_weeks_ago/:id/:guest_id",menuController.get_menu_by_event_id_3_weeks_ago);
-
-
 router.get("/menu/:id", auth,menuController.get_menu);
 router.delete("/menu/:id", auth, menuController.delete_menu);
 router.delete("/menu", auth, menuController.delete_menus);
@@ -355,6 +352,9 @@ router.get("/guest-potential-report",auth,reportController.guest_potential_repor
 
 // get menu audit report
 router.get("/menu-audit-report",reportController.menu_audit_report);
+
+// get revenue comparison report
+router.get("/revenue-comparison-report",reportController.revenue_comparison_report);
 
 
 // get event validator detail API

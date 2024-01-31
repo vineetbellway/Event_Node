@@ -544,10 +544,49 @@ exports.menu_audit_report = async (req, res) => {
        return res.status(200).json({ success: false, message: 'Seller not found',data: null });
      }
 
-    let menuAuditReport;
+     // Find all events and event's menu created by the seller
+     const menus = await EventModel.aggregate([
+      {
+        $match: { seller_id: new mongoose.Types.ObjectId(sellerId) }
+      },
+  
+      {
+        $lookup: {
+          from: 'menuitemrecords',
+          localField: '_id',
+          foreignField: 'event_id',
+          as: 'menu_items'
+        }
+      },
+      {
+        $unwind: '$menu_items'
+      },
+      {
+        $project: {
+          _id: '$menu_items._id',
+          event_id: '$menu_items.event_id',
+          name: '$menu_items.name',
+          uom_id: '$menu_items.uom_id',
+          category_id: '$menu_items.category_id',
+          total_stock: '$menu_items.total_stock',
+          cost_price: '$menu_items.cost_price',
+          total_stock: '$menu_items.total_stock',
+          selling_price: '$menu_items.selling_price',
+          is_limited: '$menu_items.is_limited',
+          limited_count: '$menu_items.limited_count',
+          status: '$menu_items.status',
+          createdAt: '$menu_items.createdAt',
+          updatedAt: '$menu_items.updatedAt',
+          __v: '$menu_items.__v',
+          
+        }
+      }
+    ]);
+      
+    console.log("menus",menus.length)
 
-    if (menuAuditReport.length > 0) {
-      res.json({ success: true, message: "Data found", data: menuAuditReport });
+    if (menus.length > 0) {
+      res.json({ success: true, message: "Data found", data: menus });
     } else {
       res.json({ success: false, message: "No data found", data: [] });
     }
@@ -560,3 +599,94 @@ exports.menu_audit_report = async (req, res) => {
     });
   }
 };
+
+exports.revenue_comparison_report = async (req, res) => {
+  try {
+    const eventId = req.query.event_id;
+
+    // Find the event by eventId
+    const event = await EventModel.findById(eventId);
+
+    if (!event) {
+      return res.status(200).json({ success: false, message: 'Event not found', data: null });
+    }
+
+    let potentialReport;
+
+    if (event.type === "food_event") {
+      console.log("event",event)
+
+      potentialReport = await BookedMenuItem.aggregate([
+        {
+          $lookup: {
+            from: 'menuitempayments',
+            localField: 'payment_id',
+            foreignField: '_id',
+            as: 'menu_item_payment_data',
+          },
+        },
+        {
+          $unwind: '$menu_item_payment_data' // Deconstruct the array
+        },
+        {
+          $match: { "menu_item_payment_data.is_approved": "yes", event_id: new mongoose.Types.ObjectId(eventId) }
+        },
+        {
+          $group: {
+            _id: null,
+            totalAmount: { $sum: '$menu_item_payment_data.amount' }, // Sum up the total amount for all guests
+          }
+        },
+        {
+          $project: {
+            _id: 0,
+            totalAmount: 1,
+          }
+        }
+      ]);
+    } else {
+      potentialReport = await BookingMenu.aggregate([
+        {
+          $lookup: {
+            from: 'bookingpayments',
+            localField: 'payment_id',
+            foreignField: '_id',
+            as: 'menu_item_payment_data',
+          },
+        },
+        {
+          $unwind: '$menu_item_payment_data' // Deconstruct the array
+        },
+        {
+          $match: { "menu_item_payment_data.status": "active", event_id: new mongoose.Types.ObjectId(eventId) }
+        },
+        {
+          $group: {
+            _id: null,
+            totalAmount: { $sum: '$menu_item_payment_data.amount' }, // Sum up the total amount for all guests
+          }
+        },
+        {
+          $project: {
+            _id: 0,
+            totalAmount: 1,
+          }
+        }
+      ]);
+    }
+
+    if (potentialReport.length > 0) {
+      res.json({ success: true, message: "Data found", data: potentialReport });
+    } else {
+      res.json({ success: false, message: "No data found", data: [] });
+    }
+
+  } catch (err) {
+    res.status(500).send({
+      status: false,
+      message: err.toString() || "Internal Server Error",
+      data: null,
+    });
+  }
+};
+

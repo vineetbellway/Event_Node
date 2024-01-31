@@ -7,7 +7,7 @@ const path = require('path');
 // Set up storage for multer
 const storage = multer.diskStorage({
    destination: function (req, file, cb) {
-     cb(null, 'uploads/events');
+     cb(null, 'uploads/logo');
    },
    filename: function (req, file, cb) {
      cb(null, Date.now() + path.extname(file.originalname));
@@ -17,17 +17,7 @@ const storage = multer.diskStorage({
    storage: storage
  });
 
- const banner_storage = multer.diskStorage({
-   destination: function (req, file, cb) {
-     cb(null, 'uploads/banners');
-   },
-   filename: function (req, file, cb) {
-     cb(null, Date.now() + path.extname(file.originalname));
-   },
- });
- var banner_upload = multer({
-   storage: banner_storage
- });
+
 
 const authController = require("../controllers/admin/auth_controller");
 const sellerController = require("../controllers/admin/seller_controller");
@@ -76,7 +66,7 @@ router.delete("/validator/:id", admin_auth, validatorController.delete_validator
 
 // business setting routes
 
-router.post("/manage-business-settings",admin_auth,businessSettingController.manageSetting);
+router.post("/manage-business-settings",admin_auth,upload.single('logo'),businessSettingController.manageSetting);
 router.get("/get-business-settings",admin_auth,businessSettingController.getAllSettings);
 
 // subscription plan routes

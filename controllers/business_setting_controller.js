@@ -3,12 +3,12 @@ const mongoose = require("mongoose");
 const { baseStatus, userStatus } = require("../utils/enumerator");
 
 
-exports.getSettingByKey = async (req, res) => {
+exports.getBusinessSettings = async (req, res) => {
   try {
     const { key } = req.params;
 
     // Find the setting by key
-    const setting = await BusinessSettings.findOne({ key });
+    const setting = await BusinessSettings.find();
 
     if (!setting) {
       return res.status(200).json({

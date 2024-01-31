@@ -50,7 +50,7 @@ exports.get_guests = async (req, res) => {
       {
         $match: {
           $or: [
-            { "contact_name": { $regex: search_key, $options: "i" } },
+            { "full_name": { $regex: search_key, $options: "i" } },
             { "user.code_phone": { $regex: search_key, $options: "i" } },
             {
               "user.code_phone": {

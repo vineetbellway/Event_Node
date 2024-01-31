@@ -8,7 +8,7 @@ const { baseStatus, userStatus } = require("../../utils/enumerator");
 
 exports.get_guests = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 1;
+  const limit = parseInt(req.query.limit) || 10;
   var search_key = req.query.search_key;
   const sanitizedSearchKey = search_key.trim(); 
 

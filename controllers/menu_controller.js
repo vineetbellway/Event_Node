@@ -8,6 +8,8 @@ const EventModel = require("../models/event.model");
 const Guest = require("../models/guest.model");
 const BookingMenu = require("../models/booking_menu.model");
 const BookingPayments = require("../models/booking_payments.model");
+const MenuItemRecord = require("../models/menu_item_record.model");
+
 
 exports.create_menu = async (req, res, next) => {
   if (!req.body) {
@@ -2478,8 +2480,16 @@ exports.update_menu = async (req, res, next) => {
       }
 
       Menu.findByIdAndUpdate(id, req.body, { new: true })
-        .then((result) => {
+        .then(async(result) => {
           if (result) {
+
+            req.body.menu_id = result._id;
+
+            // add menu item record
+
+            await MenuItemRecord(req.body).save();
+
+
             res.status(201).send({
               status: true,
               message: "Updated",

@@ -90,7 +90,7 @@ exports.get_sellers = async (req, res) => {
           res.status(200).send({
             status: true,
             message: "success",
-            result
+            data :result
           });
         }
       })

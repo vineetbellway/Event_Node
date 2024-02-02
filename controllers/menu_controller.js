@@ -990,29 +990,85 @@ exports.get_menu_by_event_id_for_entry_food_event = async (req, res) => {
           
         
   
-          const selectedMenuItems2 = await BookingMenu.find().populate('menu_id');
+           const selectedMenuItems2dd = await BookingMenu.find().populate('menu_id');
 
-          console.log("selectedMenuItems2",selectedMenuItems2)
-  
+       
+        const result = await BookingMenu.aggregate([
+          {
+            $lookup: {
+              from: 'bookingpayments',
+              localField: 'payment_id',
+              foreignField: '_id',
+              as: 'bookingPayment'
+            }
+          },
+          {
+            $match: {
+              'bookingPayment.status': 'active',
+            },
+          }
+        ]);
+        
+        // Extracting payment IDs
+        const paymentIds = result.map(item => item.payment_id);
+        
+        // Now perform a find query to populate 'menu_id'
+        const selectedMenuItems2 = await BookingMenu.find({ payment_id: { $in: paymentIds } }).populate('menu_id');
+        
+        
+
+        //    console.log("selectedMenuItems2",selectedMenuItems2)
   
   
           // Filter menu items based on the selected limited item's category
-          const filteredResults2 = filteredResults.filter(item => {
-            console.log("filteredResults",filteredResults)
-            const menuRecord = selectedMenuItems2.find(selectedItem => {
+          const filteredResults2old = selectedMenuItems2.filter(item => {
+            const menuRecord = selectedMenuItems2.find((selectedItem) => {
+                            
               return (
-                selectedItem.menu_id 
+                selectedItem.menu_id
               );
             });
   
-            return menuRecord;
+             return menuRecord;
           });
 
-          //console.log("selectedMenuItems2",selectedMenuItems2);
-          //console.log("filteredResults",filteredResults);
-         // console.log("filteredResults2",filteredResults2);
+
+
+            // Create a Set to store unique menu _id values
+            const uniqueMenuIdsSet = new Set();
+
+            // Iterate through selectedMenuItems2 and add unique _id values to the Set
+            selectedMenuItems2.forEach(item => {
+                uniqueMenuIdsSet.add(item.menu_id._id.toString());
+            });
+
+            // Convert the Set back to an array
+            const uniqueMenuIds = [...uniqueMenuIdsSet];
+
+            // Create an array to store unique menu items
+            const uniqueMenuItems = [];
+
+            // Iterate through selectedMenuItems2 and add unique menu items to the array
+            selectedMenuItems2.forEach(item => {
+                if (uniqueMenuIds.includes(item.menu_id._id.toString())) {
+                    uniqueMenuItems.push(item.menu_id);
+                    // Remove the id from the set to avoid duplicates
+                    uniqueMenuIdsSet.delete(item.menu_id._id.toString());
+                }
+            });
+
+          // Construct the filtered result object
+
+
+
+
+        
+
+       //    console.log("selectedMenuItems2",selectedMenuItems2);
+        //   console.log("filteredResults",filteredResults);
+   // console.log("filteredResults2",filteredResults2);
   
-          var finalResponse = (selectedMenuItems2.length == 0) ? filteredResults : filteredResults2;
+          var finalResponse = (selectedMenuItems2.length == 0) ? filteredResults : uniqueMenuItems;
   
           if (finalResponse.length > 0) {
             return res.status(200).send({
@@ -3266,7 +3322,7 @@ exports.approve_menu_payment = async (req, res, next) => {
        
            await Menu.findByIdAndUpdate(menu_id, { $set: { total_stock: newTotalStock } });
           
-           await Menu.findByIdAndUpdate(menu_id, { $set: { limited_count: newCount } });
+          // await Menu.findByIdAndUpdate(menu_id, { $set: { limited_count: newCount } });
            
            
 

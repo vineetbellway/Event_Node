@@ -2916,153 +2916,304 @@ exports.get_booked_menu_items = async (req, res) => {
     try {
       var payment_id  = req.query.payment_id;
 
-      console.log("payment_id",payment_id)
+      console.log("payment_id",payment_id);
 
-      // Check the existence of payment_id in the BookedMenuItem collection
-      const bookedMenuResult = await BookedMenuItem.find({ payment_id: payment_id });
+      var entryFoodBookedMenuData = await BookingMenu.find({"payment_id":payment_id});
 
-      if (!bookedMenuResult || bookedMenuResult.length === 0) {
-        res.status(404).send({ status: false, message: "No booking found for the provided payment_id", data: [] });
-        return;
-      }
+      console.log("entryFoodBookedMenuData",entryFoodBookedMenuData)
 
-      const guest_id = bookedMenuResult[0].guest_id;
-      const event_id = bookedMenuResult[0].event_id;
-
-      const paymentData = await MenuItemPayments.findById(payment_id);
+      if(entryFoodBookedMenuData.length > 0){
 
 
-   
-      
+       
 
-      // Fetch relevant data from MenuItem collection based on guest_id and event_id
-      const menuItemResult = await MenuItem.aggregate([
-        {
-          $match: {
-            guest_id: new mongoose.Types.ObjectId(guest_id),
-            event_id: new mongoose.Types.ObjectId(event_id),
+        const guest_id = entryFoodBookedMenuData[0].guest_id;
+        const event_id = entryFoodBookedMenuData[0].event_id;
+
+        const paymentData = await BookingPayments.findById(payment_id);
+
+
+    
+        
+
+        // Fetch relevant data from MenuItem collection based on guest_id and event_id
+        const menuItemResult = await MenuItem.aggregate([
+          {
+            $match: {
+              guest_id: new mongoose.Types.ObjectId(guest_id),
+              event_id: new mongoose.Types.ObjectId(event_id),
+            },
           },
-        },
-      ]);
+        ]);
 
-      // Fetch menu events for the specific event_id
-      const event_menus = await Menu.aggregate([
-        {
-          $match: {
-            event_id: new mongoose.Types.ObjectId(event_id),
+        // Fetch menu events for the specific event_id
+        const event_menus = await Menu.aggregate([
+          {
+            $match: {
+              event_id: new mongoose.Types.ObjectId(event_id),
+            },
           },
-        },
-        {
-          $lookup: {
-            from: "uoms",
-            localField: "uom_id",
-            foreignField: "_id",
-            as: "uom_data",
+          {
+            $lookup: {
+              from: "uoms",
+              localField: "uom_id",
+              foreignField: "_id",
+              as: "uom_data",
+            },
           },
-        },
-        {
-          $lookup: {
-            from: "categories",
-            localField: "category_id",
-            foreignField: "_id",
-            as: "category_data",
+          {
+            $lookup: {
+              from: "categories",
+              localField: "category_id",
+              foreignField: "_id",
+              as: "category_data",
+            },
           },
-        },
-        {
-          $unwind: "$uom_data", // Unwind to access the uom_data
-        },
-        {
-          $unwind: "$category_data", // Unwind to access the category_data
-        },
-        {
-          $project: {
-            _id: 1,
-            event_id: 1,
-            name: 1,
-            uom_id: 1,
-            category_id: 1,
-            total_stock: 1,
-            cost_price: 1,
-            selling_price: 1,
-            uom: "$uom_data.name",
-            category: "$category_data.name",
-            status: 1,
-            is_limited: 1,
-            limited_count: 1,
-            __v: 1,
-            createdAt: 1,
-            updatedAt: 1,
+          {
+            $unwind: "$uom_data", // Unwind to access the uom_data
           },
-        },
-      ]);
+          {
+            $unwind: "$category_data", // Unwind to access the category_data
+          },
+          {
+            $project: {
+              _id: 1,
+              event_id: 1,
+              name: 1,
+              uom_id: 1,
+              category_id: 1,
+              total_stock: 1,
+              cost_price: 1,
+              selling_price: 1,
+              uom: "$uom_data.name",
+              category: "$category_data.name",
+              status: 1,
+              is_limited: 1,
+              limited_count: 1,
+              __v: 1,
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          },
+        ]);
 
 
-      var guest_record = await Guest.aggregate([
-        {
-          $match: {
-            user_id: new mongoose.Types.ObjectId(guest_id),
+        var guest_record = await Guest.aggregate([
+          {
+            $match: {
+              user_id: new mongoose.Types.ObjectId(guest_id),
+            },
           },
-        },
-        {
-          $lookup: {
-            from: "users",
-            localField: "ser_id",
-            foreignField: "_id",
-            as: "user_data",
+          {
+            $lookup: {
+              from: "users",
+              localField: "ser_id",
+              foreignField: "_id",
+              as: "user_data",
+            },
           },
-        },
-      ]);
+        ]);
 
-      console.log("guest_record", guest_record);
-      
-      // Check if cover charge exceeds the sum of menu item prices
+        console.log("guest_record", guest_record);
+        
+        // Check if cover charge exceeds the sum of menu item prices
 
-      const eventRecord = await EventModel.findById(event_id);
-      console.log("rr",eventRecord)
-      if(eventRecord.type == "food_event"){
-      /*  if(eventRecord.is_cover_charge_added == "yes"){*/
-          var sum = 0;
-          for (const item of bookedMenuResult) {
-            if (item && typeof item.quantity === 'number' && item.quantity > 0) {
-              const menu_id = item.menu_id;
-              const menuRecord = await Menu.findById(menu_id);
+        const eventRecord = await EventModel.findById(event_id);
+        console.log("rr",eventRecord)
+        if(eventRecord.type == "entry_food_event"){
+            var sum = 0;
+            for (const item of entryFoodBookedMenuData) {
+              if (item && typeof item.quantity === 'number' && item.quantity > 0) {
+                const menu_id = item.menu_id;
+                const menuRecord = await Menu.findById(menu_id);
 
-              if (menuRecord) {
-                sum += menuRecord.selling_price * item.quantity;
+                if (menuRecord) {
+                  sum += menuRecord.selling_price * item.quantity;
+                }
               }
             }
-          }
 
-       /* } else {
-           var sum = paymentData.amount;
-        }*/
+    
+        }
+        
+
+        // Approve menu item payments
+        const result = entryFoodBookedMenuData.map(item1 => {
+          // Find the matching event_menu for the current item1
+          const matchingEventMenu = event_menus.find(event => event.event_id.equals(item1.event_id) && event._id.equals(item1.menu_id));
+        //  console.log("item1",item1)
+          // Find the matching guest record for the current item1
+          const matchingGuestRecord = guest_record.find(guest => guest.user_id.equals(item1.guest_id));
+          console.log("matchingGuestRecord",matchingGuestRecord)
+          // Assign the event_menu information to the current item1
+          return {
+            ...item1.toObject(),
+            event_menu: matchingEventMenu || null,
+            guest_record : matchingGuestRecord || null
+          };
+        });
+
+        console.log("result",result);
+        if (result.length > 0) {
+          console.log("result");
+          res.status(200).send({ status: true, message: "Data found", data: { total_selling_price: sum, menu_list: result } });
+        } else {
+          res.status(200).send({ status: true, message: "No Data found", data: [] });
+        }
+
+      } else {
+            // Check the existence of payment_id in the BookedMenuItem collection
+            const bookedMenuResult = await BookedMenuItem.find({ payment_id: payment_id });
+
+            if (!bookedMenuResult || bookedMenuResult.length === 0) {
+              res.status(404).send({ status: false, message: "No booking found for the provided payment_id", data: [] });
+              return;
+            }
+
+            const guest_id = bookedMenuResult[0].guest_id;
+            const event_id = bookedMenuResult[0].event_id;
+
+            const paymentData = await MenuItemPayments.findById(payment_id);
+
+
+        
+            
+
+            // Fetch relevant data from MenuItem collection based on guest_id and event_id
+            const menuItemResult = await MenuItem.aggregate([
+              {
+                $match: {
+                  guest_id: new mongoose.Types.ObjectId(guest_id),
+                  event_id: new mongoose.Types.ObjectId(event_id),
+                },
+              },
+            ]);
+
+            // Fetch menu events for the specific event_id
+            const event_menus = await Menu.aggregate([
+              {
+                $match: {
+                  event_id: new mongoose.Types.ObjectId(event_id),
+                },
+              },
+              {
+                $lookup: {
+                  from: "uoms",
+                  localField: "uom_id",
+                  foreignField: "_id",
+                  as: "uom_data",
+                },
+              },
+              {
+                $lookup: {
+                  from: "categories",
+                  localField: "category_id",
+                  foreignField: "_id",
+                  as: "category_data",
+                },
+              },
+              {
+                $unwind: "$uom_data", // Unwind to access the uom_data
+              },
+              {
+                $unwind: "$category_data", // Unwind to access the category_data
+              },
+              {
+                $project: {
+                  _id: 1,
+                  event_id: 1,
+                  name: 1,
+                  uom_id: 1,
+                  category_id: 1,
+                  total_stock: 1,
+                  cost_price: 1,
+                  selling_price: 1,
+                  uom: "$uom_data.name",
+                  category: "$category_data.name",
+                  status: 1,
+                  is_limited: 1,
+                  limited_count: 1,
+                  __v: 1,
+                  createdAt: 1,
+                  updatedAt: 1,
+                },
+              },
+            ]);
+
+
+            var guest_record = await Guest.aggregate([
+              {
+                $match: {
+                  user_id: new mongoose.Types.ObjectId(guest_id),
+                },
+              },
+              {
+                $lookup: {
+                  from: "users",
+                  localField: "ser_id",
+                  foreignField: "_id",
+                  as: "user_data",
+                },
+              },
+            ]);
+
+            console.log("guest_record", guest_record);
+            
+            // Check if cover charge exceeds the sum of menu item prices
+
+            const eventRecord = await EventModel.findById(event_id);
+            console.log("rr",eventRecord)
+            if(eventRecord.type == "food_event"){
+            /*  if(eventRecord.is_cover_charge_added == "yes"){*/
+                var sum = 0;
+                for (const item of bookedMenuResult) {
+                  if (item && typeof item.quantity === 'number' && item.quantity > 0) {
+                    const menu_id = item.menu_id;
+                    const menuRecord = await Menu.findById(menu_id);
+
+                    if (menuRecord) {
+                      sum += menuRecord.selling_price * item.quantity;
+                    }
+                  }
+                }
+
+            /* } else {
+                var sum = paymentData.amount;
+              }*/
+            }
+            
+
+            // Approve menu item payments
+            const result = bookedMenuResult.map(item1 => {
+              // Find the matching event_menu for the current item1
+              const matchingEventMenu = event_menus.find(event => event.event_id.equals(item1.event_id) && event._id.equals(item1.menu_id));
+            //  console.log("item1",item1)
+              // Find the matching guest record for the current item1
+              const matchingGuestRecord = guest_record.find(guest => guest.user_id.equals(item1.guest_id));
+              console.log("matchingGuestRecord",matchingGuestRecord)
+              // Assign the event_menu information to the current item1
+              return {
+                ...item1.toObject(),
+                event_menu: matchingEventMenu || null,
+                guest_record : matchingGuestRecord || null
+              };
+            });
+            if (result.length > 0) {
+              console.log("result");
+              res.status(200).send({ status: true, message: "Data found", data: { total_selling_price: sum, menu_list: result } });
+            } else {
+              res.status(200).send({ status: true, message: "No Data found", data: [] });
+            }
       }
+
+
+
+
+
       
 
-      // Approve menu item payments
-      const result = bookedMenuResult.map(item1 => {
-        // Find the matching event_menu for the current item1
-        const matchingEventMenu = event_menus.find(event => event.event_id.equals(item1.event_id) && event._id.equals(item1.menu_id));
-      //  console.log("item1",item1)
-         // Find the matching guest record for the current item1
-         const matchingGuestRecord = guest_record.find(guest => guest.user_id.equals(item1.guest_id));
-        console.log("matchingGuestRecord",matchingGuestRecord)
-        // Assign the event_menu information to the current item1
-        return {
-          ...item1.toObject(),
-          event_menu: matchingEventMenu || null,
-          guest_record : matchingGuestRecord || null
-        };
-      });
 
-      console.log("result", result);
-
-      if (result.length > 0) {
-        console.log("result");
-        res.status(200).send({ status: true, message: "Data found", data: { total_selling_price: sum, menu_list: result } });
-      } else {
-        res.status(200).send({ status: true, message: "No Data found", data: [] });
-      }
+     
     } catch (error) {
       console.log("error", error);
       res.status(500).send({ status: false, message: error.toString() || "Internal Server Error", data: [] });

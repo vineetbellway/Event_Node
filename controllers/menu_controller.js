@@ -3592,7 +3592,6 @@ exports.getBookingDetailByPaymentId = async (req, res) => {
         {
           $match: {
             payment_id: new mongoose.Types.ObjectId(payment_id),
-            "payment_data.status": "pending",
             "payment_data.payment_mode": { $nin: ["upi"] },
           },
         },

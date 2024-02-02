@@ -902,6 +902,8 @@ exports.get_menu_by_event_id_for_entry_food_event = async (req, res) => {
       {
         $match: {
           event_id: new mongoose.Types.ObjectId(event_id),
+          total_stock: { $gt: 0 },
+          "status" : "active"  
         },
       },
       {
@@ -1003,11 +1005,21 @@ exports.get_menu_by_event_id_for_entry_food_event = async (req, res) => {
             }
           },
           {
+            $lookup: {
+              from: 'menus',
+              localField: 'menu_id',
+              foreignField: '_id',
+              as: 'menu'
+            }
+          },
+          {
             $match: {
               'bookingPayment.status': 'active',
             },
           }
         ]);
+
+        console.log("result",result)
         
         // Extracting payment IDs
         const paymentIds = result.map(item => item.payment_id);
@@ -1017,7 +1029,7 @@ exports.get_menu_by_event_id_for_entry_food_event = async (req, res) => {
         
         
 
-        //    console.log("selectedMenuItems2",selectedMenuItems2)
+           console.log("selectedMenuItems2",selectedMenuItems2)
   
   
           // Filter menu items based on the selected limited item's category
@@ -1034,31 +1046,36 @@ exports.get_menu_by_event_id_for_entry_food_event = async (req, res) => {
 
 
            // Create a Set to store unique menu _id values
-const uniqueMenuIdsSet = new Set();
+            const uniqueMenuIdsSet = new Set();
 
-// Iterate through selectedMenuItems2 and add unique _id values to the Set
-selectedMenuItems2.forEach(item => {
-    uniqueMenuIdsSet.add(item.menu_id._id.toString());
-});
+            // Iterate through selectedMenuItems2 and add unique _id values to the Set
+            selectedMenuItems2.forEach(item => {
+                uniqueMenuIdsSet.add(item.menu_id._id.toString());
+            });
 
-// Create an array to store unique menu items
-const uniqueMenuItems = [];
+            // Create an array to store unique menu items
+            const uniqueMenuItems = [];
 
-// Iterate through selectedMenuItems2 and add unique menu items to the array
-selectedMenuItems2.forEach(item => {
-    if (uniqueMenuIdsSet.has(item.menu_id._id.toString())) {
-        uniqueMenuItems.push(item.menu_id);
-        // Remove the id from the set to avoid duplicates
-        uniqueMenuIdsSet.delete(item.menu_id._id.toString());
-    }
-});
+            // Iterate through selectedMenuItems2 and add unique menu items to the array
+            selectedMenuItems2.forEach(item => {
+                if (uniqueMenuIdsSet.has(item.menu_id._id.toString())) {
+                    uniqueMenuItems.push(item.menu_id);
+                    // Remove the id from the set to avoid duplicates
+                    uniqueMenuIdsSet.delete(item.menu_id._id.toString());
+                }
+            });
 
 
           // Construct the filtered result object
-           console.log("uniqueMenuItems",uniqueMenuItems);
+       //    console.log("uniqueMenuItems",uniqueMenuItems);
+
+
+       console.log("filteredResults",filteredResults)
          
   
-          var finalResponse = (selectedMenuItems2.length == 0) ? filteredResults : uniqueMenuItems;
+        //  var finalResponse = (selectedMenuItems2.length == 0) ? filteredResults : uniqueMenuItems;
+
+        var finalResponse = menuResults;
   
           if (finalResponse.length > 0) {
             return res.status(200).send({

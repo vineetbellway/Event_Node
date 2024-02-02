@@ -1073,9 +1073,9 @@ exports.get_menu_by_event_id_for_entry_food_event = async (req, res) => {
        console.log("filteredResults",filteredResults)
          
   
-        //  var finalResponse = (selectedMenuItems2.length == 0) ? filteredResults : uniqueMenuItems;
+          var finalResponse = (selectedMenuItems2.length == 0) ? filteredResults : uniqueMenuItems;
 
-        var finalResponse = menuResults;
+      //  var finalResponse = menuResults;
   
           if (finalResponse.length > 0) {
             return res.status(200).send({

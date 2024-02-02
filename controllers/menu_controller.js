@@ -3573,6 +3573,7 @@ exports.getBookingDetailByPaymentId = async (req, res) => {
   var payment_id = req.query.payment_id;
   var search_key = req.query.search_key;
   const sanitizedSearchKey = search_key.trim(); 
+  console.log("payment_id",payment_id)
 
   if (!payment_id) {
     res.status(400).json({

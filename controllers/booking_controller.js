@@ -1916,6 +1916,7 @@ const book_event_menu_items = async (req, res, next) => {
          
             var paymentResponse =  await BookingPayments(bookingPaymentData).save();
             var paymentId = paymentResponse._id;
+            var all_booking_menu_data = [];
 
             for (const [key, value] of Object.entries(bookingMenu)) {
               var bookingMenuData = {
@@ -1926,17 +1927,20 @@ const book_event_menu_items = async (req, res, next) => {
                 "quantity": value.quantity,
                 "payment_id" : paymentId,
               };
+              all_booking_menu_data.push(bookingMenuData);
 
               await BookingMenu(bookingMenuData).save();
 
                
             }
 
+            console.log("bookingMenu",all_booking_menu_data)
+
             // Delete records from the menuItems model
             const deleteConditions = {
-              event_id: { $in: bookingMenu.map(item => item.event_id) },
-              menu_id: { $in: bookingMenu.map(item => item.menu_id) },
-              guest_id: { $in: bookingMenu.map(item => item.guest_id) },
+              event_id: { $in: all_booking_menu_data.map(item => item.event_id) },
+              menu_id: { $in: all_booking_menu_data.map(item => item.menu_id) },
+              guest_id: { $in: all_booking_menu_data.map(item => item.guest_id) },
             };
     
             await MenuItem.deleteMany(deleteConditions);

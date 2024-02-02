@@ -3582,8 +3582,6 @@ exports.getBookingDetailByPaymentId = async (req, res) => {
   } else {
     try {
       const pipeline = [
-       
-
         {
           $lookup: {
             from: "bookingpayments",
@@ -3592,18 +3590,13 @@ exports.getBookingDetailByPaymentId = async (req, res) => {
             as: "payment_data",
           },
         },
-
         {
           $match: {
             payment_id: new mongoose.Types.ObjectId(payment_id),
             "payment_data.status": "pending",
-             "payment_data.payment_mode": { $nin: ["upi"] } , 
-
+            "payment_data.payment_mode": { $nin: ["upi"] },
           },
         },
-
-
-      
         {
           $lookup: {
             from: "guests",
@@ -3612,15 +3605,14 @@ exports.getBookingDetailByPaymentId = async (req, res) => {
             as: "guest_data",
           },
         },
-       {
+        {
           $lookup: {
-            from: "users",  // Assuming the contact number is in the "users" table
-            localField: "guest_data.user_id",  // Assuming "user_id" links to the "users" table
+            from: "users",
+            localField: "guest_data.user_id",
             foreignField: "_id",
             as: "user_data",
           },
         },
-       
         {
           $match: {
             $or: [
@@ -3631,48 +3623,52 @@ exports.getBookingDetailByPaymentId = async (req, res) => {
                   $regex: new RegExp(`^(\\+${sanitizedSearchKey}|0?${sanitizedSearchKey})$`, 'i')
                 }
               },
-              // Add more conditions if needed
             ],
           },
         },
-        
         {
           $sort: { createdAt: -1 },
         },
+        {
+          $group: {
+            _id: "$payment_id",
+            data: { $first: "$$ROOT" }
+          }
+        }
       ];
 
       BookingMenu.aggregate(pipeline)
-        .then((result) => {
+        .then(async(result) => {
           console.log("result", result);
           var all_data = [];
           if (result && result.length > 0) {
-            for (const booking of result) {
-             
-             
-                const guestRecord = booking.guest_data[0];
-                guestRecord.contact_number = booking.user_data[0].code_phone;
-                console.log("record",booking.payment_data[0])
-                all_data.push({
-                  "guest_data": { ...guestRecord },
-                  "booking_data": {
-                    _id: booking._id,
-                    event_id: booking.event_id,
-                    guest_id: booking.guest_id,
-                    payment_mode: booking.payment_data[0].payment_mode,
-                    status: booking.payment_data[0].status,
-                    transaction_id: booking.payment_data[0].transaction_id,
-                    amount: booking.payment_data[0].amount,
-                    createdAt: booking.createdAt,
-                    updatedAt: booking.updatedAt,
-                    __v: booking.__v,
-                  },
-                });
-              
-            }
+            const booking = result[0].data; // Since we are grouping by payment_id and using $first, we can directly access the first element
+
+            const guestRecord = booking.guest_data[0]; // Extract the first element from guest_data array
+            guestRecord.contact_number = booking.user_data[0].code_phone;
+
+            var event_record = await EventModel.findById(booking.event_id); 
+
+            all_data.push({
+              "guest_data": { ...guestRecord, contact_number: booking.user_data[0].code_phone },
+              "booking_data": {
+                _id: booking._id,
+                event_id: booking.event_id,
+                event_type: event_record.type,
+                guest_id: booking.guest_id,
+                payment_mode: booking.payment_data[0].payment_mode,
+                status: booking.payment_data[0].status,
+                transaction_id: booking.payment_data[0].transaction_id,
+                amount: booking.payment_data[0].amount,
+                createdAt: booking.createdAt,
+                updatedAt: booking.updatedAt,
+                __v: booking.__v,
+              },
+            });
 
             res.status(200).json({
               status: true,
-              message: "Data found",
+              message: "Entry Food found",
               data: all_data,
             });
           } else {
@@ -3699,6 +3695,7 @@ exports.getBookingDetailByPaymentId = async (req, res) => {
     }
   }
 };
+
 
 
 

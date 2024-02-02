@@ -1086,7 +1086,7 @@ exports.get_guest_loyalty_points = async (req, res) => {
       for (const eventId of uniqueEventIds) {
         const eventRecords = event_guest_record.filter(item => item.event_id === eventId);
         const lastRecord = eventRecords[eventRecords.length - 1]; // Get the last record
-        total_loyalty_points += parseInt(lastRecord.point);
+      //  total_loyalty_points += parseInt(lastRecord.point);
         event_data.push({
           event_id: eventId,
           point: parseInt(lastRecord.point)
@@ -1165,10 +1165,11 @@ exports.get_guest_loyalty_points = async (req, res) => {
 
      // console.log("sum",sum);
 
-      total_loyalty_points -= sum;
+     // total_loyalty_points -= sum;
 
      
-    }
+    }//var total_loyalty_points =0;
+
 
         // Remove duplicate event IDs and keep only the last occurrence
     
@@ -1180,10 +1181,22 @@ exports.get_guest_loyalty_points = async (req, res) => {
     });
     event_data = Object.values(uniqueEventData);
 
+//var total_loyalty_points =0;
+
+    if(event_data.length > 0){
+      event_data.forEach(event => {
+        total_loyalty_points +=event.point;
+         
+      });
+    }
+   
+
+    console.log("event_data",event_data)
+
     return res.status(200).json({
       status: true,
       message: "Data found",
-      data: { total_loyalty_points, event_data }
+      data: {total_loyalty_points , event_data }
     });
 
   } catch (error) {

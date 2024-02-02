@@ -435,13 +435,13 @@ router.post("/book-event-menu-items",auth,bookingController.book_event_menu_item
 
 
 // manage event menu items booking API
-router.post("/approve-event-menu-items-booking",auth,bookingController.approve_event_menu_items_booking);
+router.post("/approve-event-menu-items-booking",bookingController.approve_event_menu_items_booking);
 
 // get business settings 
 router.get("/get-business-settings",auth,businessSettingController.getBusinessSettings);
 
 // get booking detail of fnb event by payment id
-router.get("/get-booking-detail-by-payment-id",auth,menuController.getBookingDetailByPaymentId);
+router.get("/get-booking-detail-by-payment-id",menuController.getBookingDetailByPaymentId);
 
 // get guest loyality events API
 router.get("/get-guest-loyalty-events",auth,serviceController.get_guest_loyalty_events);

@@ -1480,7 +1480,7 @@ const get_pending_guest_list = async (req, res) => {
       ];
 
       Booking.aggregate(pipeline)
-        .then((result) => {
+        .then(async(result) => {
           console.log("result", result);
           var all_data = [];
           if (result && result.length > 0) {
@@ -1489,11 +1489,13 @@ const get_pending_guest_list = async (req, res) => {
              
                 const guestRecord = booking.guest_data[0];
                 guestRecord.contact_number = booking.user_data[0].code_phone;
+                var event_record = await EventModel.findById(booking.event_id);
                 all_data.push({
                   "guest_data": { ...guestRecord },
                   "booking_data": {
                     _id: booking._id,
                     event_id: booking.event_id,
+                    event_type : event_record.type,
                     guest_id: booking.guest_id,
                     payment_mode: booking.payment_mode,
                     status: booking.status,
@@ -1509,7 +1511,7 @@ const get_pending_guest_list = async (req, res) => {
 
             res.status(200).json({
               status: true,
-              message: "Data found",
+              message: "Guest list found",
               data: all_data,
             });
           } else {

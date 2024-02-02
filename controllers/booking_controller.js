@@ -1813,6 +1813,8 @@ const get_booked_menu_list = async (req, res) => {
         result.map(async (item) => {
           const groupedMenuData = {};
 
+          console.log("bookedMenuRecord",item.booked_menu_data)
+
           for (const bookedMenuRecord of item.booked_menu_data) {
             const menuRecord = await Menu.findById(bookedMenuRecord.menu_id);
 
@@ -1821,7 +1823,7 @@ const get_booked_menu_list = async (req, res) => {
               bookedMenuRecord.payment_id
             );
 
-            if (paymentRecord && paymentRecord.status === 'active') {
+            if (paymentRecord) {
               const menuKey = `${menuRecord.name}_${menuRecord._id}`;
 
               if (groupedMenuData[menuKey]) {

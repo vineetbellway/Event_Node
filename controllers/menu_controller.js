@@ -2644,6 +2644,8 @@ exports.book_menu_items = async (req, res, next) => {
       res.status(400).send({ status: false, message: "Event is expired", data: null });
       return;
     }
+
+
   
 
     if(event_record.type == "food_event"){
@@ -2807,6 +2809,96 @@ exports.book_menu_items = async (req, res, next) => {
         res.status(200).send({ status: true, message: "Item booked successfully", data : { payment_id: payment_id,amount:req.body.amount,booked_data: results} });
        }
 
+    } else if(event_record.type == "entry_food_event"){
+      console.log("here");
+      const paymentData = {
+        payment_status: 'paid',
+       
+      };
+  
+      const paymentResult = await BookingPayments(paymentData).save();
+  
+      const payment_id = paymentResult._id;
+
+
+
+
+      for (let i = 0; i < menuItems.length; i += batchSize) {
+        const batch = menuItems.slice(i, i + batchSize);
+  
+        const batchResults = await Promise.all(batch.map(async (menuItem) => {
+          const { _id, event_id, guest_id, menu_id, quantity } = menuItem;
+  
+          if (!_id || !event_id || !guest_id || !menu_id || !quantity) {
+            return { status: false, message: "_id, event_id, guest_id,menu_id, quantity  missing", data: null };
+          }
+  
+          const menuRecord = await Menu.findById(menu_id);
+  
+          if (!menuRecord) {
+            return { status: false, message: "Menu not found", data: null };
+          }
+          var menu_item_id = _id;
+
+          var bookingMenuData = await BookingMenu.find({"event_id":event_id,"guest_id":guest_id,"menu_id":menu_id});
+
+          
+          var booking_id = bookingMenuData[0].booking_id;
+     
+  
+          const bookingData = {
+            booking_id,
+            event_id,
+            guest_id,
+            menu_id,
+            quantity,
+            payment_id,
+          };  
+
+        
+  
+          const result = await BookingMenu(bookingData).save();
+  
+          if (result) {
+            const resultObject = result.toObject();
+            delete resultObject.payment_id; // Remove payment_id from individual result
+            return resultObject;
+          } else {
+            return null;
+          }
+        }));
+  
+        // Filter out null values from batchResults
+        results.push(...batchResults.filter((result) => result !== null));
+  
+  
+      }
+
+      const bookedMenuResult = await BookingMenu.find({ payment_id: payment_id });
+        var sum = 0;
+          for (const item of bookedMenuResult) {
+            if (item && typeof item.quantity === 'number' && item.quantity > 0) {
+              const menu_id = item.menu_id;
+              const menuRecord = await Menu.findById(menu_id);
+
+              if (menuRecord) {
+                sum += menuRecord.selling_price * item.quantity;
+              }
+            }
+          }
+
+          await BookingPayments.findByIdAndUpdate(payment_id, { $set: { amount: sum } });
+
+
+        // Delete records from the menuItems model
+        const deleteConditions = {
+          event_id: { $in: results.map(item => item.event_id) },
+          menu_id: { $in: results.map(item => item.menu_id) },
+          guest_id: { $in: results.map(item => item.guest_id) },
+        };
+    
+        await MenuItem.deleteMany(deleteConditions);
+        res.status(200).send({ status: true, message: "Item booked successfully", data : { payment_id: payment_id,booked_data: results} });
     }
   
 
@@ -2989,7 +3081,102 @@ exports.approve_menu_payment = async (req, res, next) => {
     try {
       const { payment_id, validator_id } = req.body;
 
-      // Check the existence of payment_id in the BookedMenuItem collection
+      var entryFoodBookedMenuData = await BookingMenu.find({"payment_id":payment_id});
+
+      if(entryFoodBookedMenuData.length > 0){
+
+
+        const guest_id = entryFoodBookedMenuData[0].guest_id;
+        const event_id = entryFoodBookedMenuData[0].event_id;
+
+        // Fetch relevant data from MenuItem collection based on guest_id and event_id
+        const menuItemResult = await MenuItem.aggregate([
+          {
+            $match: {
+              guest_id: new mongoose.Types.ObjectId(guest_id),
+              event_id: new mongoose.Types.ObjectId(event_id),
+            },
+          },
+        ]);
+      // Fetch cover charge from the event record
+      const eventRecord = await EventModel.findById(event_id);
+      // Check if cover charge exceeds the sum of menu item prices
+      let sum = 0;
+      for (const item of entryFoodBookedMenuData) {
+
+        if (item && typeof item.quantity === 'number' && item.quantity > 0) {
+          const menu_id = item.menu_id;
+          const menuRecord = await Menu.findById(menu_id);
+       
+           // Update total stock in Menu collection
+           const newTotalStock = menuRecord.total_stock - item.quantity;
+
+           const newCount = menuRecord.limited_count - item.quantity;
+       
+           await Menu.findByIdAndUpdate(menu_id, { $set: { total_stock: newTotalStock } });
+          
+           await Menu.findByIdAndUpdate(menu_id, { $set: { limited_count: newCount } });
+           
+           
+
+          if (menuRecord) {
+            sum += menuRecord.selling_price * item.quantity;
+          }
+        }
+      }
+
+
+  
+     
+
+
+
+
+
+      if(eventRecord.type == "entry_food_event"){
+        
+
+          await BookingPayments.findByIdAndUpdate(payment_id, { $set: { amount: sum } });
+
+        
+      }
+      
+     
+
+     // Approve menu item payments in BookingPayments collection
+      var updatedPaymentResult = await BookingPayments.findOneAndUpdate(
+        { _id: payment_id },
+        { validator_id: validator_id, status: 'active' },
+        { new: true }
+      );
+
+          // Check if the result is not null
+      if (updatedPaymentResult) {
+        // Now, explicitly set guest_id in the updatedPaymentResult
+        updatedPaymentResult = updatedPaymentResult.toObject(); // Convert to a plain JavaScript object
+        updatedPaymentResult.guest_id = guest_id;
+      }
+
+
+
+      res.status(200).send({
+        status: true,
+        message: "Payment approved successfully",
+        data: { updatedPaymentResult, remainingCoverCharge: 0 },
+      });
+
+
+
+
+
+
+
+
+
+
+
+      } else {
+            // Check the existence of payment_id in the BookedMenuItem collection
       const bookedMenuResult = await BookedMenuItem.find({ payment_id: payment_id });
 
       if (!bookedMenuResult || bookedMenuResult.length === 0) {
@@ -3167,6 +3354,20 @@ exports.approve_menu_payment = async (req, res, next) => {
         message: "Payment approved successfully",
         data: { updatedPaymentResult, remainingCoverCharge: total_coupon_balance-sum },
       });
+
+
+
+      }
+
+    
+
+          
+
+
+
+
+
+  
     } catch (error) {
       console.log("error", error);
       res.status(500).send({ status: false, message: error.toString() || "Internal Server Error", data: [] });

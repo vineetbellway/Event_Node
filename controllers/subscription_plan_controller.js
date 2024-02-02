@@ -64,6 +64,9 @@ exports.get_subscription_plans = async (req, res) => {
           status: baseStatus.active,
         },
       },
+      {
+        $sort: { createdAt: -1 },
+      },
     ]);
     await SubscriptionPlan.aggregatePaginate(myAggregate, options)
       .then((result) => {
@@ -103,11 +106,19 @@ exports.get_subscription_plan = async (req, res) => {
         },
       ])
         .then((result) => {
-          if (result) {
+          console.log("result",result)
+
+           if (result.length > 0) {
             res.status(200).send({
               status: true,
               message: "success",
               data: result[0],
+            });
+          } else {
+            res.status(200).send({
+              status: false,
+              message: "No data found",
+              data: null,
             });
           }
         })

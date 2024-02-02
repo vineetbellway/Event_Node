@@ -1966,6 +1966,7 @@ const book_event_menu_items = async (req, res, next) => {
 const approve_event_menu_items_booking = async (req, res) => {
   var payment_id = req.body.payment_id;
   var validator_id = req.body.validator_id;
+  var status = req.body.status;
 
 
   if (!validator_id || !payment_id) {
@@ -1974,31 +1975,22 @@ const approve_event_menu_items_booking = async (req, res) => {
     try {
       const result = await BookingPayments.findOneAndUpdate(
         { _id: payment_id },
-        { $set: { validator_id: validator_id, status: "active" } },
+        { $set: { validator_id: validator_id, status:status,payment_mode:payment_mode } },
         { new: true }
       );  
 
 
         if (result) {
-            console.log("result",result)
-            if(result.status == 'active'){
-              var message =  "Booking is already approved";
-            } else {
               var payment_id = result._id;
               var bookingMenus = await BookingMenu.find({'payment_id':payment_id});
               if(bookingMenus.length > 0){
                 for(var bookingmenu of bookingMenus){
                   var menuId = bookingmenu.menu_id;
-                  console.log("menu name",bookingmenu.name)
                   var bookingQUantity = bookingmenu.quantity;
                   var menuRecord = await Menu.findById(menuId);
-                  console.log("menuRecord",menuRecord);
                   var menuTotalStock = menuRecord.total_stock;
-                  console.log("menu_total_stock",menuTotalStock);
-                  console.log("menu_id",menuId)
-                  console.log("bookingQUantity",bookingQUantity);
                   var remainingStock = menuTotalStock - bookingQUantity;
-    
+                      
                   await Menu.findOneAndUpdate(
                     { _id: menuId },
                     { $set: { total_stock: remainingStock} },
@@ -2007,8 +1999,13 @@ const approve_event_menu_items_booking = async (req, res) => {
     
                 }
               }
-              var message =  "Booking approved successfully";
-            }
+              if(status == "active"){
+                var message =  "Booking approved successfully";
+              } else {
+                var message =  "Booking rejected successfully";
+              }
+              
+            
             
           res.status(200).json({
             status: true,

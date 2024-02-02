@@ -71,11 +71,11 @@ router.get("/get-business-settings",admin_auth,businessSettingController.getAllS
 
 // subscription plan routes
 
-router.post("/subscription_plan",admin_auth,subscriptionPlanController.create_subscription_plan);
-router.get("/subscription_plan",admin_auth,subscriptionPlanController.get_subscription_plans);
-router.get("/subscription_plan/:id",admin_auth,subscriptionPlanController.get_subscription_plan);
-router.put("/subscription_plan/:id",admin_auth,subscriptionPlanController.update_subscription_plan);
-router.delete("/subscription_plan/:id",admin_auth,subscriptionPlanController.delete_subscription_plan);
+router.post("/subscription-plan",admin_auth,subscriptionPlanController.create_subscription_plan);
+router.get("/subscription-plan",admin_auth,subscriptionPlanController.get_subscription_plans);
+router.get("/subscription-plan/:id",admin_auth,subscriptionPlanController.get_subscription_plan);
+router.put("/subscription-plan/:id",admin_auth,subscriptionPlanController.update_subscription_plan);
+router.delete("/subscription-plan/:id",admin_auth,subscriptionPlanController.delete_subscription_plan);
 
 
 module.exports = router;

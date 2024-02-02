@@ -149,11 +149,17 @@ exports.get_validator = async (req, res) => {
         },
       ])
         .then((result) => {
-          if (result) {
+          if (result.length > 0) {
             res.status(200).send({
               status: true,
               message: "success",
               data: result[0],
+            });
+          } else {
+            res.status(200).send({
+              status: false,
+              message: "No data found",
+              data: null,
             });
           }
         })

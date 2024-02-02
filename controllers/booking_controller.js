@@ -1967,7 +1967,7 @@ const approve_event_menu_items_booking = async (req, res) => {
   var payment_id = req.body.payment_id;
   var validator_id = req.body.validator_id;
   var status = req.body.status;
-
+  var payment_mode = req.body.payment_mode;
 
   if (!validator_id || !payment_id) {
     res.status(400).json({ status: false, message: "validator_id , payment_id id and  status are required in the request body" });
@@ -1990,7 +1990,7 @@ const approve_event_menu_items_booking = async (req, res) => {
                   var menuRecord = await Menu.findById(menuId);
                   var menuTotalStock = menuRecord.total_stock;
                   var remainingStock = menuTotalStock - bookingQUantity;
-                      
+
                   await Menu.findOneAndUpdate(
                     { _id: menuId },
                     { $set: { total_stock: remainingStock} },

@@ -10,13 +10,13 @@ exports.getAllSettings = async (req, res) => {
         res.status(200).json({
             status: true,
             message: "Settings retrieved successfully",
-            data: settings,
+            data: settings[0],
           });
       } else {
         res.status(200).json({
             status: false,
             message: "No data found",
-            data: [],
+            data: null,
           });
       }
   

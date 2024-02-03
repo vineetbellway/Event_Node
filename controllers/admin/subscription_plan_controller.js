@@ -40,6 +40,8 @@ exports.create_subscription_plan = (req, res, next) => {
 exports.get_subscription_plans = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
+  var search_key = req.query.search_key;
+
   const myCustomLabels = {
     totalDocs: "totalDocs",
     docs: "data",
@@ -62,7 +64,11 @@ exports.get_subscription_plans = async (req, res) => {
       {
         $match: {
           status: baseStatus.active,
+          name : { $regex: search_key, $options: "i" },
         },
+      },
+      {
+        $sort: { createdAt: -1 },
       },
     ]);
     await SubscriptionPlan.aggregatePaginate(myAggregate, options)

@@ -214,27 +214,50 @@ const get_bookings = async (req, res) => {
           var booking_data = [];
 
           for (const booking of result) {
-            const response = {
-              _id: booking._id,
-              event_id: booking.event_id,
-              guest_id: booking.guest_id,
-              payment_mode: booking.payment_mode,
-              status: booking.status,
-              transaction_id: booking.transaction_id,
-              // booking_date: booking.booking_date,
-              createdAt: booking.createdAt,
-              updatedAt: booking.updatedAt,
-              event_data: booking.event_data && booking.event_data.length > 0 && booking.event_data[0].status!="expired" ? {
-                ...booking.event_data[0],
-                // Constructing image URL
-                image: constructImageUrl(req, booking.event_data[0].image),
-              } : null,
-              booked_menu_data:booking.booked_menu_data
-            };
+            if(status == 'expired'){
+              var response = {
+                _id: booking._id,
+                event_id: booking.event_id,
+                guest_id: booking.guest_id,
+                payment_mode: booking.payment_mode,
+                status: booking.status,
+                transaction_id: booking.transaction_id,
+                // booking_date: booking.booking_date,
+                createdAt: booking.createdAt,
+                updatedAt: booking.updatedAt,
+  
+                event_data: booking.event_data && booking.event_data.length > 0  ? {
+                  ...booking.event_data[0],
+                  // Constructing image URL
+                  image: constructImageUrl(req, booking.event_data[0].image),
+                } : null,
+                booked_menu_data:booking.booked_menu_data
+              };
+            } else {
+              var response = {
+                _id: booking._id,
+                event_id: booking.event_id,
+                guest_id: booking.guest_id,
+                payment_mode: booking.payment_mode,
+                status: booking.status,
+                transaction_id: booking.transaction_id,
+                // booking_date: booking.booking_date,
+                createdAt: booking.createdAt,
+                updatedAt: booking.updatedAt,
+  
+                event_data: booking.event_data && booking.event_data.length > 0 && booking.event_data[0].status!="expired" ? {
+                  ...booking.event_data[0],
+                  // Constructing image URL
+                  image: constructImageUrl(req, booking.event_data[0].image),
+                } : null,
+                booked_menu_data:booking.booked_menu_data
+              };
+            }
+         
+            
             booking_data.push(response);
           }
 
-          console.log("booking_data", booking_data);
           res.status(200).json({
             status: true,
             message: "Data found",

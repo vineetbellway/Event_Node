@@ -31,9 +31,10 @@ exports.login = async (req, res, next) => {
       });
      }
        else {
-        return res.status(401).send({
+        return res.status(200).send({
           status: false,
           message: "Invalid credentiails",
+          data:null
         });
       }
     } catch (error) {

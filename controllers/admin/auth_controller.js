@@ -27,6 +27,7 @@ exports.login = async (req, res, next) => {
       return res.send({
         status: true,
         message: "Login Success",
+        data : {email,password}
       });
      }
        else {

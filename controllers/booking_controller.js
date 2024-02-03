@@ -1898,22 +1898,23 @@ const get_booked_menu_list = async (req, res) => {
 
          
 
-            console.log("payment record",paymentRecord)
-            console.log("groupedMenuData",groupedMenuData)
+            //console.log("payment record",paymentRecord)
+           // console.log("groupedMenuData",groupedMenuData)
 
             if (paymentRecord) {
               const menuKey = `${menuRecord.name}_${menuRecord._id}`;
-              console.log("menuKey",menuKey);
+              //console.log("menuKey",menuKey);
           
 
               if (groupedMenuData[menuKey]) {
                 // If the menu item already exists, add the quantity
-                console.log("inside if quantity",bookedMenuRecord.quantity)
+               // console.log("inside if quantity",bookedMenuRecord.quantity)
                 if(paymentRecord.status == "active"){
+                  
                   groupedMenuData[menuKey].menu_quantity -= bookedMenuRecord.quantity;
                 } 
                 else {
-                  console.log("inside else else quantity",bookedMenuRecord.quantity)
+                 // console.log("inside else else quantity",bookedMenuRecord.quantity)
 
                  //  groupedMenuData[menuKey].menu_quantity = bookedMenuRecord.quantity;
                 }
@@ -1921,7 +1922,7 @@ const get_booked_menu_list = async (req, res) => {
                 
               } else {
                 // If the menu item doesn't exist, create a new entry
-                console.log("inside else quantity",bookedMenuRecord.quantity)
+               // console.log("inside else quantity",bookedMenuRecord.quantity)
                 groupedMenuData[menuKey] = {
                   ...menuRecord.toObject(),
                   menu_quantity: bookedMenuRecord.quantity,
@@ -1930,12 +1931,13 @@ const get_booked_menu_list = async (req, res) => {
             }
           }
 
-          return Object.values(groupedMenuData); // Return an array of unique menu data
+          return Object.values(groupedMenuData)
+            .filter(menuItem => menuItem.menu_quantity > 0); 
         })
       );
 
       const flattenedData = refinedData.flat();
-     // console.log("flattenedData",flattenedData)
+      console.log("flattenedData",flattenedData)
       if(flattenedData.length > 0){
         res.status(200).json({
           status: true,

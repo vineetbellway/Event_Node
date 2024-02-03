@@ -56,6 +56,7 @@ exports.get_validators = async (req, res) => {
             },
             // Add more conditions if needed
           ],
+          "status" : "active"
         },
       },
       {

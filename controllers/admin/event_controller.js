@@ -68,9 +68,10 @@ exports.get_events = async (req, res) => {
                 { name: regex }, { coupon_name: regex }, { venue: regex },
                 // Add more conditions if needed
               ],
+               "status": { $ne: "deleted" } ,
             },
           },
-        {
+          {
             $sort: { createdAt: -1 },
           },
       ]);
@@ -126,6 +127,34 @@ exports.get_events = async (req, res) => {
         message: error.toString() ?? "Internal Server Error",
       });
     }
+};
+
+exports.delete_event = async (req, res) => {
+  var id = req.params.id;
+  if (!id) {
+    res.status(400).send({ status: false, message: "id missing" });
+  } else {
+    try {
+      const result = await EventModel.findByIdAndUpdate(id, { status: "deleted" });
+      if (result) {
+        res.status(200).send({
+          status: true,
+          message: "Event deleted successfully",
+          data: result,
+        });
+      } else {
+        res.status(404).send({
+          status: false,
+          message: "Event not found",
+        });
+      }
+    } catch (error) {
+      res.status(500).send({
+        status: false,
+        message: error.toString() ?? "Internal Server Error",
+      });
+    }
+  }
 };
   
   

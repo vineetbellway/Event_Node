@@ -53,6 +53,7 @@ exports.get_sellers = async (req, res) => {
             },
             // Add more conditions if needed
           ],
+          "status" : "active"
         },
       },
      {

@@ -294,7 +294,7 @@ const manage_bookings = async (req, res) => {
         { $set: { validator_id: validator_id, payment_mode: payment_mode, status: status } },
         { new: true } // This option returns the modified document
       )
-      .then((result) => {
+      .then(async(result) => {
         if (result) {
           if (status == "active") {
             status = "approved";
@@ -304,6 +304,46 @@ const manage_bookings = async (req, res) => {
           var message = "Booking " + status + " successfully";
           // send notification
           addNotification(validator_id, result.guest_id, "Booking status updated", message);
+
+          // approve entry food event menu
+          console.log("here",status)
+          if (status == "approved") {
+            var booking_id = result._id;
+            console.log("booking_id",booking_id)
+     
+            const bookedMenuRecordAtBookEvent = await BookingMenu.aggregate([
+              
+                {
+                  $match: {
+                    guest_id: new mongoose.Types.ObjectId(guest_id),
+                    event_id: new mongoose.Types.ObjectId(event_id),
+                    booking_id : new mongoose.Types.ObjectId(booking_id),
+                  },
+                },
+              
+                {
+                  $lookup: {
+                    from: 'bookings',
+                    localField: 'booking_id',
+                    foreignField: '_id',
+                    as: 'booking_data',
+                  },
+                },
+              {
+                  $unwind: "$booking_data"
+              }
+          ]);
+
+          if(bookedMenuRecordAtBookEvent.length > 0){
+             await BookingPayments.findOneAndUpdate
+              (
+                { _id : bookedMenuRecordAtBookEvent[0].payment_id},
+                { $set: { payment_mode: payment_mode, status: "active" } },
+                { new: true } // This option returns the modified document
+              );
+            }
+          }
+
 
           res.status(200).json({
             status: true,
@@ -1604,6 +1644,8 @@ const get_approved_booking_cost = async (req, res) => {
                       totalCardBooking = event_record.cover_charge || 0;
                     }
                  } else {
+
+
                   if (booking.payment_mode === "counter_upi") {
                     totalUPIBookingAmount += booking.amount || 0;
                   } 
@@ -1624,20 +1666,51 @@ const get_approved_booking_cost = async (req, res) => {
               }
               else if(event_record.type == "entry_food_event") {
                 // Calculate booking cost based on payment mode
+                const payment_result = await BookingPayments.aggregate([
               
-                console.log("here")
-                if (booking.payment_mode === "counter_upi") {
-                  totalUPIBookingAmount += booking.amount || 0;
-                } 
+                 
+                
+                  {
+                    $lookup: {
+                      from: 'bookingmenus',
+                      localField: '_id',
+                      foreignField: 'payment_id',
+                      as: 'booking_menu_data',
+                    },
+                  },
+                  {
+                    $match: {
+                      "booking_menu_data.event_id": new mongoose.Types.ObjectId(event_id),
+                      validator_id: new mongoose.Types.ObjectId(validator_id),
+                      "booking_menu_data.booking_id" : new mongoose.Types.ObjectId(booking._id),
+                      status : "active"
+                    },
+                  },
+                  {
+                    $unwind: "$booking_menu_data"
+                  }
+            ]);
+
+            console.log("payment_result",payment_result)
+
+            for (const payment_result_key of payment_result) {
+              if (booking.payment_mode === "counter_upi") {
+                totalUPIBookingAmount += payment_result_key.amount || 0;
+              } 
+            
+
+              if (booking.payment_mode === "cash") {
+                totalCashBooking += payment_result_key.amount || 0;
+              }
+
+              if (booking.payment_mode === "card") {
+                totalCardBooking += payment_result_key.amount || 0;
+              }
+
+            }
               
-
-                if (booking.payment_mode === "cash") {
-                  totalCashBooking += booking.amount || 0;
-                }
-
-                if (booking.payment_mode === "card") {
-                  totalCardBooking += booking.amount || 0;
-                }
+               
+                
 
             }
               
@@ -1806,7 +1879,7 @@ const get_booked_menu_list = async (req, res) => {
     // Execute the aggregation pipeline
     const result = await Booking.aggregate(bookingPipeline);
 
-
+    console.log("result",result)
     
     if (result && result.length > 0) {
       const refinedData = await Promise.all(
@@ -1823,20 +1896,32 @@ const get_booked_menu_list = async (req, res) => {
               bookedMenuRecord.payment_id
             );
 
+         
+
+            console.log("payment record",paymentRecord)
+            console.log("groupedMenuData",groupedMenuData)
+
             if (paymentRecord) {
               const menuKey = `${menuRecord.name}_${menuRecord._id}`;
+              console.log("menuKey",menuKey);
+          
 
               if (groupedMenuData[menuKey]) {
                 // If the menu item already exists, add the quantity
-               /* if(paymentRecord.status == "active"){
-                  groupedMenuData[menuKey].menu_quantity += bookedMenuRecord.quantity;
-                } else {
-                  groupedMenuData[menuKey].menu_quantity = bookedMenuRecord.quantity;
-                }*/
-                groupedMenuData[menuKey].menu_quantity += bookedMenuRecord.quantity;
+                console.log("inside if quantity",bookedMenuRecord.quantity)
+                if(paymentRecord.status == "active"){
+                  groupedMenuData[menuKey].menu_quantity -= bookedMenuRecord.quantity;
+                } 
+                else {
+                  console.log("inside else else quantity",bookedMenuRecord.quantity)
+
+                 //  groupedMenuData[menuKey].menu_quantity = bookedMenuRecord.quantity;
+                }
+              //  groupedMenuData[menuKey].menu_quantity += bookedMenuRecord.quantity;
                 
               } else {
                 // If the menu item doesn't exist, create a new entry
+                console.log("inside else quantity",bookedMenuRecord.quantity)
                 groupedMenuData[menuKey] = {
                   ...menuRecord.toObject(),
                   menu_quantity: bookedMenuRecord.quantity,
@@ -1850,7 +1935,7 @@ const get_booked_menu_list = async (req, res) => {
       );
 
       const flattenedData = refinedData.flat();
-      console.log("flattenedData",flattenedData)
+     // console.log("flattenedData",flattenedData)
       if(flattenedData.length > 0){
         res.status(200).json({
           status: true,

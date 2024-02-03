@@ -94,6 +94,8 @@ exports.get_events = async (req, res) => {
                 },
                 seller_data: {
                   ...event.seller,
+                  code_phone: event.user.code_phone,
+                  code: event.user.code,
                 },
                
               };
@@ -124,7 +126,7 @@ exports.get_events = async (req, res) => {
         message: error.toString() ?? "Internal Server Error",
       });
     }
-  };
+};
   
   
   

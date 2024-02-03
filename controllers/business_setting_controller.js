@@ -8,21 +8,21 @@ exports.getBusinessSettings = async (req, res) => {
     const { key } = req.params;
 
     // Find the setting by key
-    const setting = await BusinessSettings.find();
-
-    if (!setting) {
-      return res.status(200).json({
-        status: false,
-        message: "Setting not found",
-        data : null
-      });
+    const settings = await BusinessSettings.find();
+    if(settings.length > 0){
+      res.status(200).json({
+          status: true,
+          message: "Settings retrieved successfully",
+          data: settings[0],
+        });
+    } else {
+      res.status(200).json({
+          status: false,
+          message: "No data found",
+          data: null,
+        });
     }
 
-    res.status(200).json({
-      status: true,
-      message: "Setting retrieved successfully",
-      data: setting,
-    });
   } catch (error) {
     res.status(500).json({
       status: false,

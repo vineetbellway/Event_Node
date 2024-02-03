@@ -224,7 +224,7 @@ const get_bookings = async (req, res) => {
               // booking_date: booking.booking_date,
               createdAt: booking.createdAt,
               updatedAt: booking.updatedAt,
-              event_data: booking.event_data && booking.event_data.length > 0 ? {
+              event_data: booking.event_data && booking.event_data.length > 0 && booking.event_data[0].status!="expired" ? {
                 ...booking.event_data[0],
                 // Constructing image URL
                 image: constructImageUrl(req, booking.event_data[0].image),

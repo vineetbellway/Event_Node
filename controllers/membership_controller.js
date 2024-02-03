@@ -309,18 +309,32 @@ exports.update_membership_plan_status = (req, res, next) => {
   }
 };
 
-const disableSellerServices = () => {
-  console.log("hi")
+exports.disableSellerServices= async () => {
+
+  const currentDateTime = new Date();
+  const year = currentDateTime.getFullYear();
+  const month = ('0' + (currentDateTime.getMonth() + 1)).slice(-2);
+  const day = ('0' + currentDateTime.getDate()).slice(-2);
+  const hours = ('0' + currentDateTime.getHours()).slice(-2);
+  const minutes = ('0' + currentDateTime.getMinutes()).slice(-2);
+  const seconds = ('0' + currentDateTime.getSeconds()).slice(-2);
+  
+  const currentDateTimeFormatted = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000Z`;
+  const startDateTime = new Date(currentDateTimeFormatted);
+   
+
   try {
-    var current_date = new moment().format("YYYY-MM-DDTHH:mm:ss.SSSZ");
-    console.log("here 3 s")
-    Membership.find({ status: 'active', end_date: { $gt: current_date } })
+ 
+    Membership.find({ status: 'active', end_date: { $gt: startDateTime } })
       .then((result) => {
         if (result) {
           for (const membership of result) {
             var membership_end_date = new moment(membership.end_date).format("YYYY-MM-DDTHH:mm:ss.SSSZ");
+            console.log("membership_end_date",membership_end_date);
+            console.log("startDateTime",startDateTime);
+            return false;
             var membership_id = membership._id;
-            if (current_date === membership_end_date) {
+            if (startDateTime === membership_end_date) {
               Membership.findByIdAndUpdate(membership_id, "blocked")
                 .then((result) => {
                   if (result) {
@@ -345,3 +359,4 @@ const disableSellerServices = () => {
     console.error("Failure: " + (error || "Internal Server Error"));
   }
 };
+

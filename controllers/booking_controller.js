@@ -1818,7 +1818,7 @@ const get_booked_menu_list = async (req, res) => {
           for (const bookedMenuRecord of item.booked_menu_data) {
             const menuRecord = await Menu.findById(bookedMenuRecord.menu_id);
 
-            // Check if paymentRecord status is active
+            // Check  paymentRecord status 
             const paymentRecord = await BookingPayments.findById(
               bookedMenuRecord.payment_id
             );
@@ -1828,7 +1828,13 @@ const get_booked_menu_list = async (req, res) => {
 
               if (groupedMenuData[menuKey]) {
                 // If the menu item already exists, add the quantity
+               /* if(paymentRecord.status == "active"){
+                  groupedMenuData[menuKey].menu_quantity += bookedMenuRecord.quantity;
+                } else {
+                  groupedMenuData[menuKey].menu_quantity = bookedMenuRecord.quantity;
+                }*/
                 groupedMenuData[menuKey].menu_quantity += bookedMenuRecord.quantity;
+                
               } else {
                 // If the menu item doesn't exist, create a new entry
                 groupedMenuData[menuKey] = {

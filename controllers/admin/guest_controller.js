@@ -59,6 +59,7 @@ exports.get_guests = async (req, res) => {
             },
             // Add more conditions if needed
           ],
+          "status" : "active"
         },
       },
       {

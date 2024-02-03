@@ -80,6 +80,7 @@ router.delete("/subscription-plan/:id",admin_auth,subscriptionPlanController.del
 
 // event routes
 router.get("/event",admin_auth,eventController.get_events);
+router.delete("/event/:id",admin_auth,  eventController.delete_event);
 
 
 module.exports = router;

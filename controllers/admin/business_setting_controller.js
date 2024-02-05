@@ -77,7 +77,7 @@ exports.getAllSettings = async (req, res) => {
         var fileMime = req.file.mimetype.split("/");
         var ext = fileMime[1];
       
-        businessSettingData.logo = logo+"."+ext;
+        businessSettingData.logo = logo;
       }
   
       // Find existing document based on business_name

@@ -101,8 +101,8 @@ router.get("/event/:id",auth,  eventController.get_event);
 router.delete("/event/:id",auth,checkSellerMemberShipPlanStatus,  eventController.delete_event);
 router.delete("/event",auth,  eventController.delete_events);
 
-router.post("/menu",auth,menuController.create_menu);
-router.put("/menu/:id",auth, menuController.update_menu);
+router.post("/menu",auth,checkSellerMemberShipPlanStatus,menuController.create_menu);
+router.put("/menu/:id",auth,checkSellerMemberShipPlanStatus, menuController.update_menu);
 router.get("/menu", auth,menuController.get_menus);
 router.get("/menu_by_event_id/:id/:guest_id",auth, menuController.get_menu_by_event_id);
 router.get("/menu_by_event_id_for_entry_food_event/:id/:guest_id",auth, menuController.get_menu_by_event_id_for_entry_food_event);
@@ -180,7 +180,7 @@ router.delete("/relative",  relativeController.delete_relatives);
 
 router.post("/subscription_plan",subscriptionPlanController.create_subscription_plan);
 router.put("/subscription_plan/:id",subscriptionPlanController.update_subscription_plan);
-router.get("/subscription_plan",checkSellerMemberShipPlanStatus,subscriptionPlanController.get_subscription_plans);
+router.get("/subscription_plan",subscriptionPlanController.get_subscription_plans);
 router.get("/search_subscription_plan/:keyword",subscriptionPlanController.search_subscription_plans);
 router.get("/subscription_plan/:id",subscriptionPlanController.get_subscription_plan);
 router.delete("/subscription_plan/:id",subscriptionPlanController.delete_subscription_plan);
@@ -194,6 +194,8 @@ router.get("/membership/:keyword",auth,membershipController.search_memberships);
 router.get("/membership/:id", auth, membershipController.get_membership);
 router.delete("/membership/:id", auth, membershipController.delete_membership);
 router.delete("/membership", auth, membershipController.delete_memberships);
+router.get("/get-seller-membership-plan/:id",auth,membershipController.get_membership_by_seller_id);
+
 
 router.post("/create-order", orderController.create_order);
 router.post("/consume-loyalty-point", loyalityController.consume_loyalty_point);

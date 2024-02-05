@@ -456,13 +456,17 @@ router.get("/send-remind-list-for-event", bannerController.sendRemindNotificatio
 
 
 cron.schedule("* * * * *", function() {
-    membershipController.disableSellerServices();
-    bannerController.sendRemindNotificationOfEvent();
-
-   //bookingController.sendEventNotification();
+    //bookingController.sendEventNotification();
     bookingController.sendExpireEventNotification();
     bookingController.sendExpiredEventNotification();
 });
+
+cron.schedule("0 0 * * *", function() {
+    membershipController.disableSellerServices();
+    bannerController.sendRemindNotificationOfEvent();
+});
+
+
 
 
 

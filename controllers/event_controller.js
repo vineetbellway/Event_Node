@@ -31,7 +31,7 @@ exports.create_event = (req, res, next) => {
     const labour_charge = req.body.labour_charge.trim();
     const commision_charge = req.body.commision_charge.trim();
     const is_cover_charge_added = (req.body.is_cover_charge_added!='') ?  req.body.is_cover_charge_added.trim() : 'no';
-    const user_booking_limit = (req.body.user_booking_limit!='') ?  req.body.user_booking_limit.trim() : '';
+    const user_booking_limit = req.body.user_booking_limit ?  req.body.user_booking_limit.trim() : '';
     
  
 
@@ -697,7 +697,7 @@ exports.update_event = async (req, res, next) => {
     const status = req.body.status.trim();
     const banner_id = req.body.banner_id ? req.body.banner_id.trim() : null;
     const point = req.body.point ? req.body.point.trim() : 0;
-    const user_booking_limit = (req.body.user_booking_limit!='') ?  req.body.user_booking_limit.trim() : '';
+    const user_booking_limit = req.body.user_booking_limit ?  req.body.user_booking_limit.trim() : '';
 
 
     if(type == "loyalty"){

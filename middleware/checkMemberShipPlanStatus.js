@@ -16,14 +16,14 @@ const checkSellerMemberShipPlanStatus = async (req, res, next) => {
       var phone_number = decodedToken.phone_number;
      
       
-      const user_record = await User.findOne({ phone: phone_number , type : 'seller' });
+      const user_record = await User.findOne({ code_phone: phone_number , type : 'seller' });
       var user_id = user_record._id;
       var seller_record  = await Seller.findOne({ user_id : user_id});
       var seller_id = seller_record._id;
-      
-      // var seller_id = new mongoose.Types.ObjectId('65128513380eacbe23fda805');
-      
+      console.log("seller_id",seller_id)
+            
       const result = await Membership.findOne({seller_id: new mongoose.Types.ObjectId(seller_id), status: 'active'});
+      console.log("result",result)
       if(result){
           next();
       } else {

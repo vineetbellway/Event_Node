@@ -331,6 +331,27 @@ exports.disableSellerServices= async () => {
             if (membershipEndDateFormatted == currentDateFormatted) { // Compare date portion
               // Process further
               var membership_id = membership._id;
+              var seller_id = membership.seller_id;
+              
+
+
+              const fcm_token = user_data.fcm_token;
+
+              if (fcm_token) {
+                const notification = {
+                  title: title,
+                  body: description,
+                };
+
+                // Sending push notification
+                sendPushNotification(fcm_token, notification, {})
+                  .then(() => {
+                    console.log('Push notification sent successfully.');
+                  })
+                  .catch((error) => {
+                    console.error('Error sending push notification:', error);
+                  });
+              }
        
            
               Membership.findByIdAndUpdate(membership_id, { 'status': 'blocked' })

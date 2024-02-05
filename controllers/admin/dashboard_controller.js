@@ -26,10 +26,7 @@ exports.getCounts = async (req, res) => {
     const totalGuests = await Guest.countDocuments({ status: "active" });
     const totalActiveEvents = await EventModel.countDocuments({ status: "active" });
     const totalExpiredEvents = await EventModel.countDocuments({ status: "expired" });
-    const totalUpcomingEvents = await EventModel.countDocuments({  
-        end_time: { $gte: startDateTime}
-    
-    });
+    const totalUpcomingEvents = await EventModel.countDocuments({  start_time: { $gte: startDateTime}, 'status' : 'active'});
 
     res.status(200).json({
       status: true,

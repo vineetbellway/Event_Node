@@ -382,7 +382,7 @@ exports.add_event_validator = async(req, res, next) => {
 
 
 
-exports.get_event_validators_list = async (req, res) => {
+exports.get_event_validators_list_old = async (req, res) => {
   try {
     const sellerId = req.query.seller_id;
     const eventId = req.query.event_id;
@@ -436,6 +436,21 @@ exports.get_event_validators_list = async (req, res) => {
       },
     ]);
     console.log("eventValidators",eventValidators)
+
+    const currentDateTime = new Date();
+    const year = currentDateTime.getFullYear();
+    const month = ('0' + (currentDateTime.getMonth() + 1)).slice(-2);
+    const day = ('0' + currentDateTime.getDate()).slice(-2);
+    const hours = ('0' + currentDateTime.getHours()).slice(-2);
+    const minutes = ('0' + currentDateTime.getMinutes()).slice(-2);
+    const seconds = ('0' + currentDateTime.getSeconds()).slice(-2);
+    
+    const currentDateTimeFormatted = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000Z`;
+    
+    const startDateTime = new Date(currentDateTimeFormatted);
+    console.log("startDateTime",startDateTime)
+
+
     const allValidatorList = eventValidators
       .filter((val) => sellerDistrict === val.validator_data[0].district)
     
@@ -453,8 +468,141 @@ exports.get_event_validators_list = async (req, res) => {
         updatedAt: val.updatedAt,
         role: val.role,
         validator_status: val.status,
+        event:event
         //...eventValidators
       }));
+
+      console.log("allValidatorList",allValidatorList)
+
+    if (allValidatorList.length > 0) {
+      res.status(200).send({
+        status: true,
+        message: "Data found",
+        data: allValidatorList,
+      });
+    } else {
+      res.status(200).send({
+        status: true,
+        message: "No validators found",
+        data: [],
+      });
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).send({
+      status: false,
+      message: error.toString() || "Internal Server Error",
+      data: null,
+    });
+  }
+};
+
+exports.get_event_validators_list = async (req, res) => {
+  try {
+    const sellerId = req.query.seller_id;
+    const eventId = req.query.event_id;
+
+    var seller = await User.findById(sellerId);
+    if (!seller) {
+      return res.status(200).send({
+        status: false,
+        message: "Seller not found",
+        data: null,
+      });
+    }    
+    var sellerData = await SellerModel.findOne({ user_id: sellerId });
+    
+
+
+
+    const event = await EventModel.findById(eventId);
+    if (!event) {
+      return res.status(200).send({
+        status: false,
+        message: "Event not found",
+        data: null,
+      });
+    } 
+
+
+    const sellerDistrict = sellerData.district;
+
+    const eventValidators = await EventValidator.aggregate([
+      {
+        $match: {
+          event_id: new mongoose.Types.ObjectId(eventId),
+          seller_id: new mongoose.Types.ObjectId(sellerId),
+        },
+      },
+      {
+        $lookup: {
+          from: "validators",
+          localField: "validator_id",
+          foreignField: "user_id",
+          as: "validator_data",
+        },
+      },
+      {
+        $lookup: {
+          from: "eventmodels",
+          localField: "event_id",
+          foreignField: "_id",
+          as: "event_data",
+        },
+      },
+      
+     
+    ]);
+
+    const currentDateTime = new Date();
+    const year = currentDateTime.getFullYear();
+    const month = ('0' + (currentDateTime.getMonth() + 1)).slice(-2);
+    const day = ('0' + currentDateTime.getDate()).slice(-2);
+    const hours = ('0' + currentDateTime.getHours()).slice(-2);
+    const minutes = ('0' + currentDateTime.getMinutes()).slice(-2);
+    const seconds = ('0' + currentDateTime.getSeconds()).slice(-2);
+    
+    const currentDateTimeFormatted = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000Z`;
+    
+    const presentDateTime = new Date(currentDateTimeFormatted);
+
+      const allValidatorList = [];
+        for (const val of eventValidators) {
+          if (sellerDistrict === val.validator_data[0].district) {
+            const eventStartDateTime = event.start_time;
+            const eventEndDateTime = event.end_time;
+            console.log("eventStartDateTime",eventStartDateTime);
+            console.log("eventEndDateTime",eventEndDateTime);
+            console.log("presentDateTime",presentDateTime);
+            if(val.status == "accept"){
+              if (presentDateTime >= eventStartDateTime && presentDateTime <= eventEndDateTime) {
+                var validator_role = val.role;
+              } else {
+                var validator_role = '';
+              }
+            } else {
+              var validator_role = '';
+            }
+           
+          
+  
+            allValidatorList.push({
+              _id: val.validator_data[0]._id,
+              user_id: val.validator_data[0].user_id,
+              full_name: val.validator_data[0].full_name,
+              district: val.validator_data[0].district,
+              state: val.validator_data[0].state,
+              country: val.validator_data[0].country,
+              status: val.validator_data[0].status,
+              createdAt: val.createdAt,
+              updatedAt: val.updatedAt,
+              role: validator_role,
+              validator_status: val.status,
+            });
+          }
+        }
+      
+      
 
       console.log("allValidatorList",allValidatorList)
 

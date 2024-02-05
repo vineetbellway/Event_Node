@@ -60,7 +60,7 @@ exports.getAllSettings = async (req, res) => {
   
       // Check if image is not undefined
       if (logo !== undefined) {
-        var fileMime = req.file.mimetypes.split("/");
+        var fileMime = req.file.mimetype.split("/");
         var ext = fileMime[1];
       
         businessSettingData.logo = logo+"."+ext;

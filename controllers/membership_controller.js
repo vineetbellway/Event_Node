@@ -414,7 +414,14 @@ exports.get_membership_by_seller_id = async (req, res) => {
                       "updatedAt": 1,
                       "plan_name": { "$arrayElemAt": ["$plan_data.name", 0] } // Extracting plan_name from plan_data
                   }
-              }
+              },
+              {
+                $sort: { "createdAt": -1 } // Sort by createdAt in descending order
+            },
+            {
+                $limit: 1 // Limit to only the latest plan
+            }
+
           ])
           .then((result) => {
               console.log("result",result)

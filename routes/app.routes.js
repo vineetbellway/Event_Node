@@ -194,7 +194,7 @@ router.get("/membership/:keyword",auth,membershipController.search_memberships);
 router.get("/membership/:id", auth, membershipController.get_membership);
 router.delete("/membership/:id", auth, membershipController.delete_membership);
 router.delete("/membership", auth, membershipController.delete_memberships);
-router.get("/get-seller-membership-plan/:id",auth,membershipController.get_membership_by_seller_id);
+router.get("/get-seller-membership-plan/:id",membershipController.get_membership_by_seller_id);
 
 
 router.post("/create-order", orderController.create_order);

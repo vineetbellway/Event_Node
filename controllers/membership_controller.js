@@ -332,7 +332,7 @@ exports.disableSellerServices= async () => {
               // Process further
               var membership_id = membership._id;
               var seller_id = membership.seller_id;
-              
+
 
 
               const fcm_token = user_data.fcm_token;
@@ -378,6 +378,72 @@ exports.disableSellerServices= async () => {
       });
   } catch (error) {
     console.error("Failure: " + (error || "Internal Server Error"));
+  }
+};
+
+exports.get_membership_by_seller_id = async (req, res) => {
+  var seller_id = req.params.id;
+  if (!seller_id) {
+      res.status(400).send({ status: false, message: "seller_id missing" });
+  } else {
+      try {
+          await Membership.aggregate([
+              {
+                  $match: {
+                      seller_id: new mongoose.Types.ObjectId(seller_id),
+                  },
+              },
+              {
+                  $lookup: {
+                      from: 'subscriptionplans',
+                      localField: 'plan_id',
+                      foreignField: '_id',
+                      as: 'plan_data',
+                  },
+              },
+              {
+                  $project: {
+                      "_id": 1,
+                      "seller_id": 1,
+                      "plan_id": 1,
+                      "amount": 1,
+                      "txn": 1,
+                      "end_date": 1,
+                      "status": 1,
+                      "createdAt": 1,
+                      "updatedAt": 1,
+                      "plan_name": { "$arrayElemAt": ["$plan_data.name", 0] } // Extracting plan_name from plan_data
+                  }
+              }
+          ])
+          .then((result) => {
+              console.log("result",result)
+              if (result.length > 0) {
+                  res.status(200).send({
+                      status: true,
+                      message: "success",
+                      data: result[0],
+                  });
+              } else {
+                  res.status(200).send({
+                      status: false,
+                      message: "No data found",
+                      data: null,
+                  });
+              }
+          })
+          .catch((error) => {
+              res.send({
+                  status: false,
+                  message: error.toString() ?? "Error",
+              });
+          });
+      } catch (error) {
+          res.status(500).send({
+              status: false,
+              message: error.toString() ?? "Internal Server Error",
+          });
+      }
   }
 };
 

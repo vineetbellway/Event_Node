@@ -47,6 +47,12 @@ const book = async (req, res, next) => {
 
       var user_booking_limit = event_record.user_booking_limit;
 
+      const guesteEventBookings = await Booking.find({ event_id: event_id ,guest_id: guest_id });
+      if(guesteEventBookings.length > 0){
+        res.status(200).send({ status: false, message: "You have already booked this event", data: null });
+        return;
+      }
+
       const eventBookings = await Booking.find({ event_id: event_id });
       var event_booking_length = eventBookings.length;
 

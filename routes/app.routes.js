@@ -92,10 +92,10 @@ router.get("/validator_by_user_id/:id",auth,validatorController.get_validator_by
 router.delete("/validator/:id", auth, validatorController.delete_validator);
 router.delete("/validator", auth, validatorController.delete_validators);
 
-router.post("/event",auth,upload.single('image'), eventController.create_event);
+router.post("/event",auth, checkSellerMemberShipPlanStatus, upload.single('image'), eventController.create_event);
 router.post("/event/:id",auth, upload.single('image'),eventController.update_event);
 router.get("/event", auth,eventController.get_events);
-router.get("/search_event/:keyword",auth,eventController.search_events);
+router.get("/search_event/:keyword",eventController.search_events);
 router.get("/event_by_seller_id/:id",auth,  eventController.event_by_seller_id);
 router.get("/event/:id",auth,  eventController.get_event);
 router.delete("/event/:id",auth,  eventController.delete_event);
@@ -280,7 +280,7 @@ router.delete("/delete-uom",auth,  uomController.delete_uom);
 
 
 // Create banner API
-router.post("/create-banner",auth,banner_upload.single('image'), bannerController.create_banner);
+router.post("/create-banner",banner_upload.single('image'), bannerController.create_banner);
 
 // Get all banners API
 router.get("/get-all-banners", auth, bannerController.get_all_banners);
@@ -289,7 +289,7 @@ router.get("/get-all-banners", auth, bannerController.get_all_banners);
 router.get("/get-banner-detail",auth, bannerController.get_banner);
 
 // Update banner API
-router.put("/update-banner",auth,banner_upload.single('image'),  bannerController.update_banner);
+router.put("/update-banner",banner_upload.single('image'),  bannerController.update_banner);
 
 // Delete banner API
 router.delete("/delete-banner",auth,bannerController.delete_banner);
@@ -302,13 +302,13 @@ router.get("/get-seller-events", auth,eventController.get_seller_events);
 router.post("/add-event-validator",auth, validatorEventController.add_event_validator);
 
 // get guest banner list API
-router.get("/get-guest-banner-list",auth, bannerController.get_guest_banner_list);
+router.get("/get-guest-banner-list", bannerController.get_guest_banner_list);
 
 // get seller validator list API
 router.get("/get-seller-validator-list",auth, validatorController.get_seller_validator_list);
 
 // get validators'event list API
-router.get("/get-event-validators-list",auth, validatorEventController.get_event_validators_list);
+router.get("/get-event-validators-list", validatorEventController.get_event_validators_list);
 
 // get not expired event validators list  API
 router.get("/get-not-expired-event-validators-list",auth, validatorEventController.get_not_expired_event_validators_list);
@@ -326,7 +326,7 @@ router.get("/get-booked-guest-list",auth, bookingController.get_booked_guest_lis
 router.put("/manage-event-validator-status",auth, validatorEventController.manage_event_validator_status);
 
 // get validator's events list status API
-router.get("/get-validator-events-list",auth,  validatorEventController.get_validator_events_list);
+router.get("/get-validator-events-list",  validatorEventController.get_validator_events_list);
 
 // get item sales report API
 router.get("/item-sales-report",auth,  reportController.get_item_sales_report);
@@ -387,6 +387,8 @@ router.get("/get-guest-coupon-balance",auth,bookingController.get_guest_coupon_b
 // get guest list API
 router.get("/get-guest-list-for-banner", bannerController.get_guest_list_for_banner);
 
+
+
 // book menu items API
 router.post("/book-menu-items",auth, menuController.book_menu_items);
 
@@ -446,10 +448,17 @@ router.get("/get-booking-detail-by-payment-id",menuController.getBookingDetailBy
 // get guest loyality events API
 router.get("/get-guest-loyalty-events",auth,serviceController.get_guest_loyalty_events);
 
+// get remind list API
+router.get("/get-remind-list-for-event", bannerController.get_remind_list_for_event);
+
+router.get("/send-remind-list-for-event", bannerController.sendRemindNotificationOfEvent);
+
+
 
 cron.schedule("* * * * *", function() {
-  //  console.log("Cron job is running");
-    // bookingController.disableSellerServices();
+    membershipController.disableSellerServices();
+    bannerController.sendRemindNotificationOfEvent();
+
    //bookingController.sendEventNotification();
     bookingController.sendExpireEventNotification();
     bookingController.sendExpiredEventNotification();

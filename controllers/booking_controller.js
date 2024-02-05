@@ -392,10 +392,21 @@ const manage_bookings = async (req, res) => {
 }; 
 
 
-const sendEventNotification = () => {
+const sendEventNotification = async () => {
   console.log("here")
   const current_date = moment().format("YYYY-MM-DD");
   const oneDayBefore = moment().subtract(1, 'day').format("YYYY-MM-DD");
+  const currentDateTime = new Date();
+  const year = currentDateTime.getFullYear();
+  const month = ('0' + (currentDateTime.getMonth() + 1)).slice(-2);
+  const day = ('0' + currentDateTime.getDate()).slice(-2);
+  const hours = ('0' + currentDateTime.getHours()).slice(-2);
+  const minutes = ('0' + currentDateTime.getMinutes()).slice(-2);
+  const seconds = ('0' + currentDateTime.getSeconds()).slice(-2);
+  
+  const currentDateTimeFormatted = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000Z`;
+  const startDateTime = new Date(currentDateTimeFormatted);
+
 
   // Find guests with bookings one day before the current date
   Booking.find({ status: 'active', booking_date: oneDayBefore })
@@ -1035,10 +1046,6 @@ const get_booked_guest_list = async (req, res) => {
     }
   }
 };
-
-
-
-
 
 
 

@@ -56,11 +56,14 @@ exports.getAllSettings = async (req, res) => {
         app_url,
       };
 
-      console.log("logo",req.file)
+      console.log("logo",)
   
       // Check if image is not undefined
       if (logo !== undefined) {
-        businessSettingData.logo = logo;
+        var fileMime = req.file.mimetypes.split("/");
+        var ext = fileMime[1];
+      
+        businessSettingData.logo = logo+"."+ext;
       }
   
       // Find existing document based on business_name

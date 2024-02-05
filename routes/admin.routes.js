@@ -13,7 +13,7 @@ const storage = multer.diskStorage({
      console.log("file",file)
      var fileMime = file.mimetype.split("/");
      var ext = fileMime[1];
-     cb(null, Date.now() + ext);
+     cb(null, Date.now() +"."+ext);
    },
  });
  var upload = multer({

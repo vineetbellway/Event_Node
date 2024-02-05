@@ -56,7 +56,7 @@ exports.getAllSettings = async (req, res) => {
         app_url,
       };
 
-      console.log("logo",logo)
+      console.log("logo",req.file)
   
       // Check if image is not undefined
       if (logo !== undefined) {

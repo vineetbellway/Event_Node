@@ -92,7 +92,7 @@ router.get("/validator_by_user_id/:id",auth,validatorController.get_validator_by
 router.delete("/validator/:id", auth, validatorController.delete_validator);
 router.delete("/validator", auth, validatorController.delete_validators);
 
-router.post("/event",auth, checkSellerMemberShipPlanStatus, upload.single('image'), eventController.create_event);
+router.post("/event",auth, upload.single('image'), eventController.create_event);
 router.post("/event/:id",auth, upload.single('image'),eventController.update_event);
 router.get("/event", auth,eventController.get_events);
 router.get("/search_event/:keyword",eventController.search_events);
@@ -456,13 +456,17 @@ router.get("/send-remind-list-for-event", bannerController.sendRemindNotificatio
 
 
 cron.schedule("* * * * *", function() {
-    membershipController.disableSellerServices();
-    bannerController.sendRemindNotificationOfEvent();
-
-   //bookingController.sendEventNotification();
+    //bookingController.sendEventNotification();
     bookingController.sendExpireEventNotification();
     bookingController.sendExpiredEventNotification();
 });
+
+cron.schedule("0 0 * * *", function() {
+    membershipController.disableSellerServices();
+    bannerController.sendRemindNotificationOfEvent();
+});
+
+
 
 
 

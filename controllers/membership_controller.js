@@ -3,6 +3,8 @@ const mongoose = require("mongoose");
 const { baseStatus, userStatus } = require("../utils/enumerator");
 const moment = require("moment");
 var nodemailer = require('nodemailer');
+const Seller = require("../models/seller.model");
+const User = require("../models/user.model");
 
 
 
@@ -321,7 +323,7 @@ exports.disableSellerServices= async () => {
   try {
  
     Membership.find({ status: 'active' })
-      .then((result) => {
+      .then(async(result) => {
         if (result) {
           for (const membership of result) {
             const membershipEndDate = new Date(membership.end_date);
@@ -332,6 +334,9 @@ exports.disableSellerServices= async () => {
               // Process further
               var membership_id = membership._id;
               var seller_id = membership.seller_id;
+              var seller_record = await Seller.findById(seller_id);
+              
+              var  user_data = await User.findById(seller_record._id);
 
 
 
@@ -339,8 +344,8 @@ exports.disableSellerServices= async () => {
 
               if (fcm_token) {
                 const notification = {
-                  title: title,
-                  body: description,
+                  title: "Membership expired",
+                  body: "Your membership expired. Please purchase new plan to access app features",
                 };
 
                 // Sending push notification

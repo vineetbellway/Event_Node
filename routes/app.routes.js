@@ -95,10 +95,10 @@ router.delete("/validator", auth, validatorController.delete_validators);
 router.post("/event",auth,checkSellerMemberShipPlanStatus, upload.single('image'), eventController.create_event);
 router.post("/event/:id",auth, upload.single('image'),eventController.update_event);
 router.get("/event", auth,checkSellerMemberShipPlanStatus,eventController.get_events);
-router.get("/search_event/:keyword",checkSellerMemberShipPlanStatus,eventController.search_events);
-router.get("/event_by_seller_id/:id",auth,  eventController.event_by_seller_id);
+router.get("/search_event/:keyword",eventController.search_events);
+router.get("/event_by_seller_id/:id",auth,checkSellerMemberShipPlanStatus,  eventController.event_by_seller_id);
 router.get("/event/:id",auth,  eventController.get_event);
-router.delete("/event/:id",auth,  eventController.delete_event);
+router.delete("/event/:id",auth,checkSellerMemberShipPlanStatus,  eventController.delete_event);
 router.delete("/event",auth,  eventController.delete_events);
 
 router.post("/menu",auth,menuController.create_menu);

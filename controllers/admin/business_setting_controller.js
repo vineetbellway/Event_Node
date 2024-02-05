@@ -7,10 +7,24 @@ exports.getAllSettings = async (req, res) => {
     try {
       const settings = await BusinessSettings.find();
       if(settings.length > 0){
+
+        // Get the host (domain and port)
+        const protocol = req.protocol;
+        const host = req.get('host');
+  
+        // Combine protocol, host, and any other parts of the base URL you need
+        const baseURL = `${protocol}://${host}`;
+         // Assuming existingData contains the settings with a logo property
+      const existingData = settings[0];
+
+      // Check if the logo exists in existingData
+      const logoUrl = existingData.logo ? baseURL + '/uploads/logo/' + existingData.logo : '';
+      existingData.logo = logoUrl;
+
         res.status(200).json({
             status: true,
             message: "Settings retrieved successfully",
-            data: settings[0],
+            data: existingData , // Spread existingData and add logoUrl
           });
       } else {
         res.status(200).json({
@@ -89,6 +103,8 @@ exports.getAllSettings = async (req, res) => {
         // Combine protocol, host, and any other parts of the base URL you need
         const baseURL = `${protocol}://${host}`;
         const logoUrl = existingData.logo ? baseURL + '/uploads/logo/' + existingData.logo : '';
+
+
   
         const message = existingData._id ? 'Business setting updated successfully' : 'Business setting created successfully';
   

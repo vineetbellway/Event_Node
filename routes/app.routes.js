@@ -266,42 +266,42 @@ router.put("/update-category",auth,  categoryController.update_category);
 router.delete("/delete-category",auth,  categoryController.delete_category);
 
 // Create UOM API
-router.post("/create-uom",auth,  uomController.create_uom);
+router.post("/create-uom",auth, checkSellerMemberShipPlanStatus, uomController.create_uom);
 
 // Get all UOMs API
-router.get("/get-all-uoms",auth,  uomController.get_all_uoms);
+router.get("/get-all-uoms",auth, checkSellerMemberShipPlanStatus, uomController.get_all_uoms);
 
 // Get UOM API
-router.get("/get-uom",auth,  uomController.get_uom);
+router.get("/get-uom",auth,checkSellerMemberShipPlanStatus,  uomController.get_uom);
 
 // Update UOM API
-router.put("/update-uom",auth,  uomController.update_uom);
+router.put("/update-uom",auth,checkSellerMemberShipPlanStatus,  uomController.update_uom);
 
 // Delete UOM API
-router.delete("/delete-uom",auth,  uomController.delete_uom);
+router.delete("/delete-uom",auth, checkSellerMemberShipPlanStatus, uomController.delete_uom);
 
 
 // Create banner API
-router.post("/create-banner",banner_upload.single('image'), bannerController.create_banner);
+router.post("/create-banner",auth, checkSellerMemberShipPlanStatus,banner_upload.single('image'), bannerController.create_banner);
 
 // Get all banners API
-router.get("/get-all-banners", auth, bannerController.get_all_banners);
+router.get("/get-all-banners", auth, checkSellerMemberShipPlanStatus, bannerController.get_all_banners);
 
 // Get banner detail API
-router.get("/get-banner-detail",auth, bannerController.get_banner);
+router.get("/get-banner-detail",auth, checkSellerMemberShipPlanStatus, bannerController.get_banner);
 
 // Update banner API
-router.put("/update-banner",banner_upload.single('image'),  bannerController.update_banner);
+router.put("/update-banner",auth, checkSellerMemberShipPlanStatus,banner_upload.single('image'),  bannerController.update_banner);
 
 // Delete banner API
-router.delete("/delete-banner",auth,bannerController.delete_banner);
+router.delete("/delete-banner",auth, checkSellerMemberShipPlanStatus,bannerController.delete_banner);
 
 // Get seller events API
 router.get("/get-seller-events", auth,eventController.get_seller_events);
 
 
 // Add event validator API
-router.post("/add-event-validator",auth, validatorEventController.add_event_validator);
+router.post("/add-event-validator",auth, checkSellerMemberShipPlanStatus,validatorEventController.add_event_validator);
 
 // get guest banner list API
 router.get("/get-guest-banner-list", bannerController.get_guest_banner_list);
@@ -310,7 +310,7 @@ router.get("/get-guest-banner-list", bannerController.get_guest_banner_list);
 router.get("/get-seller-validator-list",auth, validatorController.get_seller_validator_list);
 
 // get validators'event list API
-router.get("/get-event-validators-list", validatorEventController.get_event_validators_list);
+router.get("/get-event-validators-list",auth,checkSellerMemberShipPlanStatus, validatorEventController.get_event_validators_list);
 
 // get not expired event validators list  API
 router.get("/get-not-expired-event-validators-list",auth, validatorEventController.get_not_expired_event_validators_list);
@@ -363,11 +363,11 @@ router.get("/revenue-comparison-report",reportController.revenue_comparison_repo
 router.get("/get-event-validator-detail",auth,validatorEventController.get_event_validator_detail);
 
 // update event validator API
-router.put("/update-event-validator",auth,validatorEventController.update_event_validator);
+router.put("/update-event-validator",auth,checkSellerMemberShipPlanStatus,validatorEventController.update_event_validator);
 
 
 // delete event validator API
-router.delete("/delete-event-validator",auth,validatorEventController.delete_event_validator);
+router.delete("/delete-event-validator",auth,checkSellerMemberShipPlanStatus,validatorEventController.delete_event_validator);
 
 // close event counter API
 router.put("/close-event-counter",auth,eventController.close_event_counter);

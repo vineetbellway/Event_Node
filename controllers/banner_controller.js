@@ -1149,6 +1149,7 @@ console.log("twentyFourHoursBeforeStart",twentyFourHoursBeforeStart)
             title: title,
             body: description,
           };
+          
 
           // Sending push notification
           sendPushNotification(fcm_token, notification, {})
@@ -1162,57 +1163,86 @@ console.log("twentyFourHoursBeforeStart",twentyFourHoursBeforeStart)
       }
     }
 
-    var bookedEventData = await Booking.aggregate([
-      {
-          $lookup: {
-              from: 'events',
-              localField: 'event_id',
-              foreignField: '_id',
-              as: 'event_data',
+
+    var eventBannerData = await BannerModel.find({'banner_type' : 'event'});
+    console.log("eventBannerData",eventBannerData);
+
+    if(eventBannerData.length > 0){
+      for(item of eventBannerData){
+        var seller_id = item.seller_id;
+        var bookedEventData = await Booking.aggregate([
+          {
+              $lookup: {
+                  from: 'events',
+                  localField: 'event_id',
+                  foreignField: '_id',
+                  as: 'event_data',
+              },
           },
-      },
-      {
-          $match: {
-              'event_data.status': 'active',
-              $or: [
-                { 'event_data.start_time': { $eq: startDateTime } }, // Event is today or in the future
-                { 'event_data.start_time': { $gte: twelveHoursBeforeStart, $lt: currentDateTime } }, // Event is 12 hours before current time
-                { 'event_data.start_time': { $gte: twentyFourHoursBeforeStart, $lt: twelveHoursBeforeStart } }, // Event is 24 hours before current time
-            ]
+          {
+              $match: {
+                  'event_data.status': 'active',
+                  'event_data.seller_id': new mongoose.Types.ObjectId(seller_id),
 
+                  $or: [
+                    { 'event_data.start_time': { $eq: startDateTime } }, // Event is today or in the future
+                    { 'event_data.start_time': { $gte: twelveHoursBeforeStart, $lt: currentDateTime } }, // Event is 12 hours before current time
+                    { 'event_data.start_time': { $gte: twentyFourHoursBeforeStart, $lt: twelveHoursBeforeStart } }, // Event is 24 hours before current time
+                ]
+    
+              },
           },
-      },
-      {
-          $sort: { createdAt: -1 }, // Sort by createdAt in descending order
-      },
-  ]);
-
-  console.log("bookedEventData", bookedEventData);
-
-  if (bookedEventData.length > 0) {
-      for (const [key, item1] of Object.entries(bookedEventData)) {
-
-          var event_data = item1.event_data[0];
-          console.log("event_data", event_data);
-
-          var event_name = event_data.name;
-          var event_start_date = event_data.start_time;
-          var event_end_date = event_data.event_end_time;
-          description = "your event " + event_name + " is on " + event_start_date;
-          title = 'Event invitation';
-          var event_id = event_data._id.toString(); // Convert ObjectID to string
-          // Check if event ID already added
-          if (!addedEventIds.has(event_id)) {
-              addedEventIds.add(event_id); // Add event ID to set
-              var event_name = event_data.name;
-              var event_start_date = event_data.start_time;
-              var event_end_date = event_data.event_end_time;
-              description = "Your event " + event_name + " is on " + event_start_date;
-              title = 'Event invitation';
-              invitation_list.push({ 'title': title, 'description': description });
-          }
+          {
+              $sort: { createdAt: -1 }, // Sort by createdAt in descending order
+          },
+        ]);
+    
+        console.log("bookedEventData", bookedEventData);
+    
+        if (bookedEventData.length > 0) {
+            for (const [key, item1] of Object.entries(bookedEventData)) {
+    
+                var event_data = item1.event_data[0];
+                console.log("event_data", event_data);
+    
+                var event_name = event_data.name;
+                var event_start_date = event_data.start_time;
+                var event_end_date = event_data.event_end_time;
+                description = "your event " + event_name + " is on " + event_start_date;
+                title = 'Event invitation';
+                var event_id = event_data._id.toString(); // Convert ObjectID to string
+                // Check if event ID already added
+                if (!addedEventIds.has(event_id)) {
+                    addedEventIds.add(event_id); // Add event ID to set
+                    var event_name = event_data.name;
+                    var event_start_date = event_data.start_time;
+                    var event_end_date = event_data.event_end_time;
+                    description = "Your event " + event_name + " is on " + event_start_date;
+                    title = 'Event invitation';
+                    const user_data = await User.findOne({ '_id': item1.guest_id});
+                    var fcm_token = user_data.fcm_token;
+                    const notification = {
+                      title: title,
+                      body: description,
+                    };
+          
+                    // Sending push notification
+                    sendPushNotification(fcm_token, notification, {})
+                      .then(() => {
+                        console.log('Push notification sent successfully.');
+                      })
+                      .catch((error) => {
+                        console.error('Error sending push notification:', error);
+                      });
+                    invitation_list.push({ 'title': title, 'description': description });
+                }
+            }
+        }
       }
-  }
+    }
+
+
+
   } catch (error) {
     console.log("error", error);
   }

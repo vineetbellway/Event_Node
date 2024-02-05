@@ -1156,7 +1156,8 @@ exports.get_guest_loyalty_points = async (req, res) => {
         sum = sum + parseInt(payment_data[0].total_points);
         event_data.push({
           event_id: event_id,
-          point: point
+          point: point,
+          status:event_record.status
         });
         
       }
@@ -1177,7 +1178,10 @@ exports.get_guest_loyalty_points = async (req, res) => {
     console.log("event data",event_data)
     const uniqueEventData = {};
     event_data.forEach(event => {
-      uniqueEventData[event.event_id.toString()] = event;
+      if(event.status!="expired"){
+        uniqueEventData[event.event_id.toString()] = event;
+      }
+
     });
     event_data = Object.values(uniqueEventData);
 
@@ -1185,13 +1189,13 @@ exports.get_guest_loyalty_points = async (req, res) => {
 
     if(event_data.length > 0){
       event_data.forEach(event => {
-        total_loyalty_points +=event.point;
-         
-      });
+        if(event.status!="expired"){
+          total_loyalty_points +=event.point;
+        }
+       });
     }
    
 
-    console.log("event_data",event_data)
 
     return res.status(200).json({
       status: true,
@@ -1235,6 +1239,8 @@ exports.get_guest_loyalty_events = async (req, res) => {
         $match: { "event.status": "active" } // Filter based on the status of the event
       }
     ]);
+
+    console.log("event_guest_record",event_guest_record)
 
     let total_loyalty_points = 0;
     let event_data = [];
@@ -1295,7 +1301,8 @@ exports.get_guest_loyalty_events = async (req, res) => {
        /* console.log("p_item",p_item)*/
         const payment_data = p_item.payment_data;
         const event_id = p_item.event_id;
-        const event_record = await EventModel.findById(event_id);
+        const event_record = await EventModel.find({"_id":event_id,"status":"active"});
+        console.log("event_record",event_record)
        /* console.log("payment_id",payment_data[0]._id)*/
       //  console.log("payment_data",payment_data[0])
       const total_points = parseInt(payment_data[0].total_points);
@@ -1341,14 +1348,18 @@ exports.get_guest_loyalty_events = async (req, res) => {
     var data = [];
     if(event_data.length > 0){
       for(item of event_data){
-          var event_details = await EventModel.findById(item.event_id);
-          data.push(event_details)
+          var event_details = await EventModel.find({"_id":item.event_id,"status":"active"});
+          console.log("event_details",event_details)
+          if(event_details.length > 0){
+            data.push(...event_details);
+          }
+          
       }
     }
     if(data.length > 0){
       return res.status(200).json({status: true,message: "Data found",data});
     } else {
-      return res.status(200).send({ status: true, message: "No Data found", data: [] });
+      return res.status(200).send({ status: false, message: "No Data found", data: [] });
     }
   } catch (error) {
     console.error("Error:", error);

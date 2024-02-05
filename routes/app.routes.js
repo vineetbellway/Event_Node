@@ -93,7 +93,7 @@ router.delete("/validator/:id", auth, validatorController.delete_validator);
 router.delete("/validator", auth, validatorController.delete_validators);
 
 router.post("/event",auth,checkSellerMemberShipPlanStatus, upload.single('image'), eventController.create_event);
-router.post("/event/:id",auth, upload.single('image'),eventController.update_event);
+router.post("/event/:id",auth,checkSellerMemberShipPlanStatus, upload.single('image'),eventController.update_event);
 router.get("/event", auth,checkSellerMemberShipPlanStatus,eventController.get_events);
 router.get("/search_event/:keyword",eventController.search_events);
 router.get("/event_by_seller_id/:id",auth,checkSellerMemberShipPlanStatus,  eventController.event_by_seller_id);
@@ -101,8 +101,8 @@ router.get("/event/:id",auth,  eventController.get_event);
 router.delete("/event/:id",auth,checkSellerMemberShipPlanStatus,  eventController.delete_event);
 router.delete("/event",auth,  eventController.delete_events);
 
-router.post("/menu",auth,checkSellerMemberShipPlanStatus,menuController.create_menu);
-router.put("/menu/:id",auth,checkSellerMemberShipPlanStatus, menuController.update_menu);
+router.post("/menu",auth,menuController.create_menu);
+router.put("/menu/:id",auth, menuController.update_menu);
 router.get("/menu", auth,menuController.get_menus);
 router.get("/menu_by_event_id/:id/:guest_id",auth, menuController.get_menu_by_event_id);
 router.get("/menu_by_event_id_for_entry_food_event/:id/:guest_id",auth, menuController.get_menu_by_event_id_for_entry_food_event);

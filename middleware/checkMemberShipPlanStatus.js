@@ -27,10 +27,7 @@ const checkSellerMemberShipPlanStatus = async (req, res, next) => {
       if(result){
           next();
       } else {
-          return res.send({
-              status: false,
-              message: "Please purchase membership plan to access this feature",
-          }); 
+          return res.send({status: false,message: "Please purchase membership plan to access this feature"}); 
       }
   } catch (error) {
       console.log("error",error);

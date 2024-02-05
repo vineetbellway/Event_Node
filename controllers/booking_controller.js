@@ -45,6 +45,21 @@ const book = async (req, res, next) => {
         return;
       }
 
+      var user_booking_limit = event_record.user_booking_limit;
+
+      const eventBookings = await Booking.find({ event_id: event_id });
+      var event_booking_length = eventBookings.length;
+
+      console.log("user_booking_limit",user_booking_limit);
+
+      console.log("event_booking_length",event_booking_length);
+      if(event_record.type!="loyalty"){
+        if(event_booking_length >= user_booking_limit){
+          res.status(200).send({ status: false, message: "You can not book this event", data: null });
+          return;
+        }
+      }
+
 
       if(payment_mode == "upi"){
         var status = "active";

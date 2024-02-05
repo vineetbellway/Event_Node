@@ -215,7 +215,7 @@ router.post("/approve-guest-consumption/:id", loyalityController.approve_guest_c
 
 // book event
 
-router.post("/book",auth, bookingController.book);
+router.post("/book", auth,bookingController.book);
 
 // get bookings by payment mode
 

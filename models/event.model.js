@@ -92,7 +92,10 @@ const schema = new mongoose.Schema(
     },
     point: {
       type: String,
-    },   
+    },  
+    user_booking_limit: {
+      type: String,
+    } 
   },
   {
     timestamps: true,

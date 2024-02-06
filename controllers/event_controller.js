@@ -6,6 +6,7 @@ const { ObjectId } = require('mongoose').Types;
 const moment = require("moment");
 const { baseStatus, userStatus } = require("../utils/enumerator");
 const Booking = require("../models/booking.model");
+const Membership = require("../models/membership.model");
 
 
 exports.create_event = async(req, res, next) => {

@@ -2,7 +2,9 @@ const SubscriptionPlan = require("../../models/subscription_plan.model");
 const mongoose = require("mongoose");
 const { baseStatus, userStatus } = require("../../utils/enumerator");
 
-exports.create_subscription_plan = (req, res, next) => {
+const Membership = require("../../models/membership.model");
+
+exports.create_subscription_plan = async (req, res, next) => {
   if (!req.body) {
     res.status(400).send({
       status: false,
@@ -10,6 +12,13 @@ exports.create_subscription_plan = (req, res, next) => {
     });
   } else {
     try {
+      var totalPlans = await SubscriptionPlan.find();
+      if(totalPlans.length > 0){
+        res.status(200).send({ status: false, message: "You can not add more than 3 plans" });
+        return;
+      }
+
+
       SubscriptionPlan(req.body)
         .save()
         .then((result) => {
@@ -173,8 +182,12 @@ exports.delete_subscription_plan = async (req, res) => {
   } else {
     try {
       await SubscriptionPlan.findByIdAndDelete(id)
-        .then((result) => {
+        .then(async(result) => {
           if (result) {
+
+            var sellerId = result.selller_id;
+            const deleteConditions = { seller_id: sellerId };
+            const deleteResult = await MemberShip.deleteMany(deleteConditions);
             res.status(200).send({
               status: true,
               message: "deleted",

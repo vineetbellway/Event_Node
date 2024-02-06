@@ -8,7 +8,7 @@ const { baseStatus, userStatus } = require("../utils/enumerator");
 const Booking = require("../models/booking.model");
 
 
-exports.create_event = (req, res, next) => {
+exports.create_event = async(req, res, next) => {
   try {
     // Trim values to remove extra spaces
     const seller_id = req.body.seller_id !== undefined && req.body.seller_id !== null ? req.body.seller_id.toString().trim() : null;
@@ -32,121 +32,293 @@ exports.create_event = (req, res, next) => {
     const commision_charge = req.body.commision_charge.trim();
     const is_cover_charge_added = (req.body.is_cover_charge_added!='') ?  req.body.is_cover_charge_added.trim() : 'no';
     const user_booking_limit = req.body.user_booking_limit ?  req.body.user_booking_limit.trim() : '';
+
+
+    var sellerMemberShip = await Membership.aggregate([
+      {
+          $match: {
+              seller_id: new mongoose.Types.ObjectId(seller_id),
+          },
+      },
+      {
+          $lookup: {
+              from: 'subscriptionplans',
+              localField: 'plan_id',
+              foreignField: '_id',
+              as: 'plan_data',
+          },
+      },
+      {
+          $project: {
+              "_id": 1,
+              "seller_id": 1,
+              "plan_id": 1,
+              "amount": 1,
+              "txn": 1,
+              "end_date": 1,
+              "status": 1,
+              "createdAt": 1,
+              "updatedAt": 1,
+              "event_limit" :1,
+              "description" : 1,
+              "plan_name": { "$arrayElemAt": ["$plan_data.name", 0] } // Extracting plan_name from plan_data
+          }
+      },
+      {
+        $sort: { "createdAt": -1 } // Sort by createdAt in descending order
+    },
+    {
+        $limit: 1 // Limit to only the latest plan
+    }
+
+  ]);
+
+   if(sellerMemberShip.length > 0){
+     var eventLimit = sellerMemberShip[0].event_limit;
+      if(eventLimit == "unlimited"){
+              
+        const cover_charge = (req.body.cover_charge!='') ?  req.body.cover_charge.trim() : '';
+        const others = req.body.others.trim();
+        const status = req.body.status.trim();
+        const banner_id = req.body.banner_id ? req.body.banner_id.trim() : null;
+        const point = req.body.point ? req.body.point.trim() : 0;
+
+        if(type == "loyalty"){
+          if (point == '' || point == 0) {
+            res.status(400).send({ status: false, message: "Please enter point", data: null  });
+            return;
+          }  
+        }
+
+
+
+        const guest_ids = req.body.guest_ids; 
+
+        
+
+
+
+        const eventData = {
+          seller_id: new ObjectId(seller_id),
+          primary_number,
+          secondary_number,
+          type,
+          name,
+          venue,
+          image,
+          country,
+          state,
+          city,
+          start_time,
+          end_time,
+          coupon_name,
+          amount,
+          instructions,
+          transportation_charge,
+          hire_charge,
+          labour_charge,
+          commision_charge,
+          others,
+          is_cover_charge_added,
+          cover_charge,
+          status,
+          banner_id,
+          point,
+          user_booking_limit
+        };
+
+        EventModel(eventData)
+          .save()
+          .then(async(result) => {
+            if (result) {
+              // Get the host (domain and port)
+              const protocol = req.protocol;
+              const host = req.get('host');
+
+              // Combine protocol, host, and any other parts of the base URL you need
+              const baseURL = `${protocol}://${host}`;
+              const imageUrl = baseURL + '/uploads/events/' + result.image;
+              console.log("result",result)
+
+            
+            
+              if(type == "loyalty"){
+                const jsonArray = JSON.parse(guest_ids);
+                if(jsonArray.length > 0){
+                  for(item of jsonArray){
+                    var eventguestdata = {
+                      "event_id" : result._id,
+                      "guest_id" : item,
+                      "point" : point
+                  }
+                    await EventGuestModel(eventguestdata).save();
+
+
+                  var bookingData = {
+                    'event_id': result._id,
+                    'guest_id': item,
+                    'point' : point,
+                    'status' : "active"
+                  };
+
+                  await Booking(bookingData).save();
+
+
+
+                  }
+                }
+              }
+
+
+
+
+
+              res.status(201).send({ status: true, message: 'Event created',  data: {
+                ...result.toObject(),
+                image: imageUrl,
+              }, });
+            } else {
+              res.status(500).send({ status: false, message: 'Not created' ,data :null });
+            }
+          })
+          .catch((error) => {
+            console.log("error",error)
+            res.send({
+              status: false,
+              message: error.toString() ?? 'Error',
+            });
+          });
+      }
+      const sellerEvents = await EventModel.find({ seller_id: seller_id });
+      var sellerEventLength = sellerEvents.length; 
+      if(eventLimit > 0){
+        if(sellerEventLength >= eventLimit){
+          res.status(200).send({
+            status: false,
+            message: "You can add more than "+eventLimit + "event",
+            data:null
+          });
+        } else {
+          // add event
+          const cover_charge = (req.body.cover_charge!='') ?  req.body.cover_charge.trim() : '';
+        const others = req.body.others.trim();
+        const status = req.body.status.trim();
+        const banner_id = req.body.banner_id ? req.body.banner_id.trim() : null;
+        const point = req.body.point ? req.body.point.trim() : 0;
+
+        if(type == "loyalty"){
+          if (point == '' || point == 0) {
+            res.status(400).send({ status: false, message: "Please enter point", data: null  });
+            return;
+          }  
+        }
+
+
+
+        const guest_ids = req.body.guest_ids; 
+
+        
+
+
+
+        const eventData = {
+          seller_id: new ObjectId(seller_id),
+          primary_number,
+          secondary_number,
+          type,
+          name,
+          venue,
+          image,
+          country,
+          state,
+          city,
+          start_time,
+          end_time,
+          coupon_name,
+          amount,
+          instructions,
+          transportation_charge,
+          hire_charge,
+          labour_charge,
+          commision_charge,
+          others,
+          is_cover_charge_added,
+          cover_charge,
+          status,
+          banner_id,
+          point,
+          user_booking_limit
+        };
+
+        EventModel(eventData)
+          .save()
+          .then(async(result) => {
+            if (result) {
+              // Get the host (domain and port)
+              const protocol = req.protocol;
+              const host = req.get('host');
+
+              // Combine protocol, host, and any other parts of the base URL you need
+              const baseURL = `${protocol}://${host}`;
+              const imageUrl = baseURL + '/uploads/events/' + result.image;
+              console.log("result",result)
+
+            
+            
+              if(type == "loyalty"){
+                const jsonArray = JSON.parse(guest_ids);
+                if(jsonArray.length > 0){
+                  for(item of jsonArray){
+                    var eventguestdata = {
+                      "event_id" : result._id,
+                      "guest_id" : item,
+                      "point" : point
+                  }
+                    await EventGuestModel(eventguestdata).save();
+
+
+                  var bookingData = {
+                    'event_id': result._id,
+                    'guest_id': item,
+                    'point' : point,
+                    'status' : "active"
+                  };
+
+                  await Booking(bookingData).save();
+
+
+
+                  }
+                }
+              }
+
+
+
+
+
+              res.status(201).send({ status: true, message: 'Event created',  data: {
+                ...result.toObject(),
+                image: imageUrl,
+              }, });
+            } else {
+              res.status(500).send({ status: false, message: 'Not created' ,data :null });
+            }
+          })
+          .catch((error) => {
+            console.log("error",error)
+            res.send({
+              status: false,
+              message: error.toString() ?? 'Error',
+            });
+          });
+        }
+      }
+     
+   }
     
  
 
-    
-    const cover_charge = (req.body.cover_charge!='') ?  req.body.cover_charge.trim() : '';
-    const others = req.body.others.trim();
-    const status = req.body.status.trim();
-    const banner_id = req.body.banner_id ? req.body.banner_id.trim() : null;
-    const point = req.body.point ? req.body.point.trim() : 0;
-
-    if(type == "loyalty"){
-      if (point == '' || point == 0) {
-        res.status(400).send({ status: false, message: "Please enter point", data: null  });
-        return;
-      }  
-    }
-
-
-
-    const guest_ids = req.body.guest_ids; 
-
-    
-
-
-
-    const eventData = {
-      seller_id: new ObjectId(seller_id),
-      primary_number,
-      secondary_number,
-      type,
-      name,
-      venue,
-      image,
-      country,
-      state,
-      city,
-      start_time,
-      end_time,
-      coupon_name,
-      amount,
-      instructions,
-      transportation_charge,
-      hire_charge,
-      labour_charge,
-      commision_charge,
-      others,
-      is_cover_charge_added,
-      cover_charge,
-      status,
-      banner_id,
-      point,
-      user_booking_limit
-    };
-
-    EventModel(eventData)
-      .save()
-      .then(async(result) => {
-        if (result) {
-          // Get the host (domain and port)
-          const protocol = req.protocol;
-          const host = req.get('host');
-
-          // Combine protocol, host, and any other parts of the base URL you need
-          const baseURL = `${protocol}://${host}`;
-          const imageUrl = baseURL + '/uploads/events/' + result.image;
-          console.log("result",result)
-
-         
-         
-          if(type == "loyalty"){
-            const jsonArray = JSON.parse(guest_ids);
-            if(jsonArray.length > 0){
-              for(item of jsonArray){
-                var eventguestdata = {
-                  "event_id" : result._id,
-                  "guest_id" : item,
-                  "point" : point
-               }
-                 await EventGuestModel(eventguestdata).save();
-
-
-              var bookingData = {
-                'event_id': result._id,
-                'guest_id': item,
-                'point' : point,
-                'status' : "active"
-              };
-
-              await Booking(bookingData).save();
-
-
-
-              }
-            }
-          }
-
-
-
-
-
-          res.status(201).send({ status: true, message: 'Event created',  data: {
-            ...result.toObject(),
-            image: imageUrl,
-          }, });
-        } else {
-          res.status(500).send({ status: false, message: 'Not created' ,data :null });
-        }
-      })
-      .catch((error) => {
-        console.log("error",error)
-        res.send({
-          status: false,
-          message: error.toString() ?? 'Error',
-        });
-      });
+  
   } catch (error) {
     console.error('Error:', error);
     res.status(500).send({

@@ -201,7 +201,7 @@ exports.get_validator_by_user_id3 = async (req, res) => {
   }
 };
 
-exports.get_validator_by_user_id= async (req, res) => {
+exports.get_validator_by_user_id44 = async (req, res) => {
   var id = req.params.id;
   if (!id) {
     res.status(400).send({ status: false, message: "id missing" });
@@ -241,13 +241,14 @@ exports.get_validator_by_user_id= async (req, res) => {
          const currentDateTimeFormatted = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000Z`;
          
          const presentDateTime = new Date(currentDateTimeFormatted);
-
+        var all_data = [];
          if(result.length > 0){
             for(item of result){
-              var status = item.status;
-              if(status == "accept"){
+              var validator_status = item.status;
+             // console.log("status",status)
+              if(validator_status == "accept"){
                 var eventRecord = await EventModel.findById(item.event_id);
-              //  console.log("eventRecord",eventRecord)
+               // console.log("eventRecord",eventRecord)
                 if(eventRecord){
                   const eventStartDateTime = eventRecord.start_time;
                   const eventEndDateTime = eventRecord.end_time;
@@ -262,29 +263,33 @@ exports.get_validator_by_user_id= async (req, res) => {
               } else {
                 var validator_role = '';
               }
+              const userData = await User.findOne({ _id: item.validator_id });
+
+              const validatorData = await Validator.findOne({ user_id: userData._id });
+              
+              var response = 
+                {
+                  _id: validatorData._id,
+                  user_id: validatorData.user_id,
+                  full_name: validatorData.full_name,
+                  district: validatorData.district,
+                  state: validatorData.state,
+                  country: validatorData.country,
+                  status: validatorData.status,
+                  createdAt: validatorData.createdAt,
+                  updatedAt: validatorData.updatedAt,
+                  __v: validatorData.__v,
+                  role: validator_role,
+                  user: userData,
+                  validator_status: validator_status,
+                  event:eventRecord
+                }
+
+                all_data.push(response)
 
             }
        
-            const userData = await User.findOne({ _id: item.validator_id });
-
-            const validatorData = await Validator.findOne({ user_id: userData._id });
-            console.log("dd",userData._id)
-            
-            var response = 
-              {
-                _id: validatorData._id,
-                user_id: validatorData.user_id,
-                full_name: validatorData.full_name,
-                district: validatorData.district,
-                state: validatorData.state,
-                country: validatorData.country,
-                status: validatorData.status,
-                createdAt: validatorData.createdAt,
-                updatedAt: validatorData.updatedAt,
-                __v: validatorData.__v,
-                role: validator_role,
-                user: userData
-              }
+           
             
          }
 
@@ -293,11 +298,11 @@ exports.get_validator_by_user_id= async (req, res) => {
     
  
 
-    res.status(200).send({
-      status: true,
-      message: "success",
-      data: response
-    });
+         res.status(200).send({
+          status: true,
+          message: "success",
+          data: all_data
+        });
     console.log("validator_role",validator_role)
     console.log("eventRecord",eventRecord)
 
@@ -356,6 +361,85 @@ exports.get_validator_by_user_id= async (req, res) => {
         message: error.toString() ?? "Internal Server Error",
       });
     }
+  }
+};
+exports.get_validator_by_user_id = async (req, res) => {
+  try {
+    const id = req.params.id;
+    if (!id) {
+      return res.status(400).send({ status: false, message: "id missing" });
+    }
+
+    const validator = await Validator.findOne({ user_id: id });
+    if (!validator) {
+      return res.status(404).send({ status: false, message: "Validator not found" });
+    }
+
+    const userData = await User.findOne({ _id: id });
+
+    const eventValidatorData = await EventValidator.find({ validator_id: id });
+    const filteredData = [];
+    const currentDateTime = new Date();
+    const year = currentDateTime.getFullYear();
+    const month = ('0' + (currentDateTime.getMonth() + 1)).slice(-2);
+    const day = ('0' + currentDateTime.getDate()).slice(-2);
+    const hours = ('0' + currentDateTime.getHours()).slice(-2);
+    const minutes = ('0' + currentDateTime.getMinutes()).slice(-2);
+    const seconds = ('0' + currentDateTime.getSeconds()).slice(-2);
+    
+    const currentDateTimeFormatted = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000Z`;
+    
+    const presentDateTime = new Date(currentDateTimeFormatted);
+    
+    for (const item of eventValidatorData) {
+      const eventRecord = await EventModel.findById(item.event_id);
+      if (!eventRecord) continue;
+
+      const eventStartDateTime = eventRecord.start_time;
+      const eventEndDateTime = eventRecord.end_time;
+      
+        console.log("eventRecord",eventRecord)
+        if(item.status == "accept"){
+          if (presentDateTime >= eventStartDateTime && presentDateTime <= eventEndDateTime ) {
+           var validator_role = item.role;
+         } else {
+          var validator_role = '';
+         }
+        
+      } else {
+        var validator_role = '';
+      }
+        filteredData.push({
+          _id: validator._id,
+          user_id: validator.user_id,
+          full_name: validator.full_name,
+          district: validator.district,
+          state: validator.state,
+          country: validator.country,
+          status: validator.status,
+          createdAt: validator.createdAt,
+          updatedAt: validator.updatedAt,
+          __v: validator.__v,
+          role: validator_role,
+          user: userData,
+        });
+
+      
+      
+
+
+    }
+
+    res.status(200).send({
+      status: true,
+      message: "success",
+      data: filteredData[0]
+    });
+  } catch (error) {
+    res.status(500).send({
+      status: false,
+      message: error.toString() || "Internal Server Error",
+    });
   }
 };
 

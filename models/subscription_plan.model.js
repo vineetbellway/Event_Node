@@ -26,6 +26,14 @@ const schema = new mongoose.Schema(
       type: String,
       default: baseStatus.active,
     },
+    description: {
+      type: String,
+      required: true,
+    },
+    event_limit: {
+      type: String,
+      required: true,
+    },
   },
   {
     timestamps: true,

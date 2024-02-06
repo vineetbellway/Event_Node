@@ -7,6 +7,7 @@ const moment = require("moment");
 const { baseStatus, userStatus } = require("../utils/enumerator");
 const Booking = require("../models/booking.model");
 const Membership = require("../models/membership.model");
+const Seller = require("../models/seller.model");
 
 
 exports.create_event = async(req, res, next) => {
@@ -34,11 +35,15 @@ exports.create_event = async(req, res, next) => {
     const is_cover_charge_added = (req.body.is_cover_charge_added!='') ?  req.body.is_cover_charge_added.trim() : 'no';
     const user_booking_limit = req.body.user_booking_limit ?  req.body.user_booking_limit.trim() : '';
 
+ 
+
+    var user_record = await Seller.findOne({"user_id" : seller_id});
+    console.log("user_record",user_record._id)
 
     var sellerMemberShip = await Membership.aggregate([
       {
           $match: {
-              seller_id: new mongoose.Types.ObjectId(seller_id),
+              seller_id: new mongoose.Types.ObjectId(user_record._id),
           },
       },
       {
@@ -61,8 +66,9 @@ exports.create_event = async(req, res, next) => {
               "createdAt": 1,
               "updatedAt": 1,
               "event_limit" :1,
-              "description" : 1,
-              "plan_name": { "$arrayElemAt": ["$plan_data.name", 0] } // Extracting plan_name from plan_data
+              "plan_name": { "$arrayElemAt": ["$plan_data.name", 0] } ,
+              "description": { "$arrayElemAt": ["$plan_data.description", 0] },
+              "event_limit": { "$arrayElemAt": ["$plan_data.event_limit", 0] } 
           }
       },
       {
@@ -73,9 +79,10 @@ exports.create_event = async(req, res, next) => {
     }
 
   ]);
-
+  console.log("sellerMemberShip",sellerMemberShip)
    if(sellerMemberShip.length > 0){
      var eventLimit = sellerMemberShip[0].event_limit;
+     console.log("eventLimit",eventLimit)
       if(eventLimit == "unlimited"){
               
         const cover_charge = (req.body.cover_charge!='') ?  req.body.cover_charge.trim() : '';

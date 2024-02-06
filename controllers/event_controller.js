@@ -189,7 +189,7 @@ exports.create_event = async(req, res, next) => {
             });
           });
       }
-      const sellerEvents = await EventModel.find({ seller_id: seller_id });
+      const sellerEvents = await EventModel.find({ seller_id: seller_id, 'status' : 'active' });
       var sellerEventLength = sellerEvents.length; 
       if(eventLimit > 0){
         if(sellerEventLength >= eventLimit){

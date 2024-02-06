@@ -13,7 +13,8 @@ exports.create_subscription_plan = async (req, res, next) => {
   } else {
     try {
       var totalPlans = await SubscriptionPlan.find();
-      if(totalPlans.length > 0){
+      console.log("")
+      if(totalPlans.length > 3){
         res.status(200).send({ status: false, message: "You can not add more than 3 plans" });
         return;
       }
@@ -82,6 +83,7 @@ exports.get_subscription_plans = async (req, res) => {
     ]);
     await SubscriptionPlan.aggregatePaginate(myAggregate, options)
       .then((result) => {
+        console.log("result",result)
         if (result) {
           res.status(200).send({
             status: true,

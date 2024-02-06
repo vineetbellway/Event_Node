@@ -3,6 +3,9 @@ const mongoose = require("mongoose");
 const { baseStatus, userStatus } = require("../utils/enumerator");
 const SellerModel = require("../models/seller.model");
 const EventValidator = require("../models/event_validator.model");
+const EventModel = require("../models/event.model");
+const User = require("../models/user.model");
+
 
 exports.create_validator = (req, res, next) => {
   if (!req.body) {
@@ -150,7 +153,7 @@ exports.get_validator = async (req, res) => {
   }
 };
 
-exports.get_validator_by_user_id = async (req, res) => {
+exports.get_validator_by_user_id3 = async (req, res) => {
   var id = req.params.id;
   if (!id) {
     res.status(400).send({ status: false, message: "id missing" });
@@ -189,6 +192,164 @@ exports.get_validator_by_user_id = async (req, res) => {
             message: error.toString() ?? "Error",
           });
         });
+    } catch (error) {
+      res.status(500).send({
+        status: false,
+        message: error.toString() ?? "Internal Server Error",
+      });
+    }
+  }
+};
+
+exports.get_validator_by_user_id= async (req, res) => {
+  var id = req.params.id;
+  if (!id) {
+    res.status(400).send({ status: false, message: "id missing" });
+  } else {
+    try {
+
+
+    const eventValidators = await EventValidator.aggregate([
+      {
+        $match: {
+          validator_id: new mongoose.Types.ObjectId(id),
+        },
+      },
+      {
+        $lookup: {
+          from: "validators",
+          localField: "validator_id",
+          foreignField: "user_id",
+          as: "validator_data",
+        },
+      
+      },
+      
+     
+    ])  .then(async(result) => {
+      if (result) {
+
+       //  console.log("result",result)
+         const currentDateTime = new Date();
+         const year = currentDateTime.getFullYear();
+         const month = ('0' + (currentDateTime.getMonth() + 1)).slice(-2);
+         const day = ('0' + currentDateTime.getDate()).slice(-2);
+         const hours = ('0' + currentDateTime.getHours()).slice(-2);
+         const minutes = ('0' + currentDateTime.getMinutes()).slice(-2);
+         const seconds = ('0' + currentDateTime.getSeconds()).slice(-2);
+         
+         const currentDateTimeFormatted = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000Z`;
+         
+         const presentDateTime = new Date(currentDateTimeFormatted);
+
+         if(result.length > 0){
+            for(item of result){
+              var status = item.status;
+              if(status == "accept"){
+                var eventRecord = await EventModel.findById(item.event_id);
+              //  console.log("eventRecord",eventRecord)
+                if(eventRecord){
+                  const eventStartDateTime = eventRecord.start_time;
+                  const eventEndDateTime = eventRecord.end_time;
+                  if (presentDateTime >= eventStartDateTime && presentDateTime <= eventEndDateTime) {
+                    var validator_role = result[0].role;
+                  } else {
+                    var validator_role = '';
+                  }
+                }
+                
+                
+              } else {
+                var validator_role = '';
+              }
+
+            }
+       
+            const userData = await User.findOne({ _id: item.validator_id });
+
+            const validatorData = await Validator.findOne({ user_id: userData._id });
+            console.log("dd",userData._id)
+            
+            var response = 
+              {
+                _id: validatorData._id,
+                user_id: validatorData.user_id,
+                full_name: validatorData.full_name,
+                district: validatorData.district,
+                state: validatorData.state,
+                country: validatorData.country,
+                status: validatorData.status,
+                createdAt: validatorData.createdAt,
+                updatedAt: validatorData.updatedAt,
+                __v: validatorData.__v,
+                role: validator_role,
+                user: userData
+              }
+            
+         }
+
+  
+
+    
+ 
+
+    res.status(200).send({
+      status: true,
+      message: "success",
+      data: response
+    });
+    console.log("validator_role",validator_role)
+    console.log("eventRecord",eventRecord)
+
+      
+      }
+    })
+    .catch((error) => {
+      console.log("error",error)
+      res.send({
+        status: false,
+        message: error.toString() ?? "Error",
+      });
+    });
+
+
+
+
+
+
+    /*  await Validator.aggregate([
+        {
+          $match: {
+            user_id: new mongoose.Types.ObjectId(id),
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "user_id",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        {
+          $unwind: "$user",
+        },
+      ])
+        .then((result) => {
+          if (result) {
+            res.status(200).send({
+              status: true,
+              message: "success",
+              data: result[0],
+            });
+          }
+        })
+        .catch((error) => {
+          res.send({
+            status: false,
+            message: error.toString() ?? "Error",
+          });
+        });*/
     } catch (error) {
       res.status(500).send({
         status: false,

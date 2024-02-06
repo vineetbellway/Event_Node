@@ -497,7 +497,7 @@ exports.get_event_validators_list_old = async (req, res) => {
   }
 };
 
-exports.get_event_validators_list = async (req, res) => {
+exports.get_event_validators_list_backup = async (req, res) => {
   try {
     const sellerId = req.query.seller_id;
     const eventId = req.query.event_id;
@@ -629,6 +629,120 @@ exports.get_event_validators_list = async (req, res) => {
   }
 };
 
+
+exports.get_event_validators_list = async (req, res) => {
+  try {
+    const sellerId = req.query.seller_id;
+    const eventId = req.query.event_id;
+
+    var seller = await User.findById(sellerId);
+    if (!seller) {
+      return res.status(200).send({
+        status: false,
+        message: "Seller not found",
+        data: null,
+      });
+    }    
+    var sellerData = await SellerModel.findOne({ user_id: sellerId });
+    
+
+
+
+    const event = await EventModel.findById(eventId);
+    if (!event) {
+      return res.status(200).send({
+        status: false,
+        message: "Event not found",
+        data: null,
+      });
+    } 
+
+    const sellerDistrict = sellerData.district;
+
+    const eventValidators = await EventValidator.aggregate([
+      {
+        $lookup: {
+          from: "validators",
+          localField: "validator_id",
+          foreignField: "user_id",
+          as: "validator_data",
+        },
+      },
+      {
+        $lookup: {
+          from: "eventmodels",
+          localField: "event_id",
+          foreignField: "_id",
+          as: "event_data",
+        },
+      },
+      {
+        $match: {
+          event_id: new mongoose.Types.ObjectId(eventId),
+          seller_id: new mongoose.Types.ObjectId(sellerId),
+        },
+      },
+    ]);
+    console.log("eventValidators",eventValidators)
+
+    const currentDateTime = new Date();
+    const year = currentDateTime.getFullYear();
+    const month = ('0' + (currentDateTime.getMonth() + 1)).slice(-2);
+    const day = ('0' + currentDateTime.getDate()).slice(-2);
+    const hours = ('0' + currentDateTime.getHours()).slice(-2);
+    const minutes = ('0' + currentDateTime.getMinutes()).slice(-2);
+    const seconds = ('0' + currentDateTime.getSeconds()).slice(-2);
+    
+    const currentDateTimeFormatted = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000Z`;
+    
+    const startDateTime = new Date(currentDateTimeFormatted);
+    console.log("startDateTime",startDateTime)
+
+
+    const allValidatorList = eventValidators
+      .filter((val) => sellerDistrict === val.validator_data[0].district)
+    
+      .map((val) => ({
+       
+        
+        _id: val.validator_data[0]._id,
+        user_id: val.validator_data[0].user_id, // Assuming this is the user_id from the 'validators' collection
+        full_name: val.validator_data[0].full_name, // Assuming this is the full_name from the 'validators' collection
+        district: val.validator_data[0].district,
+        state: val.validator_data[0].state,
+        country: val.validator_data[0].country,
+        status: val.validator_data[0].status,
+        createdAt: val.createdAt,
+        updatedAt: val.updatedAt,
+        role: val.role,
+        validator_status: val.status,
+        //...eventValidators
+      }));
+
+      console.log("allValidatorList",allValidatorList)
+
+    if (allValidatorList.length > 0) {
+      res.status(200).send({
+        status: true,
+        message: "Data found",
+        data: allValidatorList,
+      });
+    } else {
+      res.status(200).send({
+        status: true,
+        message: "No validators found",
+        data: [],
+      });
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).send({
+      status: false,
+      message: error.toString() || "Internal Server Error",
+      data: null,
+    });
+  }
+};
 
 exports.get_not_expired_event_validators_list = async (req, res) => {
   try {

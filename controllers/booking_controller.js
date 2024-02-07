@@ -1722,12 +1722,13 @@ const get_pending_guest_list = async (req, res) => {
 
                 if(eventId.toString()  === booking.event_id.toString() ){
                   if (booking._id.toString() === booking_id) {
-
+                    var event_record = await EventModel.findById(booking.event_id);
                     specifiedBookingData = {
                       "guest_data": { ...guestRecord },
                       "booking_data": {
                           _id: booking._id,
                           event_id: booking.event_id,
+                          event_type : event_record.type,
                           guest_id: booking.guest_id,
                           payment_mode: booking.payment_mode,
                           status: booking.status,
@@ -1742,17 +1743,16 @@ const get_pending_guest_list = async (req, res) => {
 
                   } else {
                      // For other records, push them to the all_data array
-                     console.log("inside else",booking._id)
-                      console.log("yha")
                       var booking_data = await Booking.findById(booking_id);
                       var booking_status = booking_data.status;
-                      console.log("booking_status",booking_status)
                       if(booking_status == "pending" && booking._id.toString() !== booking_id){
+                        var event_record = await EventModel.findById(booking.event_id);
                         all_data.push({
                           "guest_data": { ...guestRecord },
                           "booking_data": {
                               _id: booking._id,
                               event_id: booking.event_id,
+                              event_type : event_record.type,
                               guest_id: booking.guest_id,
                               payment_mode: booking.payment_mode,
                               status: booking.status,

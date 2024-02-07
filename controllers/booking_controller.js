@@ -246,7 +246,7 @@ const get_bookings = async (req, res) => {
                 // booking_date: booking.booking_date,
                 createdAt: booking.createdAt,
                 updatedAt: booking.updatedAt,
-                is_approve_request: booking.is_approve_request ?? 0,
+                is_approve_request: booking.is_approve_request ? booking.is_approve_request.toString() : "0",
                 event_data: booking.event_data && booking.event_data.length > 0  ? {
                   ...booking.event_data[0],
                   // Constructing image URL
@@ -268,7 +268,7 @@ const get_bookings = async (req, res) => {
                 // booking_date: booking.booking_date,
                 createdAt: booking.createdAt,
                 updatedAt: booking.updatedAt,
-                is_approve_request: booking.is_approve_request ?? 0,
+                is_approve_request: booking.is_approve_request ? booking.is_approve_request.toString() : "0",
                 event_data: booking.event_data && booking.event_data.length > 0 && booking.event_data[0].status!="expired" ? {
                   ...booking.event_data[0],
                   // Constructing image URL
@@ -614,7 +614,7 @@ const  get_booking_detail = async (req, res) => {
                 payment_mode: booking.payment_mode,
                 status: booking.status,
                 transaction_id: booking.transaction_id,
-                is_approve_request: booking.is_approve_request ?? 0,
+                is_approve_request: booking.is_approve_request ? booking.is_approve_request.toString() : "0",
                 createdAt: booking.createdAt,
                 updatedAt: booking.updatedAt,
                 event_data: booking.event_data && booking.event_data.length > 0 ? {

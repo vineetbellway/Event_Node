@@ -2370,13 +2370,13 @@ const send_entry_request_to_guest = async (req, res) => {
       return res.status(200).json({status: false,message: "Invalid booking id",data: null});
     }
 
-    if(bookingData.is_approve_request == '1'){
+    if(bookingData.is_approve_request == '0'){
       return res.status(200).json({status: false,message: "Guest has already approved your request",data: null});
     }
      try {
       const result = await Booking.findOneAndUpdate(
         { _id: bookingId },
-        { $set: { is_approve_request: 0 } },
+        { $set: { is_approve_request: 1 } },
         { new: true }
       );  
 
@@ -2438,7 +2438,7 @@ const approve_entry_request = async (req, res) => {
      try {
       const result = await Booking.findOneAndUpdate(
         { _id: bookingId },
-        { $set: { is_approve_request: 1 } },
+        { $set: { is_approve_request: 0 } },
         { new: true }
       );  
 

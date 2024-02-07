@@ -246,7 +246,7 @@ const get_bookings = async (req, res) => {
                 // booking_date: booking.booking_date,
                 createdAt: booking.createdAt,
                 updatedAt: booking.updatedAt,
-  
+                is_requested: booking.is_requested ?? 0,
                 event_data: booking.event_data && booking.event_data.length > 0  ? {
                   ...booking.event_data[0],
                   // Constructing image URL
@@ -255,6 +255,9 @@ const get_bookings = async (req, res) => {
                 booked_menu_data:booking.booked_menu_data
               };
             } else {
+
+              console.log("here")
+
               var response = {
                 _id: booking._id,
                 event_id: booking.event_id,
@@ -265,7 +268,7 @@ const get_bookings = async (req, res) => {
                 // booking_date: booking.booking_date,
                 createdAt: booking.createdAt,
                 updatedAt: booking.updatedAt,
-  
+                is_requested: booking.is_requested ?? 0,  
                 event_data: booking.event_data && booking.event_data.length > 0 && booking.event_data[0].status!="expired" ? {
                   ...booking.event_data[0],
                   // Constructing image URL
@@ -2354,8 +2357,114 @@ const approve_event_menu_items_booking = async (req, res) => {
   }
 }; 
 
+const send_entry_request_to_guest = async (req, res) => {
+  var bookingId = req.body.booking_id;
+  var bookingData = await Booking.findById(bookingId);
+
+  if (!bookingId) {
+   return  res.status(400).json({ status: false, message: "booking id is required in the request body" });
+  } else {
+
+    if(!bookingData){
+      return res.status(200).json({status: false,message: "Invalid booking id",data: null});
+    }
+
+    if(bookingData.is_requested == '1'){
+      return res.status(200).json({status: false,message: "Guest has already approved your request",data: null});
+    }
+     try {
+      const result = await Booking.findOneAndUpdate(
+        { _id: bookingId },
+        { $set: { is_requested: 0 } },
+        { new: true }
+      );  
 
 
+    if (result) {
+      const user_data = await User.findOne({ '_id': bookingData.guest_id });
+      var fcm_token = user_data.fcm_token;
+
+      const notification = {
+        title:  'Entry request',
+        body: "Validator has requested to you for entry",
+      };
+
+      var data = {};
+
+      // Sending push notification
+      sendPushNotification(fcm_token, notification, data)
+        .then(() => {
+          console.log('Push notification sent successfully.');
+        })
+        .catch((error) => {
+          console.error('Error sending push notification:', error);
+        });
+        
+        res.status(200).json({
+          status: true,
+          message: "Entry requested successfully",
+          data: result,
+        });
+      } else {
+        res.status(200).json({
+          status: false,
+          message: "No record found",
+          data: null,
+        });
+      }
+    
+    } catch (error) {
+      console.log("error", error);
+      res.status(500).json({
+        status: false,
+        message: error.toString() || "Internal Server Error",
+      });
+    }
+  }
+}; 
+
+const approve_entry_request = async (req, res) => {
+  var bookingId = req.body.booking_id;
+  var bookingData = await Booking.findById(bookingId);
+
+  if (!bookingId) {
+   return  res.status(400).json({ status: false, message: "booking id is required in the request body" });
+  } else {
+
+    if(!bookingData){
+      return res.status(200).json({status: false,message: "Invalid booking id",data: null});
+    }
+     try {
+      const result = await Booking.findOneAndUpdate(
+        { _id: bookingId },
+        { $set: { is_requested: 1 } },
+        { new: true }
+      );  
+
+
+    if (result) {
+        res.status(200).json({
+          status: true,
+          message: "Entry request approved succesfully",
+          data: result,
+        });
+      } else {
+        res.status(200).json({
+          status: false,
+          message: "No record found",
+          data: null,
+        });
+      }
+    
+    } catch (error) {
+      console.log("error", error);
+      res.status(500).json({
+        status: false,
+        message: error.toString() || "Internal Server Error",
+      });
+    }
+  }
+}; 
 
 
 
@@ -2376,5 +2485,7 @@ module.exports = {
   close_event_by_seller,
   get_booked_menu_list,
   book_event_menu_items,
-  approve_event_menu_items_booking
+  approve_event_menu_items_booking,
+  send_entry_request_to_guest,
+  approve_entry_request
 }; 

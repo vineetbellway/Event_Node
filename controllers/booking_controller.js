@@ -614,6 +614,7 @@ const  get_booking_detail = async (req, res) => {
                 payment_mode: booking.payment_mode,
                 status: booking.status,
                 transaction_id: booking.transaction_id,
+                is_approve_request: booking.is_approve_request ?? 0,
                 createdAt: booking.createdAt,
                 updatedAt: booking.updatedAt,
                 event_data: booking.event_data && booking.event_data.length > 0 ? {

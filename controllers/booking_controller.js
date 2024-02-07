@@ -1504,7 +1504,7 @@ const get_guest_coupon_balance = async (req, res) => {
   }
 };
 
-const get_pending_guest_list = async (req, res) => {
+const get_pending_guest_list_by_event_id = async (req, res) => {
   var event_id = req.query.event_id;
   var search_key = req.query.search_key;
   const sanitizedSearchKey = search_key.trim(); 
@@ -1605,6 +1605,189 @@ const get_pending_guest_list = async (req, res) => {
               message: "Guest list found",
               data: all_data,
             });
+          } else {
+            res.status(404).json({
+              status: false,
+              message: "No guests found",
+              data: [],
+            });
+          }
+        })
+        .catch((error) => {
+          console.log("error", error);
+          res.status(500).json({
+            status: false,
+            message: error.toString() || "Internal Server Error",
+          });
+        });
+    } catch (error) {
+      console.log("error", error);
+      res.status(500).json({
+        status: false,
+        message: error.toString() || "Internal Server Error",
+      });
+    }
+  }
+};
+
+const get_pending_guest_list = async (req, res) => {
+  var booking_id = req.query.booking_id;
+  var search_key = req.query.search_key;
+  const sanitizedSearchKey = search_key.trim(); 
+
+  if (!booking_id) {
+    res.status(400).json({
+      status: false,
+      message: "booking_id is required in the request body",
+    });
+  } else {
+    try {
+      const pipeline = [
+        {
+          $match: {
+            /*_id: new mongoose.Types.ObjectId(booking_id),*/
+            status: "pending",
+             "payment_mode": { $nin: ["upi"] } , // Exclude documents with payment_mode not equal to "upi" or "pay on counter"
+
+          },
+        },
+        {
+          $lookup: {
+            from: "events",
+            localField: "event_id",
+            foreignField: "_id",
+            as: "event_data",
+          },
+        },
+        {
+          $lookup: {
+            from: "guests",
+            localField: "guest_id",
+            foreignField: "user_id",
+            as: "guest_data",
+          },
+        },
+       {
+          $lookup: {
+            from: "users",  // Assuming the contact number is in the "users" table
+            localField: "guest_data.user_id",  // Assuming "user_id" links to the "users" table
+            foreignField: "_id",
+            as: "user_data",
+          },
+        },
+       
+        {
+          $match: {
+            $or: [
+              { "guest_data.full_name": { $regex: search_key, $options: "i" } },
+              { "user_data.code_phone": { $regex: search_key, $options: "i" } },
+              {
+                "user_data.code_phone": {
+                  $regex: new RegExp(`^(\\+${sanitizedSearchKey}|0?${sanitizedSearchKey})$`, 'i')
+                }
+              },
+              // Add more conditions if needed
+            ],
+          },
+        },
+        
+       
+      ];
+
+      Booking.aggregate(pipeline)
+        .then(async(result) => {
+          console.log("result", result);
+          var bookingData = await Booking.findById(booking_id);
+         
+          var eventId = bookingData.event_id;
+          
+          var eventData = await EventModel.findById(eventId);
+          var eventType = eventData.type;
+         
+          var all_data = [];
+          if (result && result.length > 0) {
+            for (const booking of result) {
+              var bookingEventData = await EventModel.findById(booking.event_id);
+              var specifiedBookingData;
+              if(bookingEventData.type === eventType){
+                const guestRecord = booking.guest_data[0];
+                guestRecord.contact_number = booking.user_data[0].code_phone;
+
+                if(eventId.toString()  === booking.event_id.toString() ){
+                  if (booking._id.toString() === booking_id) {
+
+                    specifiedBookingData = {
+                      "guest_data": { ...guestRecord },
+                      "booking_data": {
+                          _id: booking._id,
+                          event_id: booking.event_id,
+                          guest_id: booking.guest_id,
+                          payment_mode: booking.payment_mode,
+                          status: booking.status,
+                          transaction_id: booking.transaction_id,
+                          amount: booking.amount,
+                          createdAt: booking.createdAt,
+                          updatedAt: booking.updatedAt,
+                          __v: booking.__v,
+                      },
+                  };
+
+
+                  } else {
+                     // For other records, push them to the all_data array
+                     console.log("inside else",booking._id)
+                      console.log("yha")
+                      var booking_data = await Booking.findById(booking_id);
+                      var booking_status = booking_data.status;
+                      console.log("booking_status",booking_status)
+                      if(booking_status == "pending" && booking._id.toString() !== booking_id){
+                        all_data.push({
+                          "guest_data": { ...guestRecord },
+                          "booking_data": {
+                              _id: booking._id,
+                              event_id: booking.event_id,
+                              guest_id: booking.guest_id,
+                              payment_mode: booking.payment_mode,
+                              status: booking.status,
+                              transaction_id: booking.transaction_id,
+                              amount: booking.amount,
+                              createdAt: booking.createdAt,
+                              updatedAt: booking.updatedAt,
+                              __v: booking.__v,
+                          },
+                      });
+                      }
+                     
+                     
+                  }
+
+         
+                
+                  
+                }
+                
+              }
+            }
+             // Push the record for the specified booking_id to the beginning of the all_data array
+             console.log("specifiedBookingData",specifiedBookingData)
+        if (specifiedBookingData!=undefined) {
+            all_data.unshift(specifiedBookingData);
+        }
+            if(all_data.length > 0){
+              res.status(200).json({
+                status: true,
+                message: "Data found",
+                data: all_data,
+              });
+            } else {
+              res.status(200).json({
+                status: false,
+                message: "No data found",
+                data: all_data,
+              });
+            }
+
+            
           } else {
             res.status(404).json({
               status: false,
@@ -2191,6 +2374,7 @@ module.exports = {
   get_booked_guest_list,
   get_guest_coupon_balance,
   get_pending_guest_list,
+  get_pending_guest_list_by_event_id,
   get_approved_booking_cost,
   close_event_by_seller,
   get_booked_menu_list,

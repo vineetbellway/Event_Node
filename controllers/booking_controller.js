@@ -246,7 +246,7 @@ const get_bookings = async (req, res) => {
                 // booking_date: booking.booking_date,
                 createdAt: booking.createdAt,
                 updatedAt: booking.updatedAt,
-                is_requested: booking.is_requested ?? 0,
+                is_approve_request: booking.is_approve_request ?? 0,
                 event_data: booking.event_data && booking.event_data.length > 0  ? {
                   ...booking.event_data[0],
                   // Constructing image URL
@@ -268,7 +268,7 @@ const get_bookings = async (req, res) => {
                 // booking_date: booking.booking_date,
                 createdAt: booking.createdAt,
                 updatedAt: booking.updatedAt,
-                is_requested: booking.is_requested ?? 0,  
+                is_approve_request: booking.is_approve_request ?? 0,
                 event_data: booking.event_data && booking.event_data.length > 0 && booking.event_data[0].status!="expired" ? {
                   ...booking.event_data[0],
                   // Constructing image URL
@@ -2369,13 +2369,13 @@ const send_entry_request_to_guest = async (req, res) => {
       return res.status(200).json({status: false,message: "Invalid booking id",data: null});
     }
 
-    if(bookingData.is_requested == '1'){
+    if(bookingData.is_approve_request == '1'){
       return res.status(200).json({status: false,message: "Guest has already approved your request",data: null});
     }
      try {
       const result = await Booking.findOneAndUpdate(
         { _id: bookingId },
-        { $set: { is_requested: 0 } },
+        { $set: { is_approve_request: 0 } },
         { new: true }
       );  
 
@@ -2437,7 +2437,7 @@ const approve_entry_request = async (req, res) => {
      try {
       const result = await Booking.findOneAndUpdate(
         { _id: bookingId },
-        { $set: { is_requested: 1 } },
+        { $set: { is_approve_request: 1 } },
         { new: true }
       );  
 

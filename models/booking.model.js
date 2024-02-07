@@ -35,7 +35,7 @@ const schema = new mongoose.Schema(
     point: {
       type: String,
     },
-    is_requested: {
+    is_approve_request: {
       type: String,
     },
   },

@@ -224,7 +224,7 @@ router.post("/book", auth,bookingController.book);
 router.get("/get-bookings-by-payment-mode",auth, bookingController.get_bookings_by_payment_mode);
 
 // get bookings
-router.get("/get-bookings", auth , bookingController.get_bookings);
+router.get("/get-bookings" ,auth, bookingController.get_bookings);
 
 // get booking detail
 router.get("/get-booking-detail",auth,  bookingController.get_booking_detail);
@@ -405,10 +405,20 @@ router.post("/approve-menu-payment",auth, menuController.approve_menu_payment);
 router.get("/get-expired-events/:id",auth, eventController.get_expired_events);
 
 
-// get pending guest list API
+// get pending guest list by event id API
 router.get("/get-pending-guest-list-by-event-id",auth,bookingController.get_pending_guest_list_by_event_id);
 
-router.get("/get-pending-guest-list",auth,bookingController.get_pending_guest_list);
+// get pending guest list API
+router.get("/get-pending-guest-list",bookingController.get_pending_guest_list);
+
+// send entry request to guest API
+
+router.post("/send-entry-request-to-guest",auth,bookingController.send_entry_request_to_guest);
+
+
+// approve entry request API
+
+router.post("/approve-entry-request",auth,bookingController.approve_entry_request);
 
 
 // get approved booking cost API

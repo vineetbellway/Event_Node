@@ -35,6 +35,9 @@ const schema = new mongoose.Schema(
     point: {
       type: String,
     },
+    is_requested: {
+      type: String,
+    },
   },
   {
     timestamps: true,

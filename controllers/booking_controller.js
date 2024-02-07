@@ -1698,6 +1698,10 @@ const get_pending_guest_list = async (req, res) => {
         .then(async(result) => {
           console.log("result", result);
           var bookingData = await Booking.findById(booking_id);
+          console.log("bookingData",bookingData)
+          if(!bookingData){
+            return res.status(200).json({status: false,message: "Invalid booking id",data: null});
+          }
          
           var eventId = bookingData.event_id;
           
@@ -1757,15 +1761,8 @@ const get_pending_guest_list = async (req, res) => {
                           },
                       });
                       }
-                     
-                     
-                  }
-
-         
-                
-                  
-                }
-                
+                    }
+                 }
               }
             }
              // Push the record for the specified booking_id to the beginning of the all_data array
@@ -1782,7 +1779,7 @@ const get_pending_guest_list = async (req, res) => {
             } else {
               res.status(200).json({
                 status: false,
-                message: "No data found",
+                message: "Booking already approved",
                 data: all_data,
               });
             }

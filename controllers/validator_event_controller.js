@@ -339,12 +339,12 @@ exports.add_event_validator = async(req, res, next) => {
    
 
      // Check if a validator already exists in same event
-     const existingRoleInEventValidator = await EventValidator.findOne({validator_id: req.body.validator_id , event_id: req.body.event_id });
+     const existingRoleInEventValidator = await EventValidator.findOne({validator_id: req.body.validator_id , event_id: req.body.event_id , role: req.body.role});
 
      if (existingRoleInEventValidator) {
        return res.status(409).send({
          status: false,
-         message: "Validator is already added to event",
+         message: "Validator is already assigned this role in this event",
          data:null
        });
      }

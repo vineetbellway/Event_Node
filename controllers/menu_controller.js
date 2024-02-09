@@ -1107,13 +1107,20 @@ exports.get_menu_by_event_id = async (req, res) => {
           
 
           const filteredResults2 = filteredResults.filter(item => {
-            // Check if the item's category ID matches any of the category IDs of selected items
-            const hasMatchingCategory = selectedMenuItems2.some(selectedItem => {
-                return selectedItem.menu_id.category_id.toString() === item.category_id.toString();
-            });
-        
-            // If there is a matching category, exclude the item
-            return !hasMatchingCategory;
+
+            console.log("item",item)
+            if(item.is_limited == "yes"){
+                    // Check if the item's category ID matches any of the category IDs of selected items
+                  const hasMatchingCategory = selectedMenuItems2.some(selectedItem => {
+                    return selectedItem.menu_id.category_id.toString() === item.category_id.toString();
+                });
+            
+                // If there is a matching category, exclude the item
+                return !hasMatchingCategory;
+            } else {
+              return item;
+            }
+           
         });
         
         

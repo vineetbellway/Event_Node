@@ -2164,7 +2164,7 @@ const get_booked_menu_list = async (req, res) => {
                // console.log("inside if quantity",bookedMenuRecord.quantity)
                 if(paymentRecord.status == "active"){
                   
-                  groupedMenuData[menuKey].menu_quantity -= bookedMenuRecord.quantity;
+                  groupedMenuData[menuKey].menu_quantity += bookedMenuRecord.quantity;
                 } 
                 else {
                  // console.log("inside else else quantity",bookedMenuRecord.quantity)

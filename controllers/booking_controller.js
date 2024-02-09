@@ -1927,22 +1927,40 @@ const get_approved_booking_cost = async (req, res) => {
             ]);
 
             console.log("payment_result",payment_result)
+            if(payment_result.length > 0){
+              for (const payment_result_key of payment_result) {
+                if (booking.payment_mode === "counter_upi") {
+                  totalUPIBookingAmount += payment_result_key.amount || 0;
+                } 
+              
+  
+                if (booking.payment_mode === "cash") {
+                  totalCashBooking += payment_result_key.amount || 0;
+                }
+  
+                if (booking.payment_mode === "card") {
+                  totalCardBooking += payment_result_key.amount || 0;
+                }
+  
+              }
 
-            for (const payment_result_key of payment_result) {
+            } else {
+
+
               if (booking.payment_mode === "counter_upi") {
-                totalUPIBookingAmount += payment_result_key.amount || 0;
+                totalUPIBookingAmount += booking.amount || 0;
               } 
             
 
               if (booking.payment_mode === "cash") {
-                totalCashBooking += payment_result_key.amount || 0;
+                totalCashBooking += booking.amount || 0;
               }
 
               if (booking.payment_mode === "card") {
-                totalCardBooking += payment_result_key.amount || 0;
+                totalCardBooking += booking.amount || 0;
               }
-
             }
+            
               
                
                 

@@ -891,11 +891,11 @@ exports.approve_service_payment = async (req, res, next) => {
         console.log("total_sum",total_sum);
         console.log("sum",sum);
       //    return false;
-         
+         /*
         if (sum > total_loyality_points) {
           res.status(400).send({ status: false, message: "Total points exceeds then event loyality point", data: [] });
           return;
-        }    
+        }    */
 
         console.log("sum",sum)
   

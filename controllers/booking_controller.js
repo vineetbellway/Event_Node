@@ -2162,15 +2162,23 @@ const get_booked_menu_list = async (req, res) => {
               if (groupedMenuData[menuKey]) {
                 // If the menu item already exists, add the quantity
                 console.log("inside if quantity",bookedMenuRecord)
-                if(paymentRecord.status == "active"){
+               if(paymentRecord.status == "active"){ 
+                  if(paymentRecord.is_consumed == "no"){
+                    groupedMenuData[menuKey].menu_quantity += bookedMenuRecord.quantity;
+                  } else {
+                    groupedMenuData[menuKey].menu_quantity -= bookedMenuRecord.quantity;
+                  }
+
                   
-                  groupedMenuData[menuKey].menu_quantity += bookedMenuRecord.quantity;
+                 
                 } 
-                else {
-                 // console.log("inside else else quantity",bookedMenuRecord.quantity)
+                
+
+               // else {
+                  // console.log("inside else else quantity",bookedMenuRecord.quantity)
 
                  //  groupedMenuData[menuKey].menu_quantity = bookedMenuRecord.quantity;
-                }
+               //  }
               //  groupedMenuData[menuKey].menu_quantity += bookedMenuRecord.quantity;
                 
               } else {

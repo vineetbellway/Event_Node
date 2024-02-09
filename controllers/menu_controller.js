@@ -3312,32 +3312,32 @@ exports.approve_menu_payment = async (req, res, next) => {
             },
           },
         ]);
-      // Fetch cover charge from the event record
-      const eventRecord = await EventModel.findById(event_id);
-      // Check if cover charge exceeds the sum of menu item prices
-      let sum = 0;
-      for (const item of entryFoodBookedMenuData) {
+        // Fetch cover charge from the event record
+        const eventRecord = await EventModel.findById(event_id);
+        // Check if cover charge exceeds the sum of menu item prices
+        let sum = 0;
+        for (const item of entryFoodBookedMenuData) {
 
-        if (item && typeof item.quantity === 'number' && item.quantity > 0) {
-          const menu_id = item.menu_id;
-          const menuRecord = await Menu.findById(menu_id);
-       
-           // Update total stock in Menu collection
-           const newTotalStock = menuRecord.total_stock - item.quantity;
+          if (item && typeof item.quantity === 'number' && item.quantity > 0) {
+            const menu_id = item.menu_id;
+            const menuRecord = await Menu.findById(menu_id);
+        
+            // Update total stock in Menu collection
+            const newTotalStock = menuRecord.total_stock - item.quantity;
 
-           const newCount = menuRecord.limited_count - item.quantity;
-       
-           await Menu.findByIdAndUpdate(menu_id, { $set: { total_stock: newTotalStock } });
-          
-          // await Menu.findByIdAndUpdate(menu_id, { $set: { limited_count: newCount } });
-           
-           
+            const newCount = menuRecord.limited_count - item.quantity;
+        
+            await Menu.findByIdAndUpdate(menu_id, { $set: { total_stock: newTotalStock } });
+            
+            // await Menu.findByIdAndUpdate(menu_id, { $set: { limited_count: newCount } });
+            
+            
 
-          if (menuRecord) {
-            sum += menuRecord.selling_price * item.quantity;
+            if (menuRecord) {
+              sum += menuRecord.selling_price * item.quantity;
+            }
           }
         }
-      }
 
 
   
@@ -3350,7 +3350,7 @@ exports.approve_menu_payment = async (req, res, next) => {
       if(eventRecord.type == "entry_food_event"){
         
 
-          await BookingPayments.findByIdAndUpdate(payment_id, { $set: { amount: sum } });
+          await BookingPayments.findByIdAndUpdate(payment_id, { $set: { amount: sum ,is_consumed: 'yes'} });
 
         
       }

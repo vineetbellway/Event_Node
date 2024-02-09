@@ -30,6 +30,12 @@ const schema = new mongoose.Schema(
     transaction_id:{
         type: String,
     },
+    is_consumed: {
+      type: String,
+      enum: ['yes', 'no'],
+      default: 'no' 
+    }
+    
   },
   {
     timestamps: true,

@@ -2161,7 +2161,7 @@ const get_booked_menu_list = async (req, res) => {
 
               if (groupedMenuData[menuKey]) {
                 // If the menu item already exists, add the quantity
-               // console.log("inside if quantity",bookedMenuRecord.quantity)
+                console.log("inside if quantity",bookedMenuRecord)
                 if(paymentRecord.status == "active"){
                   
                   groupedMenuData[menuKey].menu_quantity += bookedMenuRecord.quantity;

@@ -95,7 +95,7 @@ router.delete("/validator", auth, validatorController.delete_validators);
 router.post("/event",auth,checkSellerMemberShipPlanStatus, upload.single('image'), eventController.create_event);
 router.post("/event/:id",auth,checkSellerMemberShipPlanStatus, upload.single('image'),eventController.update_event);
 router.get("/event", auth,checkSellerMemberShipPlanStatus,eventController.get_events);
-router.get("/search_event/:keyword",eventController.search_events);
+router.get("/search_event/:keyword",auth,eventController.search_events);
 router.get("/event_by_seller_id/:id",auth,checkSellerMemberShipPlanStatus,  eventController.event_by_seller_id);
 router.get("/event/:id",auth,  eventController.get_event);
 router.delete("/event/:id",auth,checkSellerMemberShipPlanStatus,  eventController.delete_event);
@@ -422,7 +422,7 @@ router.post("/approve-entry-request",auth,bookingController.approve_entry_reques
 
 
 // get approved booking cost API
-router.get("/get-approved-booking-cost",auth, bookingController.get_approved_booking_cost);
+router.get("/get-approved-booking-cost", bookingController.get_approved_booking_cost);
 
 // read all notifications api
 router.post("/read-all-notifications",auth, notificationController.read_all_notifications);

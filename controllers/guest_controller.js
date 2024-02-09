@@ -325,6 +325,7 @@ exports.get_active_city_events = async (req, res) => {
           $match: {
             status: "active",
             city: guestDistrict,
+            type: { $ne: "loyalty" } // Exclude documents where type is "loyalty"
           },
         },
       ])

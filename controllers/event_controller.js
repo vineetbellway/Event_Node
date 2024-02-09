@@ -552,7 +552,9 @@ exports.search_events = async (req, res) => {
       {
         $match: {
           $or: [{ name: regex }, { coupon_name: regex }, { venue: regex } ],
-          'status' : 'active'
+          'status' : 'active',
+          type: { $ne: "loyalty" } // Exclude documents where type is "loyalty"
+
         },
       },
     ]);

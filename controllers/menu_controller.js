@@ -1060,8 +1060,8 @@ exports.get_menu_by_event_id = async (req, res) => {
             
           });
 
-          console.log("filteredResults",filteredResults);
-          console.log("selectedMenuItems2",selectedMenuItems2)
+        //  console.log("filteredResults",filteredResults);
+        //  console.log("selectedMenuItems2",selectedMenuItems2)
 
 
           const filteredResults23 = filteredResults.filter(async(item) => {
@@ -1108,30 +1108,60 @@ exports.get_menu_by_event_id = async (req, res) => {
 
           const filteredResults2 = filteredResults.filter(item => {
 
-            console.log("item",item)
-            if(item.is_limited == "yes"){
-                    // Check if the item's category ID matches any of the category IDs of selected items
-                  const hasMatchingCategory = selectedMenuItems2.some(selectedItem => {
-                    return selectedItem.menu_id.category_id.toString() === item.category_id.toString();
-                });
             
-                // If there is a matching category, exclude the item
-                return !hasMatchingCategory;
+            
+            if(item.is_limited == "yes"){
+
+
+                 // console.log("selectedMenuItems2",selectedMenuItems2)
+                  
+                   
+                    // Check if the item's category ID matches any of the category IDs of selected items
+                    const hasMatchingCategory = selectedMenuItems2.some(selectedItem => {
+                      console.log("limited count",selectedItem.menu_id.limited_count)
+                      console.log("menu name",selectedItem.menu_id.name)
+                    
+                     
+                      return selectedItem.menu_id.category_id.toString() === item.category_id.toString() && selectedItem.menu_id._id.toString() !== item._id.toString();
+                      
+                  });
+               
+                   // If there is a matching category, exclude the item
+                   return !hasMatchingCategory;
+                  
+              
+                
+                   
             } else {
               return item;
             }
            
         });
+        if(filteredResults2.length > 0){
+          var  filteredData = filteredResults2.filter(item => {
+            if (item.is_limited === "yes") {
+              return item.limited_count > 0;
+            } else {
+              return item.limited_count === 0;
+            }
+          });
+        } else {
+          var filteredData = [];
+        }
+       
+
+      
+      
         
         
   
 
        //  console.log("selectedMenuItems2",selectedMenuItems2)
-          console.log("filteredResults2",filteredResults2)
+       //   console.log("filteredResults2",filteredResults2)
      
           
   
-          var finalResponse = (selectedMenuItems2.length == 0) ? filteredResults : filteredResults2;
+          var finalResponse = (selectedMenuItems2.length == 0) ? filteredResults : filteredData;
         } else {
 
           console.log("cover charge enabled");

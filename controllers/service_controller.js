@@ -622,7 +622,10 @@ exports.book_service_items = async (req, res, next) => {
         await ServiceItemPayments.findByIdAndUpdate(payment_id, { $set: { total_points: sum } });
 
 
+
       // Delete records from the ServiceItem model
+
+      
      const deleteConditions = {
         event_id: { $in: results.map(item => item.event_id) },
         service_id: { $in: results.map(item => item.service_id) },

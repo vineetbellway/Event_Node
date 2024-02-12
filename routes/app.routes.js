@@ -406,7 +406,7 @@ router.get("/get-expired-events/:id",auth, eventController.get_expired_events);
 
 
 // get pending guest list by event id API
-router.get("/get-pending-guest-list-by-event-id",bookingController.get_pending_guest_list_by_event_id);
+router.get("/get-pending-guest-list-by-event-id",auth,bookingController.get_pending_guest_list_by_event_id);
 
 // get pending guest list API
 router.get("/get-pending-guest-list",auth,bookingController.get_pending_guest_list);

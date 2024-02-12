@@ -373,6 +373,11 @@ exports.get_events = async (req, res) => {
           status: baseStatus.active,
         },
       },
+      {
+        $sort: {
+          createdAt: -1 // Sort by createdAt field in descending order (latest first)
+        }
+      }
     ]);
     await EventModel.aggregatePaginate(myAggregate, options)
       .then((result) => {
@@ -557,6 +562,11 @@ exports.search_events = async (req, res) => {
 
         },
       },
+      {
+        $sort: {
+          createdAt: -1 // Sort by createdAt field in descending order (latest first)
+        }
+      }
     ]);
     await EventModel.aggregatePaginate(myAggregate, options)
       .then((result) => {
@@ -650,6 +660,11 @@ exports.event_by_seller_id = async (req, res) => {
       {
         $match: { seller_id: new mongoose.Types.ObjectId(id) , 'status' : 'active' },
       },
+      {
+        $sort: {
+          createdAt: -1 // Sort by createdAt field in descending order (latest first)
+        }
+      }
     ]);
     await EventModel.aggregatePaginate(myAggregate, options)
       .then((result) => {
@@ -719,6 +734,11 @@ exports.get_seller_events = async (req, res) => {
       {
         $match: { seller_id: new mongoose.Types.ObjectId(sellerId), 'status': 'active' },
       },
+      {
+        $sort: {
+          createdAt: -1 // Sort by createdAt field in descending order (latest first)
+        }
+      }
     ]);
 
     const result = await myAggregate.exec();
@@ -1013,17 +1033,44 @@ exports.close_event_counter = async (req, res, next) => {
 
 exports.get_expired_events = async (req, res) => {
   const id = req.params.id;
+  const type = req.params.type;
   try {
-    const results = await EventModel.aggregate([
-      {
-        $match: {
-          $and: [
-            { status: baseStatus.expired },
-            { seller_id: new mongoose.Types.ObjectId(id) },
-          ],
+    if(type == "food"){
+      var results = await EventModel.aggregate([
+        {
+          $match: {
+            $and: [
+              { status: baseStatus.expired },
+              { seller_id: new mongoose.Types.ObjectId(id) },
+              { type: { $in: ['entry_food_event','food_event'] }},
+            ],
+          },
+          
         },
-      },
-    ]);
+        {
+          $sort: {
+            createdAt: -1 // Sort by createdAt field in descending order (latest first)
+          }
+        }
+      ]);
+    } else {
+      var results = await EventModel.aggregate([
+        {
+          $match: {
+            $and: [
+              { status: baseStatus.expired },
+              { seller_id: new mongoose.Types.ObjectId(id) },
+            ],
+          },
+        },
+        {
+          $sort: {
+            createdAt: -1 // Sort by createdAt field in descending order (latest first)
+          }
+        }
+      ]);
+    }
+    
 
     if (results.length > 0) {
       // Get the host (domain and port)

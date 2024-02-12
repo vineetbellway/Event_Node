@@ -4205,13 +4205,7 @@ exports.get_event_menu_list = async (req, res) => {
         });
       }
 
-      if (event.status == "expired") {
-        return  res.status(200).send({
-          status: false,
-          message: "Event is expired",
-          data: null,
-        });
-      }
+  
     if (menuResults.length > 0) {
       if (event.type == "entry_food_event") {
         for(var item of menuResults){
@@ -4325,6 +4319,193 @@ exports.get_event_menu_list = async (req, res) => {
   }
 };
 
+
+exports.update_consumed_menu_quantity = async (req, res) => {
+  try {
+    const validator_id = req.body.validator_id;
+    const event_id = req.body.event_id;
+    const menu_id = req.body.menu_id;
+    var quantity = req.body.quantity;
+
+
+    // Fetch all menu items
+    const menuResults = await Menu.aggregate([
+      {
+        $match: {
+          event_id: new mongoose.Types.ObjectId(event_id),
+        },
+      },
+      {
+        $lookup: {
+          from: "uoms",
+          localField: "uom_id",
+          foreignField: "_id",
+          as: "uom_data",
+        },
+      },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "category_id",
+          foreignField: "_id",
+          as: "category_data",
+        },
+      },
+      {
+        $unwind: "$uom_data",
+      },
+      {
+        $unwind: "$category_data",
+      },
+      {
+        $project: {
+          _id: 1,
+          event_id: 1,
+          name: 1,
+          uom_id: 1,
+          category_id: 1,
+          total_stock: 1,
+          cost_price: 1,
+          selling_price: 1,
+          uom: "$uom_data.name",
+          category: "$category_data.name",
+          status: 1,
+          is_limited: 1,
+          limited_count: 1,
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      },
+    ]);
+
+
+      // Check if the event exists
+      const event = await EventModel.findById(event_id);
+      
+      if (!event) {
+        return res.status(404).send({
+          status: false,
+          message: "Event not found",
+          data: null,
+        });
+      }
+
+    
+    if (menuResults.length > 0) {
+      if (event.type == "entry_food_event") {
+        for(var item of menuResults){
+          const result = await BookingMenu.aggregate([
+           
+           {
+             $lookup: {
+               from: 'menus',
+               localField: 'menu_id',
+               foreignField: '_id',
+               as: 'menu'
+             }
+           },
+            
+           {
+            $lookup: {
+              from: 'bookingpayments',
+              localField: 'payment_id',
+              foreignField: '_id',
+              as: 'menu_item_payment_data',
+            },
+          },
+          {
+            $match: { "menu_item_payment_data.status": "active" ,   'menu_id' :  new mongoose.Types.ObjectId(item._id)  }
+          },
+           {
+             $match: {
+               'menu_item_payment_data.status': 'active',
+              'menu_item_payment_data.is_consumed': 'yes',
+               'menu_id' :  new mongoose.Types.ObjectId(item._id),
+             },
+           },
+           {
+             $group: {
+               _id: null,
+               total_quantity: { $sum: '$quantity' }
+             }
+           }
+         ]);
+         
+         var total_consumed_quantity = (result.length > 0) ? result[0].total_quantity :0;
+         console.log("total_consumed_quantity",total_consumed_quantity)
+           // Assign the total consumed quantity to the current menu item
+         item.total_consumed_quantity = total_consumed_quantity;
+         } 
+        
+      } else {
+        console.log("here")
+        for(var item of menuResults){
+          const result = await BookedMenuItem.aggregate([
+          
+           {
+             $lookup: {
+               from: 'menus',
+               localField: 'menu_id',
+               foreignField: '_id',
+               as: 'menu'
+             }
+           },
+           {
+            $lookup: {
+              from: 'menuitempayments',
+              localField: 'payment_id',
+              foreignField: '_id',
+              as: 'menu_item_payment_data',
+            },
+          },
+          {
+            $match: { "menu_item_payment_data.is_approved": "yes" , 'menu_id' :  new mongoose.Types.ObjectId(item._id) }
+          },
+        
+        
+           {
+             $group: {
+               _id: null,
+               validator_id: { $first: "$menu_item_payment_data.validator_id" }, // Assuming validator_id is a field in your documents
+               payment_id: { $first: "$payment_id" }, // Assuming validator_id is a field in your documents
+               total_quantity: { $sum: '$quantity' }
+             }
+           }
+         ]);
+
+         console.log("e",result)
+
+         
+         var total_consumed_quantity = (result.length > 0) ? result[0].total_quantity :0;
+           // Assign the total consumed quantity to the current menu item
+         item.total_consumed_quantity = total_consumed_quantity;
+       } 
+      }
+
+
+      
+
+      return res.status(200).send({
+        status: true,
+        message: "Data found",
+        data: menuResults,
+      });
+    } else {
+      res.status(200).send({
+        status: true,
+        message: "No data found",
+        data: [],
+      });
+    }
+  } catch (error) {
+    console.log("error",error)
+    res.status(500).send({
+      status: false,
+      message: error.toString() || "Internal Server Error",
+      data: null,
+    });
+  }
+};
 
 
 

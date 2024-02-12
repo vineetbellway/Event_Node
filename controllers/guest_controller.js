@@ -328,6 +328,13 @@ exports.get_active_city_events = async (req, res) => {
             type: { $ne: "loyalty" } // Exclude documents where type is "loyalty"
           },
         },
+
+        {
+          $sort: {
+            createdAt: -1 // Sort by createdAt field in descending order (latest first)
+          }
+        }
+        
       ])
         .then((result) => {
           if (result.length > 0) {

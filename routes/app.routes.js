@@ -469,7 +469,7 @@ router.get("/get-remind-list-for-event",auth, bannerController.get_remind_list_f
 router.get("/send-remind-list-for-event", auth, bannerController.sendRemindNotificationOfEvent);
 
 // get event menu list API
-router.get("/get-event-menu-list",menuController.get_event_menu_list);
+router.get("/get-event-menu-list",auth,menuController.get_event_menu_list);
 
 
 // update consumed menu quantity API

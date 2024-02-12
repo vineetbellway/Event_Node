@@ -4393,108 +4393,47 @@ exports.update_consumed_menu_quantity = async (req, res) => {
     
     if (menuResults.length > 0) {
       if (event.type == "entry_food_event") {
-        for(var item of menuResults){
-          const result = await BookingMenu.aggregate([
-           
-           {
-             $lookup: {
-               from: 'menus',
-               localField: 'menu_id',
-               foreignField: '_id',
-               as: 'menu'
-             }
-           },
-            
-           {
-            $lookup: {
-              from: 'bookingpayments',
-              localField: 'payment_id',
-              foreignField: '_id',
-              as: 'menu_item_payment_data',
-            },
-          },
-          {
-            $match: { "menu_item_payment_data.status": "active" ,   'menu_id' :  new mongoose.Types.ObjectId(item._id)  }
-          },
-           {
-             $match: {
-               'menu_item_payment_data.status': 'active',
-              'menu_item_payment_data.is_consumed': 'yes',
-               'menu_id' :  new mongoose.Types.ObjectId(item._id),
-             },
-           },
-           {
-             $group: {
-               _id: null,
-               total_quantity: { $sum: '$quantity' }
-             }
-           }
-         ]);
-         
-         var total_consumed_quantity = (result.length > 0) ? result[0].total_quantity :0;
-         console.log("total_consumed_quantity",total_consumed_quantity)
-           // Assign the total consumed quantity to the current menu item
-         item.total_consumed_quantity = total_consumed_quantity;
-         } 
+        const filter = {
+          menu_id: new mongoose.Types.ObjectId(menu_id),
+          event_id : new mongoose.Types.ObjectId(event_id),
+        };
+        // Update operation
+        const updateOperation = {
+          $set: {
+            quantity: quantity
+          }
+        };
+      // Update the documents that match the filter
+      var result = await BookingMenu.findOneAndUpdate(filter, updateOperation, { new: true });
         
       } else {
-        console.log("here")
-        for(var item of menuResults){
-          const result = await BookedMenuItem.aggregate([
-          
-           {
-             $lookup: {
-               from: 'menus',
-               localField: 'menu_id',
-               foreignField: '_id',
-               as: 'menu'
-             }
-           },
-           {
-            $lookup: {
-              from: 'menuitempayments',
-              localField: 'payment_id',
-              foreignField: '_id',
-              as: 'menu_item_payment_data',
-            },
-          },
-          {
-            $match: { "menu_item_payment_data.is_approved": "yes" , 'menu_id' :  new mongoose.Types.ObjectId(item._id) }
-          },
-        
-        
-           {
-             $group: {
-               _id: null,
-               validator_id: { $first: "$menu_item_payment_data.validator_id" }, // Assuming validator_id is a field in your documents
-               payment_id: { $first: "$payment_id" }, // Assuming validator_id is a field in your documents
-               total_quantity: { $sum: '$quantity' }
-             }
-           }
-         ]);
-
-         console.log("e",result)
-
-         
-         var total_consumed_quantity = (result.length > 0) ? result[0].total_quantity :0;
-           // Assign the total consumed quantity to the current menu item
-         item.total_consumed_quantity = total_consumed_quantity;
-       } 
-      }
+            const filter = {
+              menu_id: new mongoose.Types.ObjectId(menu_id),
+              event_id : new mongoose.Types.ObjectId(event_id),
+            };
+              // Update operation
+          const updateOperation = {
+            $set: {
+              quantity: quantity
+            }
+          };
+          // Update the documents that match the filter
+          var result =   await BookedMenuItem.findOneAndUpdate(filter, updateOperation, { new: true });
+        }
 
 
       
 
       return res.status(200).send({
         status: true,
-        message: "Data found",
-        data: menuResults,
+        message: "Quantity updated succesfully",
+        data: result,
       });
     } else {
       res.status(200).send({
         status: true,
         message: "No data found",
-        data: [],
+        data: null,
       });
     }
   } catch (error) {

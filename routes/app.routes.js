@@ -472,6 +472,10 @@ router.get("/send-remind-list-for-event", auth, bannerController.sendRemindNotif
 router.get("/get-event-menu-list",menuController.get_event_menu_list);
 
 
+// update consumed menu quantity API
+router.put("/update-consumed-menu-quantity",menuController.update_consumed_menu_quantity);
+
+
 
 cron.schedule("* * * * *", function() {
     //bookingController.sendEventNotification();

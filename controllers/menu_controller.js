@@ -9,6 +9,7 @@ const Guest = require("../models/guest.model");
 const BookingMenu = require("../models/booking_menu.model");
 const BookingPayments = require("../models/booking_payments.model");
 const MenuItemRecord = require("../models/menu_item_record.model");
+const ValidatorQuantity = require("../models/validator_quantity.model");
 
 
 exports.create_menu = async (req, res, next) => {
@@ -4207,92 +4208,32 @@ exports.get_event_menu_list = async (req, res) => {
 
   
     if (menuResults.length > 0) {
-      if (event.type == "entry_food_event") {
         for(var item of menuResults){
-          const result = await BookingMenu.aggregate([
+          const result = await ValidatorQuantity.aggregate([
            
            {
              $lookup: {
                from: 'menus',
                localField: 'menu_id',
-               foreignField: '_id',
+               foreignField: 'menu_id',
                as: 'menu'
              }
            },
             
-           {
-            $lookup: {
-              from: 'bookingpayments',
-              localField: 'payment_id',
-              foreignField: '_id',
-              as: 'menu_item_payment_data',
-            },
-          },
           {
-            $match: { "menu_item_payment_data.status": "active" ,   'menu_id' :  new mongoose.Types.ObjectId(item._id)  }
+            $match: {  'menu_id' :  new mongoose.Types.ObjectId(item._id)  }
           },
-           {
-             $match: {
-               'menu_item_payment_data.status': 'active',
-              'menu_item_payment_data.is_consumed': 'yes',
-               'menu_id' :  new mongoose.Types.ObjectId(item._id),
-             },
-           },
-           {
-             $group: {
-               _id: null,
-               total_quantity: { $sum: '$quantity' }
-             }
-           }
-         ]);
-         
-         var total_consumed_quantity = (result.length > 0) ? result[0].total_quantity :0;
-         console.log("total_consumed_quantity",total_consumed_quantity)
-           // Assign the total consumed quantity to the current menu item
-         item.total_consumed_quantity = total_consumed_quantity;
-         } 
-        
-      } else {
-        for(var item of menuResults){
-          const result = await BookedMenuItem.aggregate([
           
-           {
-             $lookup: {
-               from: 'menus',
-               localField: 'menu_id',
-               foreignField: '_id',
-               as: 'menu'
-             }
-           },
-           {
-            $lookup: {
-              from: 'menuitempayments',
-              localField: 'payment_id',
-              foreignField: '_id',
-              as: 'menu_item_payment_data',
-            },
-          },
-          {
-            $match: { "menu_item_payment_data.is_approved": "yes" , 'menu_id' :  new mongoose.Types.ObjectId(item._id) }
-          },
-        
-        
-           {
-             $group: {
-               _id: null,
-               total_quantity: { $sum: '$quantity' }
-             }
-           }
          ]);
 
-         console.log("result",result)
+         console.log("result",result);
          
-         var total_consumed_quantity = (result.length > 0) ? result[0].total_quantity :0;
-         console.log("total_consumed_quantity",total_consumed_quantity)
+         var total_quantity = (result.length > 0) ? result[0].quantity :0;
            // Assign the total consumed quantity to the current menu item
-         item.total_consumed_quantity = total_consumed_quantity;
-       } 
-      }
+         item.total_consumed_quantity = total_quantity;
+         } 
+        
+      
 
 
       
@@ -4328,56 +4269,7 @@ exports.update_consumed_menu_quantity = async (req, res) => {
     var quantity = req.body.quantity;
 
 
-    // Fetch all menu items
-    const menuResults = await Menu.aggregate([
-      {
-        $match: {
-          event_id: new mongoose.Types.ObjectId(event_id),
-        },
-      },
-      {
-        $lookup: {
-          from: "uoms",
-          localField: "uom_id",
-          foreignField: "_id",
-          as: "uom_data",
-        },
-      },
-      {
-        $lookup: {
-          from: "categories",
-          localField: "category_id",
-          foreignField: "_id",
-          as: "category_data",
-        },
-      },
-      {
-        $unwind: "$uom_data",
-      },
-      {
-        $unwind: "$category_data",
-      },
-      {
-        $project: {
-          _id: 1,
-          event_id: 1,
-          name: 1,
-          uom_id: 1,
-          category_id: 1,
-          total_stock: 1,
-          cost_price: 1,
-          selling_price: 1,
-          uom: "$uom_data.name",
-          category: "$category_data.name",
-          status: 1,
-          is_limited: 1,
-          limited_count: 1,
-          createdAt: 1,
-          updatedAt: 1,
-        },
-      },
-    ]);
-
+    
 
       // Check if the event exists
       const event = await EventModel.findById(event_id);
@@ -4390,37 +4282,24 @@ exports.update_consumed_menu_quantity = async (req, res) => {
         });
       }
 
-    
-    if (menuResults.length > 0) {
-      if (event.type == "entry_food_event") {
-        const filter = {
-          menu_id: new mongoose.Types.ObjectId(menu_id),
-          event_id : new mongoose.Types.ObjectId(event_id),
-        };
+      const filter = {
+        menu_id: new mongoose.Types.ObjectId(menu_id),
+        event_id : new mongoose.Types.ObjectId(event_id),
+      };
         // Update operation
-        const updateOperation = {
-          $set: {
-            quantity: quantity
-          }
-        };
-      // Update the documents that match the filter
-      var result = await BookingMenu.findOneAndUpdate(filter, updateOperation, { new: true });
-        
-      } else {
-            const filter = {
-              menu_id: new mongoose.Types.ObjectId(menu_id),
-              event_id : new mongoose.Types.ObjectId(event_id),
-            };
-              // Update operation
-          const updateOperation = {
-            $set: {
-              quantity: quantity
-            }
-          };
-          // Update the documents that match the filter
-          var result =   await BookedMenuItem.findOneAndUpdate(filter, updateOperation, { new: true });
-        }
+    const updateOperation = {
+      $set: {
+        quantity: quantity
+      }
+    };
 
+    // Update the documents that match the filter
+    var result =   await ValidatorQuantity.findOneAndUpdate(filter, updateOperation, { new: true , upsert: true });
+
+    
+    if (result) {
+      
+     
 
       
 
@@ -4432,7 +4311,7 @@ exports.update_consumed_menu_quantity = async (req, res) => {
     } else {
       res.status(200).send({
         status: true,
-        message: "No data found",
+        message: "Failed ! Please try again",
         data: null,
       });
     }

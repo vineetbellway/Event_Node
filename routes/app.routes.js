@@ -464,9 +464,12 @@ router.get("/get-booking-detail-by-payment-id",menuController.getBookingDetailBy
 router.get("/get-guest-loyalty-events",auth,serviceController.get_guest_loyalty_events);
 
 // get remind list API
-router.get("/get-remind-list-for-event", bannerController.get_remind_list_for_event);
+router.get("/get-remind-list-for-event",auth, bannerController.get_remind_list_for_event);
 
-router.get("/send-remind-list-for-event", bannerController.sendRemindNotificationOfEvent);
+router.get("/send-remind-list-for-event", auth, bannerController.sendRemindNotificationOfEvent);
+
+// get event menu list API
+router.get("/get-event-menu-list",menuController.get_event_menu_list);
 
 
 

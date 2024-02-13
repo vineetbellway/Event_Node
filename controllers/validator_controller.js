@@ -391,47 +391,43 @@ exports.get_validator_by_user_id = async (req, res) => {
     
     const presentDateTime = new Date(currentDateTimeFormatted);
 
-    console.log("validator event data",eventValidatorData)
+//console.log("validator event data",eventValidatorData)
 
     if(eventValidatorData.length > 0){
       for (const item of eventValidatorData) {
         const eventRecord = await EventModel.findById(item.event_id);
+
         if (!eventRecord) continue;
   
         const eventStartDateTime = eventRecord.start_time;
         const eventEndDateTime = eventRecord.end_time;
-        
-          console.log("eventRecord",eventRecord)
+        var validator_role = '';
           if(item.status == "accept"){
             if (presentDateTime >= eventStartDateTime && presentDateTime <= eventEndDateTime ) {
-             var validator_role = item.role;
-           } else {
-            var validator_role = '';
-           }
-          
-        } else {
-          var validator_role = '';
-        }
-          filteredData.push({
-            _id: validator._id,
-            user_id: validator.user_id,
-            full_name: validator.full_name,
-            district: validator.district,
-            state: validator.state,
-            country: validator.country,
-            status: validator.status,
-            createdAt: validator.createdAt,
-            updatedAt: validator.updatedAt,
-            __v: validator.__v,
-            role: validator_role,
-            user: userData,
-          });
-  
-        
-        
-  
-  
+                var validator_role = item.role;
+                break;
+            }
+          }
       }
+
+      res.status(200).send({
+        status: true,
+        message: "success",
+        data: {
+          _id: validator._id,
+          user_id: validator.user_id,
+          full_name: validator.full_name,
+          district: validator.district,
+          state: validator.state,
+          country: validator.country,
+          status: validator.status,
+          createdAt: validator.createdAt,
+          updatedAt: validator.updatedAt,
+          __v: validator.__v,
+          role: validator_role,
+          user: userData
+        }
+      });
     } else {
       filteredData.push({
         _id: validator._id,
@@ -447,15 +443,18 @@ exports.get_validator_by_user_id = async (req, res) => {
         role: '',
         user: userData,
       });
+      res.status(200).send({
+        status: true,
+        message: "success",
+        data: filteredData[0]
+      });
     }
+   
     
+   // console.log("here",filteredData)
     
 
-    res.status(200).send({
-      status: true,
-      message: "success",
-      data: filteredData[0]
-    });
+   
   } catch (error) {
     res.status(500).send({
       status: false,

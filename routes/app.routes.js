@@ -84,10 +84,10 @@ router.get("/seller_by_user_id/:id",auth,sellerController.get_seller_by_user_id)
 router.delete("/seller/:id", auth, sellerController.delete_seller);
 router.delete("/seller", auth, sellerController.delete_sellers);
 
-router.post("/validator", validatorController.create_validator);
-router.put("/validator/:id", validatorController.update_validator);
-router.get("/validator", validatorController.get_validators);
-router.get("/validator/:id", validatorController.get_validator);
+router.post("/validator", auth,validatorController.create_validator);
+router.put("/validator/:id", auth,validatorController.update_validator);
+router.get("/validator",auth, validatorController.get_validators);
+router.get("/validator/:id",auth, validatorController.get_validator);
 router.get("/validator_by_user_id/:id",auth,validatorController.get_validator_by_user_id);
 router.delete("/validator/:id", auth, validatorController.delete_validator);
 router.delete("/validator", auth, validatorController.delete_validators);
@@ -353,10 +353,10 @@ router.get("/guest-potential-report",auth,reportController.guest_potential_repor
 //router.get("/guest-presence-report",reportController.guest_presence_report);
 
 // get menu audit report
-router.get("/menu-audit-report",reportController.menu_audit_report);
+router.get("/menu-audit-report",auth,reportController.menu_audit_report);
 
 // get revenue comparison report
-router.get("/revenue-comparison-report",reportController.revenue_comparison_report);
+router.get("/revenue-comparison-report",auth,reportController.revenue_comparison_report);
 
 
 // get event validator detail API

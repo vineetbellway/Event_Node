@@ -620,7 +620,7 @@ exports.get_seller_validator_list = async (req, res) => {
           user_id: validator.user_id,
           full_name: (validator.full_name) ?? '',
           district: validator.district,
-          phone: (validators[0].user_data[0].code_phone) ?? '',
+          phone: (validator.user_data[0].code_phone) ?? '',
           state: validator.state,
           country: validator.country,
           status: validator.status,

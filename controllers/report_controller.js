@@ -611,12 +611,36 @@ exports.revenue_comparison_report = async (req, res) => {
       return res.status(200).json({ status: false, message: 'Event not found', data: null });
     }
 
-    let potentialReport;
+    let revenueReport;
 
-    if (event.type === "food_event") {
-      console.log("event",event)
+    if (event.type === "entry_event") {
+      revenueReport = await Booking.aggregate([
+       
+      
+        {
+          $match: { "status": { $in: ["active", "expired"] }, event_id: new mongoose.Types.ObjectId(eventId) }
+        },
+        {
+          $group: {
+            _id: null,
+            totalAmount: { $sum: '$amount' }, // Sum up the total amount for all guests
+          }
+        },
+        {
+          $project: {
+            _id: 0,
+            totalAmount: 1,
+          }
+        }
+      ]);
 
-      potentialReport = await BookedMenuItem.aggregate([
+
+
+    }
+
+   else if (event.type === "food_event") {
+
+    revenueReport = await BookedMenuItem.aggregate([
         {
           $lookup: {
             from: 'menuitempayments',
@@ -645,7 +669,7 @@ exports.revenue_comparison_report = async (req, res) => {
         }
       ]);
     } else {
-      potentialReport = await BookingMenu.aggregate([
+      revenueReport = await BookingMenu.aggregate([
         {
           $lookup: {
             from: 'bookingpayments',
@@ -675,8 +699,8 @@ exports.revenue_comparison_report = async (req, res) => {
       ]);
     }
 
-    if (potentialReport.length > 0) {
-      res.json({ status: true, message: "Data found", data: potentialReport });
+    if (revenueReport.length > 0) {
+      res.json({ status: true, message: "Data found", data: revenueReport[0] });
     } else {
       res.json({ status: false, message: "No data found", data: [] });
     }

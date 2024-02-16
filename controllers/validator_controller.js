@@ -391,6 +391,8 @@ exports.get_validator_by_user_id = async (req, res) => {
     
     const presentDateTime = new Date(currentDateTimeFormatted);
 
+    console.log("presentDateTime",presentDateTime)
+
 //console.log("validator event data",eventValidatorData)
 
     if(eventValidatorData.length > 0){

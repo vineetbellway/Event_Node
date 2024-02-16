@@ -948,7 +948,7 @@ exports.get_validator_events_list = async (req, res) => {
       const all_validator_events_list = await Promise.all(
         validator_events.map(async (validatorEventData) => {
           const eventDetails = await EventModel.findById(
-            validatorEventData.event_id
+            validatorEventData.event_id,
           );
 
           // Get the host (domain and port)
@@ -961,7 +961,10 @@ exports.get_validator_events_list = async (req, res) => {
           var validator_role = validatorEventData.role;
 
           if (eventDetails) {
-            if (eventDetails.status != "expired") {
+
+        
+
+            if (eventDetails.status != "expired" && eventDetails.status != "deleted") {
               return {
                 role: validator_role,
                 event_data: {
@@ -1005,7 +1008,6 @@ exports.get_validator_events_list = async (req, res) => {
       );
 
       if (filteredList.length > 0) {
-        console.log("d",filteredList)
         res.status(200).send({
           status: true,
           message: "Data found",

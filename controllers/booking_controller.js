@@ -183,13 +183,17 @@ const get_bookings = async (req, res) => {
     if (status == "expired") {
       match = {
         $match: {
-          "event_data.status": "expired", 
+          $and: [
+            { "event_data.status": "expired" },
+            { "event_data.status": { $ne: "deleted" } }
+          ]
         }
       };
     } else {
       match = {
         $match: {
-          "status": status, // Filter by event status
+          "status": status, 
+          "event_data.status": { $ne: "deleted" } 
         }
       };
     }
@@ -256,7 +260,6 @@ const get_bookings = async (req, res) => {
               };
             } else {
 
-              console.log("here")
 
               var response = {
                 _id: booking._id,
@@ -508,8 +511,11 @@ const  get_bookings_by_payment_mode = async (req, res) => {
         },
         {
           $match: {
-            "event_data.status": "active", // Filter by event status
-          },
+            $and: [
+              { "event_data.status": "active" },
+              { "event_data.status": { $ne: "deleted" } }
+            ]
+          }
         },
         {
           $sort: { createdAt: -1 }, // Sort by createdAt in descending order

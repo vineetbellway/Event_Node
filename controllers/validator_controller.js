@@ -403,7 +403,7 @@ exports.get_validator_by_user_id = async (req, res) => {
   
         const eventStartDateTime = eventRecord.start_time;
         const eventEndDateTime = eventRecord.end_time;
-        var validator_role = '';
+        var validator_role = 'cashier';
           if(item.status == "accept"){
             if (presentDateTime >= eventStartDateTime && presentDateTime <= eventEndDateTime ) {
                 var validator_role = item.role;

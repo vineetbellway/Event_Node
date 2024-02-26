@@ -3185,11 +3185,10 @@ exports.book_menu_items = async (req, res, next) => {
 
           // Delete records from the menuItems model
           const deleteConditions = {
-            event_id: event_id,
-            menu_id: { $in: bookingMenu.map(item => item.menu_id) },
-            guest_id: guest_id,
+            event_id: { $in: results.map(item => item.event_id) },
+            menu_id: { $in: results.map(item => item.menu_id) },
+            guest_id: { $in: results.map(item => item.guest_id) },
           };
-          
       
           await MenuItem.deleteMany(deleteConditions);
           res.status(200).send({ status: true, message: "Item booked successfully", data : { payment_id: payment_id,booked_data: results} });

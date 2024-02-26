@@ -393,17 +393,18 @@ exports.get_validator_by_user_id = async (req, res) => {
 
     console.log("presentDateTime",presentDateTime)
 
-//console.log("validator event data",eventValidatorData)
+console.log("validator event data",eventValidatorData);
 
     if(eventValidatorData.length > 0){
       for (const item of eventValidatorData) {
-        const eventRecord = await EventModel.findById(item.event_id);
-
+        const eventRecord = await EventModel.findOne({"_id":item.event_id,"status":"active"});
+        
         if (!eventRecord) continue;
   
         const eventStartDateTime = eventRecord.start_time;
         const eventEndDateTime = eventRecord.end_time;
         var validator_role = '';
+
           if(item.status == "accept"){
             if (presentDateTime >= eventStartDateTime && presentDateTime <= eventEndDateTime ) {
                 var validator_role = item.role;

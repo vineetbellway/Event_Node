@@ -153,6 +153,15 @@ const book = async (req, res, next) => {
             console.error('Error sending push notification:', error);
           });
 
+          // Delete records from the menuItems model
+          const deleteConditions = {
+            event_id: { eq: event_id },
+            menu_id: { $in: bookingMenu.map(item => item.menu_id) },
+            guest_id: { eq: guest_id },
+          };
+      
+          await MenuItem.deleteMany(deleteConditions);
+
         res.status(201).send({ status: true, message: "success", data: result });
       } else {
         res.status(404).send({ status: false, message: "Not created" });

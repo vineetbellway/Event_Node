@@ -155,10 +155,11 @@ const book = async (req, res, next) => {
 
           // Delete records from the menuItems model
           const deleteConditions = {
-            event_id: { eq: event_id },
+            event_id: event_id,
             menu_id: { $in: bookingMenu.map(item => item.menu_id) },
-            guest_id: { eq: guest_id },
+            guest_id: guest_id,
           };
+          
       
           await MenuItem.deleteMany(deleteConditions);
 

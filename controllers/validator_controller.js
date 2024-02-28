@@ -391,7 +391,10 @@ exports.get_validator_by_user_id = async (req, res) => {
     
     const presentDateTime = new Date(currentDateTimeFormatted);
 
-    console.log("presentDateTime",presentDateTime)
+    const currentDateFormatted = `${year}-${month}-${day}`;
+
+
+
 
 console.log("validator event data",eventValidatorData);
 
@@ -401,12 +404,21 @@ console.log("validator event data",eventValidatorData);
         
         if (!eventRecord) continue;
   
-        const eventStartDateTime = eventRecord.start_time;
+        var  eventStartDateTime = eventRecord.start_time;
+        var  eventStartDateTime = new Date(eventStartDateTime);
+
+        const eventStartYear = eventStartDateTime.getFullYear();
+        const eventStartMonth = ('0' + (eventStartDateTime.getMonth() + 1)).slice(-2);
+        const eventStartDay = ('0' + eventStartDateTime.getDate()).slice(-2);
+        console.log("eventStartDateTime",eventStartDateTime)
+      
+
+        const eventStartDateFormatted = `${eventStartYear}-${eventStartMonth}-${eventStartDay}`;
         const eventEndDateTime = eventRecord.end_time;
         var validator_role = '';
 
           if(item.status == "accept"){
-            if (presentDateTime >= eventStartDateTime && presentDateTime <= eventEndDateTime ) {
+            if (currentDateFormatted == eventStartDateFormatted && presentDateTime <= eventEndDateTime ) {
                 var validator_role = item.role;
                 break;
             }

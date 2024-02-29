@@ -396,7 +396,7 @@ exports.get_validator_by_user_id = async (req, res) => {
 
 
 
-console.log("validator event data",eventValidatorData);
+// console.log("validator event data",eventValidatorData);
 
     if(eventValidatorData.length > 0){
       for (const item of eventValidatorData) {
@@ -410,15 +410,37 @@ console.log("validator event data",eventValidatorData);
         const eventStartYear = eventStartDateTime.getFullYear();
         const eventStartMonth = ('0' + (eventStartDateTime.getMonth() + 1)).slice(-2);
         const eventStartDay = ('0' + eventStartDateTime.getDate()).slice(-2);
-        console.log("eventStartDateTime",eventStartDateTime)
+     //   console.log("eventStartDateTime",eventStartDateTime)
       
 
         const eventStartDateFormatted = `${eventStartYear}-${eventStartMonth}-${eventStartDay}`;
-        const eventEndDateTime = eventRecord.end_time;
+
+
+
+        var eventEndDateTime = eventRecord.end_time;
+        var eventEndDateTime = new Date(eventEndDateTime);
+
+        const eventEndYear = eventEndDateTime.getFullYear();
+        const eventEndMonth = ('0' + (eventEndDateTime.getMonth() + 1)).slice(-2);
+        const eventEndDay = ('0' + eventEndDateTime.getDate()).slice(-2);
+
+      
+
+        const eventEndDateFormatted = `${eventEndYear}-${eventEndMonth}-${eventEndDay}`;
+        console.log("eventEndDateFormatted",eventEndDateFormatted);
+        console.log("currentDateFormatted",currentDateFormatted);
+
+
         var validator_role = '';
 
           if(item.status == "accept"){
-            if (currentDateFormatted == eventStartDateFormatted && presentDateTime <= eventEndDateTime ) {
+            console.log("eventRecord",eventRecord);
+            console.log("currentDateFormatted",currentDateFormatted);
+            console.log("eventEndDateFormatted",eventEndDateFormatted);
+
+         
+
+            if (currentDateFormatted >= eventStartDateFormatted && currentDateFormatted <= eventEndDateFormatted) {
                 var validator_role = item.role;
                 break;
             }

@@ -328,7 +328,7 @@ router.get("/get-booked-guest-list",auth, bookingController.get_booked_guest_lis
 router.put("/manage-event-validator-status",auth, validatorEventController.manage_event_validator_status);
 
 // get validator's events list status API
-router.get("/get-validator-events-list",  validatorEventController.get_validator_events_list);
+router.get("/get-validator-events-list",auth, validatorEventController.get_validator_events_list);
 
 // get item sales report API
 router.get("/item-sales-report",auth,  reportController.get_item_sales_report);

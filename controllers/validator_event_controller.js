@@ -942,7 +942,7 @@ exports.get_validator_events_list = async (req, res) => {
     const validator_events = await EventValidator.find({
       validator_id,
       status: { $eq: status },
-    });
+    }).sort({ createdAt: -1 });
 
     if (validator_events && validator_events.length > 0) {
       const all_validator_events_list = await Promise.all(

@@ -446,7 +446,6 @@ exports.get_validator_by_user_id = async (req, res) => {
             }
           }
       }
-
       res.status(200).send({
         status: true,
         message: "success",
@@ -461,11 +460,12 @@ exports.get_validator_by_user_id = async (req, res) => {
           createdAt: validator.createdAt,
           updatedAt: validator.updatedAt,
           __v: validator.__v,
-          role: validator_role,
+          role: validator_role ?? '',
           user: userData
         }
       });
     } else {
+    
       filteredData.push({
         _id: validator._id,
         user_id: validator.user_id,

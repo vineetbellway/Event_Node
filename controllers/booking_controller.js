@@ -13,6 +13,9 @@ const MenuItemPayments = require("../models/menu_item_payments.model");
 const BookingPayments = require("../models/booking_payments.model");
 const Menu = require("../models/menu.model");
 const MenuItem = require("../models/menu_item.model");
+const Validator = require("../models/validator.model");
+
+
 // It will book event by guest
 
 const book = async (req, res, next) => {
@@ -2509,6 +2512,263 @@ const approve_entry_request = async (req, res) => {
   }
 }; 
 
+const get_approved_booking_cost_of_all_validators = async (req, res) => {
+  var event_id = req.query.event_id;
+  var validator_id = req.query.validator_id;
+
+  if (!event_id) {
+    res.status(400).json({
+      status: false,
+      message: "event ID is required in the request body",
+    });
+  } else {
+    try {
+      const pipeline = [
+        {
+          $match: {
+           // validator_id: new mongoose.Types.ObjectId(validator_id),
+            event_id: new mongoose.Types.ObjectId(event_id),
+            status: "active",
+          },
+        },
+        {
+          $lookup: {
+            from: "events",
+            localField: "event_id",
+            foreignField: "_id",
+            as: "event_data",
+          },
+        },
+        {
+          $group: {
+              _id: "$validator_id",
+              bookings: { $push: "$$ROOT" }, // Preserve all booking columns,
+              
+             // event_data: { $first: "$event_data" }, // Preserve event data
+
+
+              
+          }
+        },
+        {
+          $unwind: "$bookings" // Unwind to get each booking as a separate document
+      },
+      {
+          $replaceRoot: { newRoot: "$bookings" } // Replace the root with the booking document
+      },
+  
+        {
+          $sort: { createdAt: -1 },
+        },
+      ];
+
+      Booking.aggregate(pipeline)
+        .then(async(result) => {
+         // console.log("result", result);
+
+          var payment_data = [];
+     
+          if (result && result.length > 0) {
+            var data = [];
+            var totalUPIBookingAmount = 0;
+            var totalPayOnCounterBooking = 0;
+            var totalCashBooking = 0;
+            var totalCardBooking = 0;
+
+            for (const booking of result) {
+
+            
+          
+              var event_record = await EventModel.findById(booking.event_id);
+              var validator_data = await Validator.findOne({"user_id":booking.validator_id});
+              var user_data = await User.findById(booking.validator_id);         
+         
+             if(validator_data){
+              const validatorObj = validator_data.toObject();
+
+              validatorObj.code_phone = user_data.code_phone;
+              validator_data = validatorObj;
+             } 
+            
+
+
+              if(event_record.type == "food_event"){
+                 if(event_record.is_cover_charge_added == "yes"){
+                    if (booking.payment_mode === "counter_upi") {
+                      totalUPIBookingAmount = event_record.cover_charge|| 0;
+                    } 
+                  
+
+                    if (booking.payment_mode === "cash") {
+                      totalCashBooking = event_record.cover_charge || 0;
+                    }
+                    
+                    if (booking.payment_mode === "card") {
+                      totalCardBooking = event_record.cover_charge || 0;
+                    }
+                 } else {
+
+
+                  if (booking.payment_mode === "counter_upi") {
+                    totalUPIBookingAmount = booking.amount || 0;
+                  } 
+                
+
+                  if (booking.payment_mode === "cash") {
+                    totalCashBooking = booking.amount || 0;
+                  }
+
+                  if (booking.payment_mode === "card") {
+                    totalCardBooking = booking.amount || 0;
+                  }
+
+                 }
+                
+                 payment_data.push({
+                  'validator_data' : validator_data,
+                  'total_upi_booking_amount': totalUPIBookingAmount,
+                  'total_cash_booking_amount': totalCashBooking,
+                  'total_card_booking_amount': totalCardBooking,
+                  'total_amount' : totalUPIBookingAmount  + totalCashBooking + totalCardBooking
+                });
+                 
+              }
+              else if(event_record.type == "entry_food_event") {
+                // Calculate booking cost based on payment mode
+
+               
+
+             //   validator_data.add({'code_phone':user_data.code_phone})
+                const payment_result = await BookingPayments.aggregate([
+              
+                 
+                
+                  {
+                    $lookup: {
+                      from: 'bookingmenus',
+                      localField: '_id',
+                      foreignField: 'payment_id',
+                      as: 'booking_menu_data',
+                    },
+                  },
+                  {
+                    $match: {
+                      "booking_menu_data.event_id": new mongoose.Types.ObjectId(event_id),
+                      validator_id: new mongoose.Types.ObjectId(booking.validator_id),
+                      "booking_menu_data.booking_id" : new mongoose.Types.ObjectId(booking._id),
+                      status : "active"
+                    },
+                  },
+                  {
+                    $unwind: "$booking_menu_data"
+                  }
+            ]);
+
+                if(payment_result.length > 0){
+                  for (const payment_result_key of payment_result) {
+                    if (booking.payment_mode === "counter_upi") {
+                      totalUPIBookingAmount = payment_result_key.amount || 0;
+                    } 
+                  
+      
+                    if (booking.payment_mode === "cash") {
+                      totalCashBooking = payment_result_key.amount || 0;
+                    }
+      
+                    if (booking.payment_mode === "card") {
+                      totalCardBooking = payment_result_key.amount || 0;
+                    }
+      
+                  }
+
+                 
+
+                } else {
+
+
+                  if (booking.payment_mode === "counter_upi") {
+                    totalUPIBookingAmount = booking.amount || 0;
+                  } 
+                
+
+                  if (booking.payment_mode === "cash") {
+                    totalCashBooking = booking.amount || 0;
+                  }
+
+                  if (booking.payment_mode === "card") {
+                    totalCardBooking = booking.amount || 0;
+                  }
+                }
+
+                payment_data.push({
+                  'validator_data' : validator_data,
+                  'total_upi_booking_amount': totalUPIBookingAmount,
+                  'total_cash_booking_amount': totalCashBooking,
+                  'total_card_booking_amount': totalCardBooking,
+                  'total_amount' : totalUPIBookingAmount  + totalCashBooking + totalCardBooking
+                });
+              }
+              
+              
+              else {
+                  // Calculate booking cost based on payment mode
+                
+
+                  if (booking.payment_mode === "counter_upi") {
+                    totalUPIBookingAmount = booking.amount || 0;
+                  } 
+                
+
+                  if (booking.payment_mode === "cash") {
+                    totalCashBooking = booking.amount || 0;
+                  }
+
+                  if (booking.payment_mode === "card") {
+                    totalCardBooking = booking.amount || 0;
+                  }
+
+                  payment_data.push({
+                    'validator_data' : validator_data,
+                    'total_upi_booking_amount': totalUPIBookingAmount,
+                    'total_cash_booking_amount': totalCashBooking,
+                    'total_card_booking_amount': totalCardBooking,
+                    'total_amount' : totalUPIBookingAmount  + totalCashBooking + totalCardBooking
+                  });
+
+              }
+                
+
+            
+              
+            }
+
+            res.status(200).json({
+              status: true,
+              message: "Data found",
+              data: payment_data
+              
+            });
+          } else {
+            res.status(404).json({ status: false, message: "No data found",data: [] });
+          }
+        })
+        .catch((error) => {
+          console.log("error", error);
+          res.status(500).json({
+            status: false,
+            message: error.toString() || "Internal Server Error",
+          });
+        });
+    } catch (error) {
+      console.log("error", error);
+      res.status(500).json({
+        status: false,
+        message: error.toString() || "Internal Server Error",
+      });
+    }
+  }
+};
+
 
 
 module.exports = {
@@ -2530,5 +2790,6 @@ module.exports = {
   book_event_menu_items,
   approve_event_menu_items_booking,
   send_entry_request_to_guest,
-  approve_entry_request
+  approve_entry_request,
+  get_approved_booking_cost_of_all_validators
 }; 

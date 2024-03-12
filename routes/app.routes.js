@@ -476,6 +476,10 @@ router.get("/get-event-menu-list",auth,menuController.get_event_menu_list);
 router.put("/update-consumed-menu-quantity",auth,menuController.update_consumed_menu_quantity);
 
 
+router.get("/get_approved_booking_cost_of_all_validators",auth,bookingController.get_approved_booking_cost_of_all_validators);
+
+
+
 
 cron.schedule("* * * * *", function() {
     //bookingController.sendEventNotification();

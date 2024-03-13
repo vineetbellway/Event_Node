@@ -2654,36 +2654,44 @@ const get_approved_booking_cost_of_all_validators = async (req, res) => {
                   {
                     $match: {
                       "booking_menu_data.event_id": new mongoose.Types.ObjectId(event_id),
-                      validator_id: new mongoose.Types.ObjectId(booking.validator_id),
-                      "booking_menu_data.booking_id" : new mongoose.Types.ObjectId(booking._id),
+                      // validator_id: new mongoose.Types.ObjectId(booking.validator_id),
+                      //"booking_menu_data.booking_id" : new mongoose.Types.ObjectId(booking._id),
                       status : "active"
                     },
                   },
+
+                 
+
                   {
                     $unwind: "$booking_menu_data"
                   }
             ]);
-
-                if(payment_result.length > 0){
-                  for (const payment_result_key of payment_result) {
-                    if (booking.payment_mode === "counter_upi") {
-                      totalUPIBookingAmount = payment_result_key.amount || 0;
-                    } 
-                  
-      
-                    if (booking.payment_mode === "cash") {
-                      totalCashBooking = payment_result_key.amount || 0;
-                    }
-      
-                    if (booking.payment_mode === "card") {
-                      totalCardBooking = payment_result_key.amount || 0;
-                    }
-      
+            if (payment_result.length > 0) {
+              const uniqueIds = new Set(); // Set to store unique _id values
+              for (const payment_result_key of payment_result) {
+                  console.log("payment_resullt key", payment_result_key);
+          
+                  // Check if _id has been encountered before
+                  if (!uniqueIds.has(payment_result_key._id.toString())) {
+                      uniqueIds.add(payment_result_key._id.toString()); // Add _id to the set
+                      if (booking.payment_mode === "counter_upi") {
+                          totalUPIBookingAmount += payment_result_key.amount || 0;
+                      }
+          
+                      if (booking.payment_mode === "cash") {
+                          totalCashBooking += payment_result_key.amount || 0;
+                      }
+          
+                      if (booking.payment_mode === "card") {
+                          totalCardBooking += payment_result_key.amount || 0;
+                      }
                   }
+              }
+          }
+          
+                
+            else {
 
-                 
-
-                } else {
 
 
                   if (booking.payment_mode === "counter_upi") {

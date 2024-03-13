@@ -605,6 +605,8 @@ exports.get_seller_validator_list = async (req, res) => {
       });
     }
 
+    const sellerDistrict = seller.district;
+
    
 
     // Define the regex pattern for the search_key
@@ -649,21 +651,20 @@ exports.get_seller_validator_list = async (req, res) => {
 
     if (validators && validators.length > 0) {
       const validator_data = validators
-        .map((validator) => ({
-
-         
-          _id: validator._id,
-          user_id: validator.user_id,
-          full_name: (validator.full_name) ?? '',
-          district: validator.district,
-          phone: (validator.user_data[0].code_phone) ?? '',
-          state: validator.state,
-          country: validator.country,
-          status: validator.status,
-          createdAt: validator.createdAt,
-          updatedAt: validator.updatedAt,
-          __v: validator.__v,
-          role: validator.validator_event_data.length > 0 ? validator.validator_event_data[0].role : '',
+        .filter(validator => sellerDistrict === validator.district) // Filter based on district
+        .map(validator => ({
+            _id: validator._id,
+            user_id: validator.user_id,
+            full_name: validator.full_name ?? '',
+            district: validator.district,
+            phone: validator.user_data[0]?.code_phone ?? '', // Ensure user_data[0] exists before accessing code_phone
+            state: validator.state,
+            country: validator.country,
+            status: validator.status,
+            createdAt: validator.createdAt,
+            updatedAt: validator.updatedAt,
+            __v: validator.__v,
+            role: validator.validator_event_data.length > 0 ? validator.validator_event_data[0].role : '',
         }));
 
       if (validator_data.length > 0) {

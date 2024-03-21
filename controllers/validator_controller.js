@@ -5,6 +5,8 @@ const SellerModel = require("../models/seller.model");
 const EventValidator = require("../models/event_validator.model");
 const EventModel = require("../models/event.model");
 const User = require("../models/user.model");
+const ValidatorEventBalance = require("../models/validator_event_balance.model");
+
 
 
 exports.create_validator = (req, res, next) => {
@@ -441,13 +443,18 @@ exports.get_validator_by_user_id = async (req, res) => {
     
 
             if (currentDateFormatted >= eventStartDateFormatted && currentDateFormatted <= eventEndDateFormatted) {
-              if(eventRecord.is_closed == 'yes'){
-                var validator_role = '';
-              } else {
+           //   console.log("eventRecord",eventRecord)
+                var checkEventCounterBalanceRecord = await ValidatorEventBalance.findOne({
+                  validator_id: id,
+                  event_id: item.event_id
+              });
+              console.log("Record exists:", checkEventCounterBalanceRecord);
+              if (checkEventCounterBalanceRecord) {
+                var validator_role = '';             
+              }  else {
                 var validator_role = item.role;
-              } 
-              
-                break;
+              }
+               break;
             }
           }
       }

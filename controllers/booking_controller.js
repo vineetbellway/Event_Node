@@ -2633,16 +2633,28 @@ const get_approved_booking_cost_of_all_validators = async (req, res) => {
                 if(checkEventCounterBalanceRecord){
                  var total_card_booking_difference = checkEventCounterBalanceRecord.total_card_booking_difference;
                   var total_cash_booking_difference = checkEventCounterBalanceRecord.total_cash_booking_difference;
-                  var total_upi_booking_difference =checkEventCounterBalanceRecord.total_upi_booking_difference;
+                  var total_upi_booking_difference = checkEventCounterBalanceRecord.total_upi_booking_difference;
                  
                   var total_booking_difference = total_card_booking_difference + total_cash_booking_difference + total_upi_booking_difference;
+
+                  var total_card_booking_collect_amount = checkEventCounterBalanceRecord.total_card_booking_collect_amount;
+                  var total_upi_booking_collect_amount = checkEventCounterBalanceRecord.total_upi_booking_collect_amount;               
+                  var total_cash_booking_collect_amount = checkEventCounterBalanceRecord.total_cash_booking_collect_amount;
+                 
+                  var total_booking_collect_amount = total_card_booking_collect_amount + total_upi_booking_collect_amount + total_cash_booking_collect_amount;
+
+
+
                   
                 } else {
                   var total_card_booking_difference = 0;
                   var total_cash_booking_difference = 0;
-                  var total_upi_booking_difference = 0;
-                 
-                  var total_booking_difference = total_card_booking_difference + total_cash_booking_difference + total_upi_booking_difference;
+                  var total_upi_booking_difference = 0;                 
+                  var total_booking_difference = 0;
+                  var total_card_booking_collect_amount = 0;
+                  var total_upi_booking_collect_amount = 0;
+                  var total_cash_booking_collect_amount = 0;                 
+                  var total_booking_collect_amount = 0;
                 }
                 
                  payment_data.push({
@@ -2651,10 +2663,16 @@ const get_approved_booking_cost_of_all_validators = async (req, res) => {
                   'total_cash_booking_amount': totalCashBooking,
                   'total_card_booking_amount': totalCardBooking,
                   'total_amount' : totalUPIBookingAmount  + totalCashBooking + totalCardBooking,
+                  'total_upi_booking_collect_amount': total_upi_booking_collect_amount,
+                  'total_cash_booking_collect_amount': total_cash_booking_collect_amount,
+                  'total_card_booking_collect_amount': total_card_booking_collect_amount,
+                  'total_booking_collect_amount': total_booking_collect_amount,
                   'total_upi_booking_difference': total_upi_booking_difference,
                   'total_cash_booking_difference': total_cash_booking_difference,
                   'total_card_booking_difference': total_card_booking_difference,
                   'total_booking_difference': total_booking_difference,
+                  
+                  
                 });
                  
               }
@@ -2741,16 +2759,25 @@ const get_approved_booking_cost_of_all_validators = async (req, res) => {
                 if(checkEventCounterBalanceRecord){
                   var total_card_booking_difference = checkEventCounterBalanceRecord.total_card_booking_difference;
                   var total_cash_booking_difference = checkEventCounterBalanceRecord.total_cash_booking_difference;
-                  var total_upi_booking_difference =checkEventCounterBalanceRecord.total_upi_booking_difference;
+                  var total_upi_booking_difference = checkEventCounterBalanceRecord.total_upi_booking_difference;
                   
                   var total_booking_difference = total_card_booking_difference + total_cash_booking_difference + total_upi_booking_difference;
+
+                  var total_card_booking_collect_amount = checkEventCounterBalanceRecord.total_card_booking_collect_amount;
+                  var total_upi_booking_collect_amount = checkEventCounterBalanceRecord.total_upi_booking_collect_amount;               
+                  var total_cash_booking_collect_amount = checkEventCounterBalanceRecord.total_cash_booking_collect_amount;
+                 
+                  var total_booking_collect_amount = total_card_booking_collect_amount + total_upi_booking_collect_amount + total_cash_booking_collect_amount;
                   
                 } else {
                   var total_card_booking_difference = 0;
                   var total_cash_booking_difference = 0;
-                  var total_upi_booking_difference = 0;
-                  
-                  var total_booking_difference = total_card_booking_difference + total_cash_booking_difference + total_upi_booking_difference;
+                  var total_upi_booking_difference = 0;                 
+                  var total_booking_difference = 0;
+                  var total_card_booking_collect_amount = 0;
+                  var total_upi_booking_collect_amount = 0;
+                  var total_cash_booking_collect_amount = 0;                 
+                  var total_booking_collect_amount = 0;
                 }
 
                 payment_data.push({
@@ -2759,6 +2786,10 @@ const get_approved_booking_cost_of_all_validators = async (req, res) => {
                   'total_cash_booking_amount': totalCashBooking,
                   'total_card_booking_amount': totalCardBooking,
                   'total_amount' : totalUPIBookingAmount  + totalCashBooking + totalCardBooking,
+                  'total_upi_booking_collect_amount': total_upi_booking_collect_amount,
+                  'total_cash_booking_collect_amount': total_cash_booking_collect_amount,
+                  'total_card_booking_collect_amount': total_card_booking_collect_amount,
+                  'total_booking_collect_amount': total_booking_collect_amount,
                   'total_upi_booking_difference': total_upi_booking_difference,
                   'total_cash_booking_difference': total_cash_booking_difference,
                   'total_card_booking_difference': total_card_booking_difference,
@@ -2795,13 +2826,22 @@ const get_approved_booking_cost_of_all_validators = async (req, res) => {
                     var total_upi_booking_difference =checkEventCounterBalanceRecord.total_upi_booking_difference;
                     
                     var total_booking_difference = total_card_booking_difference + total_cash_booking_difference + total_upi_booking_difference;
+
+                    var total_card_booking_collect_amount = checkEventCounterBalanceRecord.total_card_booking_collect_amount;
+                    var total_upi_booking_collect_amount = checkEventCounterBalanceRecord.total_upi_booking_collect_amount;               
+                    var total_cash_booking_collect_amount = checkEventCounterBalanceRecord.total_cash_booking_collect_amount;
+                   
+                    var total_booking_collect_amount = total_card_booking_collect_amount + total_upi_booking_collect_amount + total_cash_booking_collect_amount;
                     
                   } else {
                     var total_card_booking_difference = 0;
                     var total_cash_booking_difference = 0;
-                    var total_upi_booking_difference = 0;
-                    
-                    var total_booking_difference = total_card_booking_difference + total_cash_booking_difference + total_upi_booking_difference;
+                    var total_upi_booking_difference = 0;                 
+                    var total_booking_difference = 0;
+                    var total_card_booking_collect_amount = 0;
+                    var total_upi_booking_collect_amount = 0;
+                    var total_cash_booking_collect_amount = 0;                 
+                    var total_booking_collect_amount = 0;
                   }
 
                   payment_data.push({
@@ -2810,6 +2850,10 @@ const get_approved_booking_cost_of_all_validators = async (req, res) => {
                     'total_cash_booking_amount': totalCashBooking,
                     'total_card_booking_amount': totalCardBooking,
                     'total_amount' : totalUPIBookingAmount  + totalCashBooking + totalCardBooking,
+                    'total_upi_booking_collect_amount': total_upi_booking_collect_amount,
+                    'total_cash_booking_collect_amount': total_cash_booking_collect_amount,
+                    'total_card_booking_collect_amount': total_card_booking_collect_amount,
+                    'total_booking_collect_amount': total_booking_collect_amount,
                     'total_upi_booking_difference': total_upi_booking_difference,
                     'total_cash_booking_difference': total_cash_booking_difference,
                     'total_card_booking_difference': total_card_booking_difference,
@@ -2855,7 +2899,8 @@ const manage_validator_event_balance = async (req, res) => {
     var event_id = req.body.event_id;
     var total_card_booking_collect_amount = req.body.total_card_booking_collect_amount;
     var total_upi_booking_collect_amount = req.body.total_upi_booking_collect_amount;
-    var total_cash_booking_booking_collect_amount = req.body.total_cash_booking_booking_collect_amount;
+    var total_cash_booking_collect_amount = req.body.total_cash_booking_collect_amount;
+    console.log("total_cash_booking_collect_amount",total_cash_booking_collect_amount)
 
     try {
       const pipeline = [
@@ -3027,11 +3072,8 @@ const manage_validator_event_balance = async (req, res) => {
             
             var total_card_booking_difference =  totalCardBooking - total_card_booking_collect_amount;
             var total_upi_booking_difference =  totalUPIBookingAmount - total_upi_booking_collect_amount;
-            var total_cash_booking_difference =  totalCashBooking - total_cash_booking_booking_collect_amount;
-
-            console.log("total_cash_booking_difference",total_cash_booking_difference);
-            console.log("totalCashBooking",totalCashBooking);
-            console.log("total_cash_booking_booking_collect_amount",total_cash_booking_booking_collect_amount);
+            var total_cash_booking_difference =  totalCashBooking - total_cash_booking_collect_amount;
+            console.log("total_cash_booking_collect_amount",total_cash_booking_collect_amount)
         
         
             // Find and update the existing record, or insert a new record if it doesn't exist
@@ -3041,7 +3083,11 @@ const manage_validator_event_balance = async (req, res) => {
                   $set: {
                       total_card_booking_difference: total_card_booking_difference,
                       total_upi_booking_difference: total_upi_booking_difference,
-                      total_cash_booking_difference: total_cash_booking_difference
+                      total_cash_booking_difference: total_cash_booking_difference,
+                      total_card_booking_collect_amount: total_card_booking_collect_amount,
+                      total_upi_booking_collect_amount: total_upi_booking_collect_amount,
+                      total_cash_booking_collect_amount: total_cash_booking_collect_amount
+
                   }
               },
               { 
@@ -3051,12 +3097,12 @@ const manage_validator_event_balance = async (req, res) => {
           );
 
 
-    res.status(200).json({
-      status: true,
-      message: "Balance Updated",
-      data: updatedRecord
-      
-    });
+          res.status(200).json({
+            status: true,
+            message: "Balance Updated",
+            data: updatedRecord
+            
+          });
   
 
 

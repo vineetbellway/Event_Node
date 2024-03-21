@@ -14,6 +14,7 @@ const BookingPayments = require("../models/booking_payments.model");
 const Menu = require("../models/menu.model");
 const MenuItem = require("../models/menu_item.model");
 const Validator = require("../models/validator.model");
+const ValidatorEventBalance = require("../models/validator_event_balance.model");
 
 
 // It will book event by guest
@@ -2777,6 +2778,40 @@ const get_approved_booking_cost_of_all_validators = async (req, res) => {
   }
 };
 
+const manage_validator_event_balance = async (req, res) => {
+    var validator_id = req.body.validator_id;
+    var event_id = req.body.event_id;
+    var total_card_booking_difference = req.body.total_card_booking_difference;
+    var total_upi_booking_difference = req.body.total_upi_booking_difference;
+    var total_cash_booking_difference = req.body.total_cash_booking_difference;
+
+    // Find and update the existing record, or insert a new record if it doesn't exist
+    var updatedRecord = await ValidatorEventBalance.findOneAndUpdate(
+      { validator_id: validator_id, event_id: event_id },
+      { 
+          $set: {
+              total_card_booking_difference: total_card_booking_difference,
+              total_upi_booking_difference: total_upi_booking_difference,
+              total_cash_booking_difference: total_cash_booking_difference
+          }
+      },
+      { 
+          new: true, // Return the updated document
+          upsert: true // If no matching document is found, create a new one
+      }
+  );
+
+    res.status(200).json({
+      status: true,
+      message: "Data found",
+      data: updatedRecord
+      
+    });
+  
+
+
+};
+
 
 
 module.exports = {
@@ -2799,5 +2834,6 @@ module.exports = {
   approve_event_menu_items_booking,
   send_entry_request_to_guest,
   approve_entry_request,
-  get_approved_booking_cost_of_all_validators
+  get_approved_booking_cost_of_all_validators,
+  manage_validator_event_balance
 }; 

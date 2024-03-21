@@ -478,6 +478,8 @@ router.put("/update-consumed-menu-quantity",auth,menuController.update_consumed_
 
 router.get("/get_approved_booking_cost_of_all_validators",auth,bookingController.get_approved_booking_cost_of_all_validators);
 
+router.put("/manage-validator-event-balance",auth,bookingController.manage_validator_event_balance);
+
 
 
 

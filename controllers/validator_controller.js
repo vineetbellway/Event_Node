@@ -427,21 +427,26 @@ exports.get_validator_by_user_id = async (req, res) => {
       
 
         const eventEndDateFormatted = `${eventEndYear}-${eventEndMonth}-${eventEndDay}`;
-        console.log("eventEndDateFormatted",eventEndDateFormatted);
-        console.log("currentDateFormatted",currentDateFormatted);
+       // console.log("eventEndDateFormatted",eventEndDateFormatted);
+      //  console.log("currentDateFormatted",currentDateFormatted);
 
 
         var validator_role = '';
 
           if(item.status == "accept"){
-            console.log("eventRecord",eventRecord);
-            console.log("currentDateFormatted",currentDateFormatted);
-            console.log("eventEndDateFormatted",eventEndDateFormatted);
+            //console.log("eventRecord",eventRecord);
+          //  console.log("currentDateFormatted",currentDateFormatted);
+          //  console.log("eventEndDateFormatted",eventEndDateFormatted);
 
-         
+    
 
             if (currentDateFormatted >= eventStartDateFormatted && currentDateFormatted <= eventEndDateFormatted) {
+              if(eventRecord.is_closed == 'yes'){
+                var validator_role = '';
+              } else {
                 var validator_role = item.role;
+              } 
+              
                 break;
             }
           }

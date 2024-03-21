@@ -17,15 +17,15 @@ const schema = new mongoose.Schema(
     },
 
     total_card_booking_difference: {
-        type: String,
+        type: Number,
     },
 
     total_upi_booking_difference: {
-        type: String,
+        type: Number,
     },
 
     total_cash_booking_difference: {
-        type: String,
+        type: Number,
     },
   },
   {

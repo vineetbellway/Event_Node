@@ -2903,26 +2903,42 @@ const manage_validator_event_balance = async (req, res) => {
     console.log("total_cash_booking_collect_amount",total_cash_booking_collect_amount)
 
     try {
-      const pipeline = [
-        {
-          $match: {
-            validator_id: new mongoose.Types.ObjectId(validator_id),
-            event_id: new mongoose.Types.ObjectId(event_id),
-            status: "active",
+      console.log("event_id",event_id)
+      if(event_id == null){
+        var pipeline = [
+          {
+            $match: {
+              validator_id: new mongoose.Types.ObjectId(validator_id),
+              status: "active",
+            },
           },
-        },
-        {
-          $lookup: {
-            from: "events",
-            localField: "event_id",
-            foreignField: "_id",
-            as: "event_data",
+          {
+            $sort: { createdAt: -1 },
           },
-        },
-        {
-          $sort: { createdAt: -1 },
-        },
-      ];
+        ];
+      } else {
+        var pipeline = [
+          {
+            $match: {
+              validator_id: new mongoose.Types.ObjectId(validator_id),
+              event_id: new mongoose.Types.ObjectId(event_id),
+              status: "active",
+            },
+          },
+          {
+            $lookup: {
+              from: "events",
+              localField: "event_id",
+              foreignField: "_id",
+              as: "event_data",
+            },
+          },
+          {
+            $sort: { createdAt: -1 },
+          },
+        ];
+      }
+      
 
       Booking.aggregate(pipeline)
         .then(async(result) => {

@@ -451,10 +451,10 @@ exports.get_validator_by_user_id = async (req, res) => {
 
               var checkEventCounterBalanceRecord = await ValidatorEventBalance.findOne({
                 validator_id: id,
-                $or: [
+                /*$or: [
                     { event_id: item.event_id },
                     // Add more conditions as needed
-                ]
+                ]*/
             });
             
               console.log("Record exists:", checkEventCounterBalanceRecord);

@@ -35,6 +35,9 @@ const schema = new mongoose.Schema(
         },
         total_card_booking_collect_amount: {
           type: Number,
+        },
+        count:{
+          type: Number,
         }
     },
       {

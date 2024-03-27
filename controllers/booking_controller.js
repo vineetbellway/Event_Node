@@ -3117,7 +3117,8 @@ const manage_validator_event_balance = async (req, res) => {
                       total_upi_booking_collect_amount: total_upi_booking_collect_amount,
                       total_cash_booking_collect_amount: total_cash_booking_collect_amount
 
-                  }
+                  },
+                  $inc: { count: 1 }
               },
               { 
                   new: true, // Return the updated document

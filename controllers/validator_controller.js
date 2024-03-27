@@ -434,7 +434,7 @@ exports.get_validator_by_user_id = async (req, res) => {
 
 
         var validator_role = '';
-
+     //   console.log("item",item)
           if(item.status == "accept"){
             //console.log("eventRecord",eventRecord);
           //  console.log("currentDateFormatted",currentDateFormatted);
@@ -447,11 +447,36 @@ exports.get_validator_by_user_id = async (req, res) => {
            var EventCounterBalanceRecord = await ValidatorEventBalance.findOne({
             validator_id: id,
         });
-              console.log("event id", EventCounterBalanceRecord.event_id);
-               if(EventCounterBalanceRecord.event_id == null){
+             
+          
+            //  return false;
+               if(EventCounterBalanceRecord && EventCounterBalanceRecord.event_id == null){
+                
+                console.log("updatedAt", EventCounterBalanceRecord.updatedAt);
+                var EventCounterBalanceRecordUpdateDateTime = new Date( EventCounterBalanceRecord.updatedAt);
+  
+                const updateRecordYear = EventCounterBalanceRecordUpdateDateTime.getFullYear();
+                const updateRecordMonth = ('0' + (EventCounterBalanceRecordUpdateDateTime.getMonth() + 1)).slice(-2);
+                const updateRecordDay = ('0' + EventCounterBalanceRecordUpdateDateTime.getDate()).slice(-2);
+        
+                const updateRecordhours = ('0' + EventCounterBalanceRecordUpdateDateTime.getHours()).slice(-2);
+                const updateRecordminutes = ('0' + EventCounterBalanceRecordUpdateDateTime.getMinutes()).slice(-2);
+                const updateRecordseconds = ('0' + EventCounterBalanceRecordUpdateDateTime.getSeconds()).slice(-2);
+        
+                const updateRecordFormatted = `${updateRecordYear}-${updateRecordMonth}-${updateRecordDay}T${updateRecordhours}:${updateRecordminutes}:${updateRecordseconds}.000Z`;
+  
+                console.log("EventCounterBalanceRecord",EventCounterBalanceRecord)
+                console.log("updateRecordFormatted",updateRecordFormatted)
+                console.log("currentDateTimeFormatted",currentDateTimeFormatted)
+                if(currentDateTimeFormatted <= updateRecordFormatted){
+                   console.log("here");
+                }
+                
                 var checkEventCounterBalanceRecord = await ValidatorEventBalance.findOne({
                   validator_id: id,
+                  event_id: item.event_id
               });
+            
              
                } else {
                 var checkEventCounterBalanceRecord = await ValidatorEventBalance.findOne({
@@ -524,6 +549,7 @@ exports.get_validator_by_user_id = async (req, res) => {
 
    
   } catch (error) {
+    console.log("error",error)
     res.status(500).send({
       status: false,
       message: error.toString() || "Internal Server Error",

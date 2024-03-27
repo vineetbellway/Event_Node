@@ -7,7 +7,6 @@ const schema = new mongoose.Schema(
         event_id: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "EventModel",
-          required: true,
         },
 
         validator_id: {

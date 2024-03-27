@@ -2900,10 +2900,8 @@ const manage_validator_event_balance = async (req, res) => {
     var total_card_booking_collect_amount = req.body.total_card_booking_collect_amount;
     var total_upi_booking_collect_amount = req.body.total_upi_booking_collect_amount;
     var total_cash_booking_collect_amount = req.body.total_cash_booking_collect_amount;
-    console.log("total_cash_booking_collect_amount",total_cash_booking_collect_amount)
-
+  
     try {
-      console.log("event_id",event_id)
       if(event_id == null){
         var pipeline = [
           {
@@ -3085,12 +3083,27 @@ const manage_validator_event_balance = async (req, res) => {
               
             }
 
+            if(total_cash_booking_collect_amount!=null){
+              var total_cash_booking_difference =  totalCashBooking - total_cash_booking_collect_amount;
+            } else {
+              var total_cash_booking_difference = null;
+            }
+
+            if(total_card_booking_collect_amount!=null){
+              var total_card_booking_difference =  totalCardBooking - total_card_booking_collect_amount;
+            } else {
+              var total_card_booking_difference = null;
+            }
+
+            if(total_upi_booking_collect_amount!=null){
+              var total_upi_booking_difference =  totalUPIBookingAmount - total_upi_booking_collect_amount;
+            } else {
+              var total_upi_booking_difference = null;
+            }
             
-            var total_card_booking_difference =  totalCardBooking - total_card_booking_collect_amount;
-            var total_upi_booking_difference =  totalUPIBookingAmount - total_upi_booking_collect_amount;
-            var total_cash_booking_difference =  totalCashBooking - total_cash_booking_collect_amount;
+           
+            
             console.log("total_cash_booking_collect_amount",total_cash_booking_collect_amount)
-        
         
             // Find and update the existing record, or insert a new record if it doesn't exist
             var updatedRecord = await ValidatorEventBalance.findOneAndUpdate(

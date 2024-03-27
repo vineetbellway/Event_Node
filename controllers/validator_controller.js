@@ -447,23 +447,24 @@ exports.get_validator_by_user_id = async (req, res) => {
            var EventCounterBalanceRecord = await ValidatorEventBalance.findOne({
             validator_id: id,
         });
-        console.log("EventCounterBalanceRecord", EventCounterBalanceRecord);
+              console.log("event id", EventCounterBalanceRecord.event_id);
                if(EventCounterBalanceRecord.event_id == null){
                 var checkEventCounterBalanceRecord = await ValidatorEventBalance.findOne({
                   validator_id: id,
               });
+             
                } else {
                 var checkEventCounterBalanceRecord = await ValidatorEventBalance.findOne({
                   validator_id: id,
                   event_id: item.event_id
               });
-              console.log("inside this",item.event_id)
+             
                }
 
                
            
 
-             
+               console.log("checkEventCounterBalanceRecord",checkEventCounterBalanceRecord)
             
              
               if (checkEventCounterBalanceRecord) {
@@ -475,6 +476,7 @@ exports.get_validator_by_user_id = async (req, res) => {
             }
           }
       }
+      console.log("validator_role",validator_role)
       res.status(200).send({
         status: true,
         message: "success",

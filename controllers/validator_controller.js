@@ -444,18 +444,19 @@ exports.get_validator_by_user_id = async (req, res) => {
 
             if (currentDateFormatted >= eventStartDateFormatted && currentDateFormatted <= eventEndDateFormatted) {
            //   console.log("eventRecord",eventRecord)
-                var checkEventCounterBalanceRecordold = await ValidatorEventBalance.findOne({
+               if(item.event_id == null){
+                var checkEventCounterBalanceRecord = await ValidatorEventBalance.findOne({
+                  validator_id: id,
+              });
+               } else {
+                var checkEventCounterBalanceRecord = await ValidatorEventBalance.findOne({
                   validator_id: id,
                   event_id: item.event_id
               });
+               }
+           
 
-              var checkEventCounterBalanceRecord = await ValidatorEventBalance.findOne({
-                validator_id: id,
-                /*$or: [
-                    { event_id: item.event_id },
-                    // Add more conditions as needed
-                ]*/
-            });
+             
             
               console.log("Record exists:", checkEventCounterBalanceRecord);
               if (checkEventCounterBalanceRecord) {

@@ -25,18 +25,17 @@ const schema = new mongoose.Schema(
 
         total_cash_booking_difference: {
             type: Number,
-        },      
+        },     
 
         total_upi_booking_collect_amount: {
             type: Number,
         },
-
         total_cash_booking_collect_amount: {
             type: Number,
         },
         total_card_booking_collect_amount: {
           type: Number,
-        },
+        }
     },
       {
         timestamps: true,

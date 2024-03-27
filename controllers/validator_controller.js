@@ -444,7 +444,11 @@ exports.get_validator_by_user_id = async (req, res) => {
 
             if (currentDateFormatted >= eventStartDateFormatted && currentDateFormatted <= eventEndDateFormatted) {
            //   console.log("eventRecord",eventRecord)
-               if(item.event_id == null){
+           var EventCounterBalanceRecord = await ValidatorEventBalance.findOne({
+            validator_id: id,
+        });
+        console.log("EventCounterBalanceRecord", EventCounterBalanceRecord);
+               if(EventCounterBalanceRecord.event_id == null){
                 var checkEventCounterBalanceRecord = await ValidatorEventBalance.findOne({
                   validator_id: id,
               });
@@ -453,12 +457,15 @@ exports.get_validator_by_user_id = async (req, res) => {
                   validator_id: id,
                   event_id: item.event_id
               });
+              console.log("inside this",item.event_id)
                }
+
+               
            
 
              
             
-              console.log("Record exists:", checkEventCounterBalanceRecord);
+             
               if (checkEventCounterBalanceRecord) {
                 var validator_role = '';             
               }  else {

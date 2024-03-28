@@ -1185,3 +1185,92 @@ exports.delete_event_validator = async (req, res) => {
   }
 };
 
+
+exports.get_active_event_of_validator = async (req, res) => {
+
+  const validatorId = req.query.validator_id;
+
+
+  if (!validatorId) {
+    res.status(400).send({ status: false, message: "validator id missing", data:null });
+  } else {
+    try {
+
+      const eventValidatorData = await EventValidator.find({'validator_id' : validatorId});   
+      const filteredData = [];
+    const currentDateTime = new Date();
+    const year = currentDateTime.getFullYear();
+    const month = ('0' + (currentDateTime.getMonth() + 1)).slice(-2);
+    const day = ('0' + currentDateTime.getDate()).slice(-2);
+    const hours = ('0' + currentDateTime.getHours()).slice(-2);
+    const minutes = ('0' + currentDateTime.getMinutes()).slice(-2);
+    const seconds = ('0' + currentDateTime.getSeconds()).slice(-2);
+    
+    const currentDateTimeFormatted = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000Z`;
+    
+    const presentDateTime = new Date(currentDateTimeFormatted);
+
+    const currentDateFormatted = `${year}-${month}-${day}`;
+
+
+
+
+// console.log("validator event data",eventValidatorData);
+
+    if(eventValidatorData.length > 0){
+      for (const item of eventValidatorData) {
+        const eventRecord = await EventModel.findOne({"_id":item.event_id,"status":"active"});
+        
+        if (!eventRecord) continue;
+  
+        var  eventStartDateTime = eventRecord.start_time;
+        var  eventStartDateTime = new Date(eventStartDateTime);
+
+        const eventStartYear = eventStartDateTime.getFullYear();
+        const eventStartMonth = ('0' + (eventStartDateTime.getMonth() + 1)).slice(-2);
+        const eventStartDay = ('0' + eventStartDateTime.getDate()).slice(-2);
+     //   console.log("eventStartDateTime",eventStartDateTime)
+      
+
+        const eventStartDateFormatted = `${eventStartYear}-${eventStartMonth}-${eventStartDay}`;
+
+
+
+        var eventEndDateTime = eventRecord.end_time;
+        var eventEndDateTime = new Date(eventEndDateTime);
+
+        const eventEndYear = eventEndDateTime.getFullYear();
+        const eventEndMonth = ('0' + (eventEndDateTime.getMonth() + 1)).slice(-2);
+        const eventEndDay = ('0' + eventEndDateTime.getDate()).slice(-2);
+        const eventEndDateFormatted = `${eventEndYear}-${eventEndMonth}-${eventEndDay}`;
+
+
+
+        var event_id = '';
+          if(item.status == "accept"){
+           if (currentDateFormatted >= eventStartDateFormatted && currentDateFormatted <= eventEndDateFormatted) {
+             event_id = item.event_id;            
+               break;
+            }
+          }
+      }
+        console.log("event_id",event_id)
+        if(event_id!=''){
+          res.status(200).send({status: true,message: "Data found",data: {event_id: event_id}});
+        } else {
+          res.status(200).send({ status: false, message: "No data found", data:null });
+        }
+        
+    } else {
+        res.status(200).send({ status: false, message: "Event validator not found", data:null });
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      res.status(500).send({
+        status: false,
+        message: error.toString() || "Internal Server Error",
+        data:null
+      });
+    }
+  }
+};

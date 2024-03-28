@@ -481,7 +481,7 @@ router.get("/get_approved_booking_cost_of_all_validators",auth,bookingController
 router.put("/manage-validator-event-balance",auth,bookingController.manage_validator_event_balance);
 
 
-
+router.get("/get-active-event-of-validator",auth,validatorEventController.get_active_event_of_validator);
 
 cron.schedule("* * * * *", function() {
     //bookingController.sendEventNotification();

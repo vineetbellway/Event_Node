@@ -819,7 +819,7 @@ const sendExpireEventNotification = async () => {
 };
 
 const sendExpiredEventNotification = async () => {
-
+  console.log("here")
   const currentDateTime = new Date();
   const year = currentDateTime.getFullYear();
   const month = ('0' + (currentDateTime.getMonth() + 1)).slice(-2);

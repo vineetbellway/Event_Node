@@ -412,12 +412,18 @@ exports.get_validator_by_user_id = async (req, res) => {
         const eventStartYear = eventStartDateTime.getFullYear();
         const eventStartMonth = ('0' + (eventStartDateTime.getMonth() + 1)).slice(-2);
         const eventStartDay = ('0' + eventStartDateTime.getDate()).slice(-2);
+        const eventStartHour = ('0' + eventStartDateTime.getHours()).slice(-2);
+        const eventStartminute = ('0' + eventStartDateTime.getMinutes()).slice(-2);
+        const eventStartsecond = ('0' + eventStartDateTime.getSeconds()).slice(-2);
+
+
+
      //   console.log("eventStartDateTime",eventStartDateTime)
       
 
         const eventStartDateFormatted = `${eventStartYear}-${eventStartMonth}-${eventStartDay}`;
 
-
+        const eventStartDateTimeFormatted = `${eventStartYear}-${eventStartMonth}-${eventStartDay}T${eventStartHour}:${eventStartminute}:${eventStartsecond}.000Z`;
 
         var eventEndDateTime = eventRecord.end_time;
         var eventEndDateTime = new Date(eventEndDateTime);
@@ -437,23 +443,32 @@ exports.get_validator_by_user_id = async (req, res) => {
      //   console.log("item",item)
           if(item.status == "accept"){
             //console.log("eventRecord",eventRecord);
-          //  console.log("currentDateFormatted",currentDateFormatted);
-          //  console.log("eventEndDateFormatted",eventEndDateFormatted);
-
-          console.log("eventEndDateFormatted",eventEndDateFormatted);
-          console.log("event id",item.event_id);
-     
          
 
-            if ((currentDateFormatted >= eventStartDateFormatted && currentDateFormatted <= eventEndDateFormatted)) {
-             
+          console.log("currentDateTimeFormatted",currentDateTimeFormatted);
+          console.log("event id",item.event_id);
+     
+          console.log("eventEndDateFormatted",eventEndDateFormatted);
+          console.log("eventStartDateTimeFormatted",eventStartDateTimeFormatted);
+
+          // Convert strings to Date objects
+const eventStartDate = new Date(eventStartDateTimeFormatted);
+const currentDate = new Date(currentDateTimeFormatted);
+// Subtract 12 hours from event start date
+const twelveHoursBeforeEvent = new Date(eventStartDateTimeFormatted);
+twelveHoursBeforeEvent.setHours(eventStartDate.getHours() - 12);
+console.log("currentDate",currentDate)
+console.log("twelveHoursBeforeEvent",twelveHoursBeforeEvent)
+
+            if ((currentDate >= twelveHoursBeforeEvent && currentDateFormatted <= eventEndDateFormatted)) {
+             console.log("here")
 
               var checkEventCounterBalanceRecord = await ValidatorEventBalance.findOne({
                 validator_id: id,
                 event_id: item.event_id
               });
               if (checkEventCounterBalanceRecord) {
-                var validator_role = '';             
+               // var validator_role = '';             
               }  else {
                 var validator_role = item.role;
               }

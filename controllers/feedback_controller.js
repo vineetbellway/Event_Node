@@ -10,80 +10,100 @@ exports.give_feedback = (req, res, next) => {
     res.status(400).send({
       status: false,
       message: "Body missing",
-      data:null
+      data: null
     });
   } else {
     try {
       const feedbackData = req.body;
-      const eventId = feedbackData.event_id; // Assuming the event_id is in the request body
+      const eventId = feedbackData.event_id;
+      const guestId = feedbackData.guest_id;
 
-      // Retrieve event data based on event_id
-      Event.findById(eventId) // Assuming you're using Mongoose for MongoDB
+      // Check if the feedback already exists for the given event and guest
+      Feedback.findOne({ event_id: eventId, guest_id: guestId })
         .exec()
-        .then((event) => {
-          if (event) {
-            // Event found, you can use the event data here
-            // Save feedback data to the database
-            Feedback(feedbackData)
-              .save()
-              .then((result) => {
-                if (result) {
-                  // Send a thank-you email
-                  //sendThankYouEmail(event.name,feedbackData.email,feedbackData);
-                  
+        .then(existingFeedback => {
+          if (existingFeedback) {
+            // Feedback already exists for the given event and guest
+            res.status(400).send({
+              status: false,
+              message: "You have already given feedback for this event",
+              data: null
+            });
+          } else {
+            // Proceed with checking and saving feedback
+            Event.findById(eventId)
+              .exec()
+              .then(event => {
+                if (event) {
+                  Feedback(feedbackData)
+                    .save()
+                    .then(result => {
+                      if (result) {
+                        // Send a thank-you email
+                        // sendThankYouEmail(event.name, feedbackData.email, feedbackData);
 
-                  // guest id will be later taken from token
+                        // guest id will be later taken from token
+                        // var guest_id = "650bdb1e015e74e090374652";
+                        // send notification
+                        // addNotification(guest_id, event.seller_id, 'New feedback received');
 
-                 // var guest_id = "650bdb1e015e74e090374652";
-                  // send notification
-                //  addNotification(guest_id,event.seller_id,'New feedback received');
-
-                  res.status(201).send({
-                    status: true,
-                    message: "Thank you for your feedback. We will contact you soon",
-                    data: result,
-                  });
+                        res.status(201).send({
+                          status: true,
+                          message: "Thank you for your feedback. We will contact you soon",
+                          data: result,
+                        });
+                      } else {
+                        res.status(404).send({
+                          status: false,
+                          message: "Not created",
+                          data: null
+                        });
+                      }
+                    })
+                    .catch(error => {
+                      console.log("error", error);
+                      res.status(500).send({
+                        status: false,
+                        message: error.toString() || "Error",
+                        data: null
+                      });
+                    });
                 } else {
                   res.status(404).send({
                     status: false,
-                    message: "Not created",
-                    data:null
+                    message: "Event not found",
+                    data: null
                   });
                 }
               })
-              .catch((error) => {
-                console.log("error", error);
+              .catch(error => {
+                console.log("Error retrieving event data:", error);
                 res.status(500).send({
                   status: false,
-                  message: error.toString() || "Error",
-                  data:null
+                  message: "Internal Server Error",
+                  data: null
                 });
               });
-          } else {
-            res.status(404).send({
-              status: false,
-              message: "Event not found",
-              data:null
-            });
           }
         })
-        .catch((error) => {
-          console.log("Error retrieving event data:", error);
+        .catch(error => {
+          console.log("Error checking existing feedback:", error);
           res.status(500).send({
             status: false,
             message: "Internal Server Error",
-            data:null
+            data: null
           });
         });
     } catch (error) {
       res.status(500).send({
         status: false,
         message: error || "Internal Server Error",
-        data:null
+        data: null
       });
     }
   }
 };
+
 
   
 function sendThankYouEmail(event_name,senderEmail,feedbackData) {

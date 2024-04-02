@@ -10,6 +10,11 @@ const schema = new mongoose.Schema(
       ref: "EventModel",
       required: true,
     },
+    guest_id: {
+      type: mongoose.Schema.Types.ObjectID,
+      ref: "User",
+      required: true,
+    },
     name: {
       type: String,
       required: true,
@@ -21,6 +26,7 @@ const schema = new mongoose.Schema(
         type: String,
         required: true,
     },
+    
     message: {
         type: String,
         required: true,

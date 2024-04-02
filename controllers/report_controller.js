@@ -7,6 +7,8 @@ const Category = require("../models/category.model");
 const Booking = require("../models/booking.model");
 const BookedMenuItem = require("../models/booked_menu_item.model");
 const BookingMenu = require("../models/booking_menu.model");
+const Validator = require("../models/validator.model");
+const User = require("../models/user.model");
 
 
 
@@ -14,79 +16,205 @@ exports.get_item_sales_report = async (req, res) => {
     try {
         const eventId = req.query.event_id;
 
-        console.log("eventId",eventId)
+       
 
         // Find the event by eventId
         const event = await EventModel.findById(eventId);
-
+        console.log("event",event)
         if (!event) {
             return res.status(200).json({ status: false, message: 'Event not found' , data :null });
           }
-    
-        // Perform aggregation to calculate item sales report
-        const itemSalesReport = await BookedMenuItem.aggregate([
-          
-          
-          {
-            $lookup: {
-              from: 'menuitempayments',
-              localField: 'payment_id',
-              foreignField: '_id',
-              as: 'menu_item_payment_data',
-            },
-          },
-          {
-            $match: { "menu_item_payment_data.is_approved": "yes" ,  event_id: new mongoose.Types.ObjectId(eventId) }
-          },
-          {
-            $lookup: {
-              from: 'menus',
-              localField: 'menu_id',
-              foreignField: '_id',
-              as: 'menu'
-            }
-          },
-          {
-            $unwind: '$menu'
-          },
-          {
-            $group: {
-              _id: {
-                menuName: '$menu.name',
-                category: '$menu.category_id'
-              },
-              consumedQuantity: { $sum: '$quantity' },
-              payment_data: { $push: '$menu_item_payment_data' },
-            }
-          },
-          {
-            $project: {
-              _id: 0,
-              itemName: '$_id.menuName',
-              category: '$_id.category',
-              consumedQuantity: 1,
-              payment_data: 1,
-            }
+
+
+          if(event.type === "food_event") {
+            // Perform aggregation to calculate item sales report
+              var itemSalesReport = await BookedMenuItem.aggregate([
+                
+                
+                {
+                  $lookup: {
+                    from: 'menuitempayments',
+                    localField: 'payment_id',
+                    foreignField: '_id',
+                    as: 'menu_item_payment_data',
+                  },
+                },
+                {
+                  $match: { "menu_item_payment_data.is_approved": "yes" ,  event_id: new mongoose.Types.ObjectId(eventId) }
+                },
+                {
+                  $lookup: {
+                    from: 'menus',
+                    localField: 'menu_id',
+                    foreignField: '_id',
+                    as: 'menu'
+                  }
+                },
+                {
+                  $unwind: '$menu'
+                },
+                {
+                  $group: {
+                    _id: {
+                      menuName: '$menu.name',
+                      category: '$menu.category_id',
+                      validator_id: '$menu_item_payment_data.validator_id'
+                    },
+                    consumedQuantity: { $sum: '$quantity' },
+                    payment_data: { $push: '$menu_item_payment_data' },
+                  }
+                },
+
+                {
+                  $lookup: {
+                    from: 'validators',
+                    localField: '_id.validator_id',
+                    foreignField: 'user_id',
+                    as: 'validator'
+                  }
+                },
+                {
+                  $unwind: '$validator'
+                },
+                {
+                  $lookup: {
+                    from: 'users',
+                    localField: '_id.validator_id',
+                    foreignField: '_id',
+                    as: 'user'
+                  }
+                },
+                {
+                  $unwind: '$user'
+                },
+                
+                {
+                  $project: {
+                    _id: 0,
+                    itemName: '$_id.menuName',
+                    category: '$_id.category',
+                    consumedQuantity: 1,
+                    validator_name: '$validator.full_name',
+                    validator_phone_number: '$user.code_phone',
+                  }
+                }
+                
+              ]);
           }
-        ]);
+
+          else if(event.type === "entry_food_event"){
+            // Perform aggregation to calculate item sales report
+            var itemSalesReport = await BookingMenu.aggregate([
+              {
+                $lookup: {
+                  from: 'bookingpayments',
+                  localField: 'payment_id',
+                  foreignField: '_id',
+                  as: 'menu_item_payment_data',
+                },
+              },
+              {
+                $match: { "menu_item_payment_data.status": "active", "menu_item_payment_data.is_consumed": "yes", event_id: new mongoose.Types.ObjectId(eventId) }
+              },
+              {
+                $lookup: {
+                  from: 'menus',
+                  localField: 'menu_id',
+                  foreignField: '_id',
+                  as: 'menu'
+                }
+              },
+              {
+                $unwind: '$menu'
+              },
+              {
+                $group: {
+                  _id: {
+                    menuName: '$menu.name',
+                    category: '$menu.category_id',
+                    validator_id: '$menu_item_payment_data.validator_id'
+                  },
+                  consumedQuantity: { $sum: '$quantity' },
+                  payment_data: { $push: '$menu_item_payment_data' },
+                }
+              },
+
+              {
+                $lookup: {
+                  from: 'validators',
+                  localField: '_id.validator_id',
+                  foreignField: 'user_id',
+                  as: 'validator'
+                }
+              },
+              {
+                $unwind: '$validator'
+              },
+              {
+                $lookup: {
+                  from: 'users',
+                  localField: '_id.validator_id',
+                  foreignField: '_id',
+                  as: 'user'
+                }
+              },
+              {
+                $unwind: '$user'
+              },
+              
+              {
+                $project: {
+                  _id: 0,
+                  itemName: '$_id.menuName',
+                  category: '$_id.category',
+                  consumedQuantity: 1,
+                  validator_name: '$validator.full_name',
+                  validator_phone_number: '$user.code_phone',
+                }
+              }
+            ]);
+          }
+    
+        
   
         if(itemSalesReport.length > 0){
-            var allData = [];
-            for(var item of itemSalesReport){
-               var categoryData =  await Category.findById(item.category);
-                  allData.push({ 
-                    "category": categoryData.name,
-                    "consumedQuantity": item.consumedQuantity,
-                    "itemName": item.itemName
-                });
+          const groupedData = {};
+    
+          for (const item of itemSalesReport) {
+            try {
+              const categoryData = await Category.findById(item.category);
+              const key = item.validator_name;
+              if (!groupedData[key]) {
+                groupedData[key] = {
+                  validator_data: {
+                    name: key,
+                    phone_number: item.validator_phone_number
+                  },
+                  approved_items: []
+                };
+              }
+              groupedData[key].approved_items.push({
+                category: categoryData.name,
+                consumedQuantity: item.consumedQuantity,
+                itemName: item.itemName,
+              });
+            } catch (error) {
+              console.error("Error fetching category data:", error);
+              // Handle error if necessary
             }
-            res.json({ status: true, message : "Data found",  data: allData });
+          }
+          
+          const result = Object.values(groupedData);
+
+            
+            res.json({ status: true, message : "Data found",  data: result});
         } else {
             res.json({ status: false, message : "No data found",  data: [] });
         }
     
         
       } catch (err) {
+        console.log("error",err)
         res.status(500).send({
             status: false,
             message: err.toString() || "Internal Server Error",

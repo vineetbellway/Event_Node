@@ -3,7 +3,7 @@ const Event = require("../models/event.model"); // Import the Event model
 const nodemailer = require('nodemailer');
 const { addNotification } = require('../helpers/notification_helper');
 const mongoose = require("mongoose");
-
+const FeedBackReply = require("../models/feedback_replies.model");
 
 exports.give_feedback = (req, res, next) => {
   if (!req.body) {
@@ -193,3 +193,85 @@ exports.get_feedbacks = async (req, res) => {
     });
   }
 };
+
+exports.give_feedback_reply = (req, res, next) => {
+  if (!req.body) {
+    res.status(400).send({
+      status: false,
+      message: "Body missing",
+      data:null
+    });
+  } else {
+    try {
+      const feedbackReplyData = req.body;
+      const feedbackId = feedbackReplyData.feedback_id; // Assuming the event_id is in the request body
+
+      // Retrieve feedback data based on feedback_id
+      Feedback.findById(feedbackId) // Assuming you're using Mongoose for MongoDB
+        .exec()
+        .then((feedback) => {
+          if (feedback) {
+            // feedback found
+            // Save feedback reply data to the database
+            FeedBackReply(feedbackReplyData)
+              .save()
+              .then((result) => {
+                if (result) {
+
+                  // send notification
+                  var guest_id = feedback.guest_id;
+                  console.log("guest_id",guest_id)
+                  const title = "New feedback reply";
+                  var type = 'app';
+                  var message = feedbackReplyData.message;
+                  addNotification(feedbackReplyData.seller_id, guest_id, title, message, type);
+
+          
+
+                  res.status(200).send({
+                    status: true,
+                    message: "Reply has been gievn successfully",
+                    data: result,
+                  });
+                } else {
+                  res.status(404).send({
+                    status: false,
+                    message: "Not created",
+                    data:null
+                  });
+                }
+              })
+              .catch((error) => {
+                console.log("error", error);
+                res.status(500).send({
+                  status: false,
+                  message: error.toString() || "Error",
+                  data:null
+                });
+              });
+          } else {
+            res.status(404).send({
+              status: false,
+              message: "Invalid Feedback Id",
+              data:null
+            });
+          }
+        })
+        .catch((error) => {
+          console.log("Error retrieving event data:", error);
+          res.status(500).send({
+            status: false,
+            message: "Internal Server Error",
+            data:null
+          });
+        });
+    } catch (error) {
+      console.log("Error retrieving event data:", error);
+      res.status(500).send({
+        status: false,
+        message: error || "Internal Server Error",
+        data:null
+      });
+    }
+  }
+}; 

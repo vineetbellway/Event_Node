@@ -483,6 +483,9 @@ router.put("/manage-validator-event-balance",auth,bookingController.manage_valid
 
 router.get("/get-active-event-of-validator",auth,validatorEventController.get_active_event_of_validator);
 
+// give feedback reply
+router.post("/give-feedback-reply",auth,feedbackController.give_feedback_reply);
+
 cron.schedule("* * * * *", function() {
     //bookingController.sendEventNotification();
     bookingController.sendExpireEventNotification();

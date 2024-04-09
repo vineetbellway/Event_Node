@@ -9,6 +9,7 @@ const BookedMenuItem = require("../models/booked_menu_item.model");
 const BookingMenu = require("../models/booking_menu.model");
 const Validator = require("../models/validator.model");
 const User = require("../models/user.model");
+const Menu = require("../models/menu.model");
 
 
 
@@ -20,7 +21,7 @@ exports.get_item_sales_report = async (req, res) => {
 
         // Find the event by eventId
         const event = await EventModel.findById(eventId);
-        console.log("event",event)
+        console.log("event",event.type)
         if (!event) {
             return res.status(200).json({ status: false, message: 'Event not found' , data :null });
           }
@@ -56,9 +57,10 @@ exports.get_item_sales_report = async (req, res) => {
                 {
                   $group: {
                     _id: {
-                      menuName: '$menu.name',
-                      category: '$menu.category_id',
-                      validator_id: '$menu_item_payment_data.validator_id'
+                    menuName: '$menu.name',
+                    menu_id: '$menu._id',
+                    category: '$menu.category_id',
+                    validator_id: '$menu_item_payment_data.validator_id'
                     },
                     consumedQuantity: { $sum: '$quantity' },
                     payment_data: { $push: '$menu_item_payment_data' },
@@ -92,6 +94,7 @@ exports.get_item_sales_report = async (req, res) => {
                   $project: {
                     _id: 0,
                     itemName: '$_id.menuName',
+                    menu_id: '$_id.menu_id',
                     category: '$_id.category',
                     consumedQuantity: 1,
                     validator_name: '$validator.full_name',
@@ -131,6 +134,7 @@ exports.get_item_sales_report = async (req, res) => {
                 $group: {
                   _id: {
                     menuName: '$menu.name',
+                    menu_id: '$menu._id',
                     category: '$menu.category_id',
                     validator_id: '$menu_item_payment_data.validator_id'
                   },
@@ -165,6 +169,7 @@ exports.get_item_sales_report = async (req, res) => {
               {
                 $project: {
                   _id: 0,
+                  menu_id: '$_id.menu_id',
                   itemName: '$_id.menuName',
                   category: '$_id.category',
                   consumedQuantity: 1,
@@ -181,8 +186,10 @@ exports.get_item_sales_report = async (req, res) => {
           const groupedData = {};
     
           for (const item of itemSalesReport) {
+            console.log("item",item)
             try {
               const categoryData = await Category.findById(item.category);
+              const menuData = await Menu.findById(item.menu_id);
               const key = item.validator_name;
               if (!groupedData[key]) {
                 groupedData[key] = {
@@ -197,6 +204,8 @@ exports.get_item_sales_report = async (req, res) => {
                 category: categoryData.name,
                 consumedQuantity: item.consumedQuantity,
                 itemName: item.itemName,
+                sellingPrice: menuData.selling_price,
+                costPrice: menuData.cost_price,
               });
             } catch (error) {
               console.error("Error fetching category data:", error);

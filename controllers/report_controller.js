@@ -13,7 +13,7 @@ const Menu = require("../models/menu.model");
 
 
 
-exports.get_item_sales_report = async (req, res) => {
+exports.get_item_sales_report_validator_wise = async (req, res) => {
     try {
         const eventId = req.query.event_id;
 
@@ -232,6 +232,151 @@ exports.get_item_sales_report = async (req, res) => {
       }
 };
 
+exports.get_item_sales_report = async (req, res) => {
+  try {
+      const eventId = req.query.event_id;
+
+      console.log("eventId",eventId)
+
+      // Find the event by eventId
+      const event = await EventModel.findById(eventId);
+
+      if (!event) {
+          return res.status(200).json({ status: false, message: 'Event not found' , data :null });
+      }
+
+      if(event.type === "food_event") {
+         // Perform aggregation to calculate item sales report
+        var itemSalesReport = await BookedMenuItem.aggregate([
+          
+          
+          {
+            $lookup: {
+              from: 'menuitempayments',
+              localField: 'payment_id',
+              foreignField: '_id',
+              as: 'menu_item_payment_data',
+            },
+          },
+          {
+            $match: { "menu_item_payment_data.is_approved": "yes" ,  event_id: new mongoose.Types.ObjectId(eventId) }
+          },
+          {
+            $lookup: {
+              from: 'menus',
+              localField: 'menu_id',
+              foreignField: '_id',
+              as: 'menu'
+            }
+          },
+          {
+            $unwind: '$menu'
+          },
+          {
+            $group: {
+              _id: {
+                menuName: '$menu.name',
+                menu_id: '$menu._id',
+                category: '$menu.category_id'
+              },
+              consumedQuantity: { $sum: '$quantity' },
+              payment_data: { $push: '$menu_item_payment_data' },
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              menu_id: '$_id.menu_id',
+              itemName: '$_id.menuName',
+              category: '$_id.category',
+              consumedQuantity: 1,
+              payment_data: 1,
+            }
+          }
+        ]);
+
+
+      } 
+      else if(event.type === "entry_food_event"){
+        var itemSalesReport = await BookingMenu.aggregate([
+          
+          
+          {
+            $lookup: {
+              from: 'menuitempayments',
+              localField: 'payment_id',
+              foreignField: '_id',
+              as: 'menu_item_payment_data',
+            },
+          },
+          {
+            $match: { "menu_item_payment_data.status": "active", "menu_item_payment_data.is_consumed": "yes", event_id: new mongoose.Types.ObjectId(eventId) }
+          },
+          {
+            $lookup: {
+              from: 'menus',
+              localField: 'menu_id',
+              foreignField: '_id',
+              as: 'menu'
+            }
+          },
+          {
+            $unwind: '$menu'
+          },
+          {
+            $group: {
+              _id: {
+                menuName: '$menu.name',
+                menu_id: '$menu._id',
+                category: '$menu.category_id'
+              },
+              consumedQuantity: { $sum: '$quantity' },
+              payment_data: { $push: '$menu_item_payment_data' },
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              itemName: '$_id.menuName',
+              menu_id: '$_id.menu_id',
+              category: '$_id.category',
+              consumedQuantity: 1,
+              payment_data: 1,
+            }
+          }
+        ]);
+
+      }
+  
+     
+      if(itemSalesReport.length > 0){
+          var allData = [];
+          for(var item of itemSalesReport){
+             var categoryData =  await Category.findById(item.category);
+             const menuData = await Menu.findById(item.menu_id);
+                allData.push({ 
+                  "category": categoryData.name,
+                  "consumedQuantity": item.consumedQuantity,
+                  "itemName": item.itemName,
+                  "sellingPrice": menuData.selling_price,
+                  "costPrice": menuData.cost_price,
+              });
+          }
+          res.json({ status: true, message : "Data found",  data: allData });
+      } else {
+          res.json({ status: false, message : "No data found",  data: [] });
+      }
+  
+      
+    } catch (err) {
+      res.status(500).send({
+          status: false,
+          message: err.toString() || "Internal Server Error",
+          data: null,
+      });
+    }
+};
+
 exports.get_number_of_guests_for_event = async (req, res) => {
     try {
         const eventId = req.query.event_id;
@@ -388,6 +533,7 @@ exports.fns_moving_item_report = async (req, res) => {
 
       // Find the event by eventId
       const event = await EventModel.findById(eventId);
+      console.log("event",event)
 
 
       if (!event) {
@@ -423,15 +569,22 @@ exports.fns_moving_item_report = async (req, res) => {
               $group: {
                 _id: {
                   menuName: '$menu.name',
+                  menu_id: '$menu._id',
+                  category: '$menu.category_id',
                 },
-                consumedQuantityNew: { $sum: 1 }, // Rename the field here
+                consumedQuantity: { $sum: '$quantity' },
+              //  percentage2: { $first: 12 } // Assign constant value 12 to percentage2
               }
             },
             {
               $project: {
                 _id: 0,
+                menu_id: '$_id.menu_id',
                 itemName: '$_id.menuName',
-                consumedQuantity: '$consumedQuantityNew', // Rename the field here
+                consumedQuantity: 1, 
+              //  percentage2:1,
+                category: '$_id.category',
+                
               }
             },
             {
@@ -473,6 +626,9 @@ exports.fns_moving_item_report = async (req, res) => {
               $group: {
                 _id: {
                   menuName: '$menu.name',
+                  menu_id: '$menu._id',
+                  category: '$menu.category_id',
+                  
                 },
                 consumedQuantity: { $sum: '$quantity' },
                 payment_data: { $push: '$menu_item_payment_data' },
@@ -481,6 +637,7 @@ exports.fns_moving_item_report = async (req, res) => {
             {
               $project: {
                 _id: 0,
+                menu_id: '$_id.menu_id',
                 itemName: '$_id.menuName',
                 category: '$_id.category',
                 consumedQuantity: 1,
@@ -501,13 +658,33 @@ exports.fns_moving_item_report = async (req, res) => {
 
       if(fnsMovingItemsReport.length > 0){
           var allData = [];
+          var sum = 0;
           for(var item of fnsMovingItemsReport){
-            console.log("item",item)
+            const menuData = await Menu.findById(item.menu_id);
+            const categoryData = await Category.findById(item.category);
+            sum = sum+item.consumedQuantity;
+          
                 allData.push({ 
+                  "category": categoryData.name,
                   "consumedQuantity": item.consumedQuantity,
                   "itemName": item.itemName,
+                  "sellingPrice": menuData.selling_price,
               });
           }
+
+          if(allData.length > 0){
+            for(var item1 of allData){            
+              var consumedQuantity = item1.consumedQuantity;
+              var percentage = (consumedQuantity/100)*sum; 
+              
+              console.log("percentage",percentage);  
+              item1.percentage = percentage;
+
+            }
+          }
+
+          
+          console.log("sum",sum)
           res.json({ status: true, message : "Data found",  data: allData });
       } else {
           res.json({ status: false, message : "No data found",  data: [] });

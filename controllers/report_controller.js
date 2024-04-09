@@ -573,7 +573,6 @@ exports.fns_moving_item_report = async (req, res) => {
                   category: '$menu.category_id',
                 },
                 consumedQuantity: { $sum: '$quantity' },
-              //  percentage2: { $first: 12 } // Assign constant value 12 to percentage2
               }
             },
             {
@@ -582,13 +581,12 @@ exports.fns_moving_item_report = async (req, res) => {
                 menu_id: '$_id.menu_id',
                 itemName: '$_id.menuName',
                 consumedQuantity: 1, 
-              //  percentage2:1,
                 category: '$_id.category',
                 
               }
             },
             {
-              $sort: { consumedQuantity: type === "most" ? -1 : 1 } // Sort by consumedQuantity based on the type
+              $sort: { consumedQuantity:  -1  } // Sort by consumedQuantity based on the type
             }
           ]);
           
@@ -645,7 +643,7 @@ exports.fns_moving_item_report = async (req, res) => {
               }
             },
             {
-              $sort: { consumedQuantity: type === "most" ? -1 : 1 } // Sort by consumedQuantity based on the type
+              $sort: { consumedQuantity: -1  } // Sort by consumedQuantity based on the type
             }
           ]);
       }
@@ -675,16 +673,13 @@ exports.fns_moving_item_report = async (req, res) => {
           if(allData.length > 0){
             for(var item1 of allData){            
               var consumedQuantity = item1.consumedQuantity;
-              var percentage = (consumedQuantity/100)*sum; 
-              
-              console.log("percentage",percentage);  
-              item1.percentage = percentage;
+              var percentage = (consumedQuantity/100)*sum;               
+              item1.percentage = percentage.toString();
 
             }
           }
 
           
-          console.log("sum",sum)
           res.json({ status: true, message : "Data found",  data: allData });
       } else {
           res.json({ status: false, message : "No data found",  data: [] });

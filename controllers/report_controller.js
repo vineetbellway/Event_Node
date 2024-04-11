@@ -667,6 +667,7 @@ exports.fns_moving_item_report = async (req, res) => {
                   "consumedQuantity": item.consumedQuantity,
                   "itemName": item.itemName,
                   "sellingPrice": menuData.selling_price,
+                  "costPrice": menuData.cost_price,
               });
           }
 
@@ -748,6 +749,7 @@ exports.guest_potential_report = async (req, res) => {
           $group: {
             _id: {
               guestId: '$guest_id',
+              menu_id: '$menu._id',
               guestName: '$guest.full_name',
               menuName: '$menu.name',
             },
@@ -757,6 +759,7 @@ exports.guest_potential_report = async (req, res) => {
         {
           $project: {
             _id: 0,
+            menu_id: '$_id.menu_id',
             guestId: '$_id.guestId',
             guestName: '$_id.guestName',
             itemName: '$_id.menuName',
@@ -806,6 +809,7 @@ exports.guest_potential_report = async (req, res) => {
           $group: {
             _id: {
               guestId: '$guest_id',
+              menu_id: '$menu._id',
               guestName: '$guest.full_name',
               menuName: '$menu.name',
             },
@@ -815,6 +819,7 @@ exports.guest_potential_report = async (req, res) => {
         {
           $project: {
             _id: 0,
+            menu_id: '$_id.menu_id',
             guestId: '$_id.guestId',
             guestName: '$_id.guestName',
             itemName: '$_id.menuName',
@@ -828,7 +833,22 @@ exports.guest_potential_report = async (req, res) => {
     }
 
     if (potentialReport.length > 0) {
-      res.json({ status: true, message: "Data found", data: potentialReport });
+
+      var allData = [];
+          for(var item of potentialReport){
+            const menuData = await Menu.findById(item.menu_id);
+            console.log("item",item)
+                allData.push({ 
+                  "guestId": item.guestId,
+                  "guestName": item.guestName,
+                  "consumedQuantity": item.consumedQuantity,
+                  "itemName": item.itemName,
+                  "costPrice": menuData.cost_price,
+              });
+          }
+
+
+      res.json({ status: true, message: "Data found", data: allData });
     } else {
       res.json({ status: false, message: "No data found", data: [] });
     }

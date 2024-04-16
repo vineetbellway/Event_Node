@@ -526,7 +526,7 @@ exports.get_number_of_guests_for_event = async (req, res) => {
      
          console.log("revenue",revenueReport)
          var earning  = revenue - total_cost;
-        res.json({ status: true, message : "Data found", data : [{ 
+        res.json({ status: true, message : "Data found", data : { 
           event_name: event.name, 
           event_date: event.start_time, 
           numberOfGuests: totalGuests ,
@@ -543,7 +543,7 @@ exports.get_number_of_guests_for_event = async (req, res) => {
           'revenue_per_cover' : revenue_per_cover,
           'earning_per_cover': earning_per_cover
 
-        }] });
+        } });
       } catch (err) {
         res.status(500).send({
             status: false,
@@ -654,34 +654,23 @@ exports.get_repeated_guests_for_seller_attending_events = async (req, res) => {
       }
 };
 
-exports.get_number_of_guests_for_seller = async (req, res) => {
+exports.guest_presence_report = async (req, res) => {
     try {
-        const sellerId = req.query.seller_id;
+        const event_id = req.query.event_id;
     
-        // Find the seller by sellerId
-        const seller = await Seller.findOne({ user_id: sellerId });
-    
-        if (!seller) {
-          return res.status(200).json({ status: false, message: 'Seller not found',data: null });
-        }
-        
-        // Find all events created by the seller
-        const sellerEvents = await EventModel.find({ seller_id: sellerId });
+      
+      
+        const sellerEvents = await EventModel.find({ event_id: event_id });
       
     
-        if (sellerEvents.length == 0) {
-          return res.json({ status: false,message: 'Seller events not found', data :[{seller: seller.company_name, numberOfGuests: 0}] });
-        }
-    
         // Get event IDs associated with the seller's events
-        const eventIds = sellerEvents.map(event => event._id);
+   
 
-        console.log("eventIds",eventIds)
     
-        // Calculate the number of guests attending all events by the seller
+        // Calculate the number of guests attending events by the seller
         const numberOfGuests = await Booking.aggregate([
           {
-            $match: { event_id: { $in: eventIds } }
+            $match: { event_id: event_id }
           },
           {
             $group: {
@@ -698,7 +687,7 @@ exports.get_number_of_guests_for_seller = async (req, res) => {
     
         const totalGuests = numberOfGuests.length > 0 ? numberOfGuests[0].totalGuests : 0;
     
-        res.json({ status: true,message: 'Data found', data : [{seller: seller.company_name, numberOfGuests: totalGuests}] });
+        res.json({ status: true,message: 'Data found', data : [{seller: 0, numberOfGuests: totalGuests}] });
       } catch (err) {
         res.status(500).json({ status: false, error: err.message });
       }

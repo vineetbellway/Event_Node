@@ -573,6 +573,55 @@ exports.get_number_of_guests_for_seller = async (req, res) => {
       }
 };
 
+exports.get_number_of_guests_for_seller_backup = async (req, res) => {
+  try {
+      const sellerId = req.query.seller_id;
+  
+      // Find the seller by sellerId
+      const seller = await Seller.findOne({ user_id: sellerId });
+  
+      if (!seller) {
+        return res.status(200).json({ status: false, message: 'Seller not found',data: null });
+      }
+      
+      // Find all events created by the seller
+      const sellerEvents = await EventModel.find({ seller_id: sellerId });
+    
+  
+      if (sellerEvents.length == 0) {
+        return res.json({ status: false,message: 'Seller events not found', data :[{seller: seller.company_name, numberOfGuests: 0}] });
+      }
+  
+      // Get event IDs associated with the seller's events
+      const eventIds = sellerEvents.map(event => event._id);
+
+      console.log("eventIds",eventIds)
+  
+      // Calculate the number of guests attending all events by the seller
+      const numberOfGuests = await Booking.aggregate([
+        {
+          $match: { event_id: { $in: eventIds } }
+        },
+        {
+          $group: {
+            _id: '$guest_id'
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalGuests: { $sum: 1 }
+          }
+        }
+      ]);
+  
+      const totalGuests = numberOfGuests.length > 0 ? numberOfGuests[0].totalGuests : 0;
+  
+      res.json({ status: true,message: 'Data found', data : [{seller: seller.company_name, numberOfGuests: totalGuests}] });
+    } catch (err) {
+      res.status(500).json({ status: false, error: err.message });
+    }
+};
 exports.fns_moving_item_report = async (req, res) => {
   try {
       const eventId = req.query.event_id;

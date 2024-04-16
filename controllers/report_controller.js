@@ -11,7 +11,10 @@ const Validator = require("../models/validator.model");
 const User = require("../models/user.model");
 const GuestModel = require("../models/guest.model");
 const Menu = require("../models/menu.model");
-
+const EventGuestModel = require("../models/event_guest.model");
+const BookedServiceItem = require("../models/booked_service_item.model");
+const ServiceItemPayments = require("../models/service_item_payments.model");
+const ServiceModel = require("../models/service.model");
 
 
 exports.get_item_sales_report_validator_wise = async (req, res) => {
@@ -661,9 +664,9 @@ exports.guest_presence_report = async (req, res) => {
     
       
       
-        const sellerEvents = await EventModel.find({ event_id: event_id });
+        const sellerEvents = await EventModel.findById(event_id);
       
-    
+    //  console.log("sellerEvents",sellerEvents)
         // Get event IDs associated with the seller's events
    
 
@@ -671,30 +674,59 @@ exports.guest_presence_report = async (req, res) => {
         // Calculate the number of guests attending events by the seller
         const numberOfGuests = await Booking.aggregate([
           {
-            $match: { event_id: event_id }
+            $match: { event_id: new mongoose.Types.ObjectId(event_id) }
           },
           {
             $group: {
-              _id: '$guest_id'
-            }
-          },
-          {
-            $group: {
-              _id: null,
+              _id: '$guest_id',
               totalGuests: { $sum: 1 }
+
             }
-          }
+          },
+         
         ]);
+
+        let guestsInfo = [];
+        // Iterate through repeatedGuests array
+        for (let i = 0; i < numberOfGuests.length; i++) {
+            const guest = numberOfGuests[i];
+          
+            var guest_id = guest._id;
+            console.log("guest id",guest_id);
+          //  return false;
+            // Retrieve guest information from GuestModel
+            const guestInfo =   await GuestModel.findOne({ "user_id" :  guest_id });
     
-        const totalGuests = numberOfGuests.length > 0 ? numberOfGuests[0].totalGuests : 0;
     
-        res.json({ status: true,message: 'Data found', data : [{seller: 0, numberOfGuests: totalGuests}] });
+            console.log("guestInfo",guestInfo);
+            // return true;
+            // Retrieve user information from UserModel
+            
+             const userInfo =  guestInfo ? await User.findOne({ _id: guestInfo.user_id }) : '';
+                   // Add guest name and phone number to the guest object
+    
+                guest.name = guestInfo ? guestInfo.full_name : '';
+                guest.phone = userInfo ? userInfo.code_phone :'';
+         
+        
+    
+       
+    
+            // Push the modified guest object to guestsInfo array
+            guestsInfo.push(guest);
+        }
+
+        console.log("numberOfGuests",numberOfGuests)
+    
+        const totalGuests = guestsInfo.length > 0 ? guestsInfo : [];
+    
+        res.json({ status: true,message: 'Data found', data : totalGuests});
       } catch (err) {
         res.status(500).json({ status: false, error: err.message });
       }
 };
 
-exports.get_number_of_guests_for_seller_backup = async (req, res) => {
+exports.guest_presence_report_backup = async (req, res) => {
   try {
       const sellerId = req.query.seller_id;
   
@@ -1261,4 +1293,77 @@ exports.revenue_comparison_report = async (req, res) => {
     });
   }
 };
+
+exports.guest_loyalty_point_report = async (req, res) => {
+  try {
+    const guest_id = req.query.guest_id;
+
+    const guestLoyaltyReport = await EventGuestModel.aggregate([
+      { $match: { guest_id: new mongoose.Types.ObjectId(guest_id) } }
+    ]);
+
+    let guestsInfo = [];
+
+    if (guestLoyaltyReport.length > 0) {
+      for (let i = 0; i < guestLoyaltyReport.length; i++) {
+        const guest = guestLoyaltyReport[i];
+        
+        const guestInfo = await GuestModel.findOne({ "user_id" :  guest_id });
+        const eventRecord = await EventModel.findById(guest.event_id);
+        
+        const userInfo = guestInfo ? await User.findOne({ _id: guestInfo.user_id }) : '';
+
+        guest.name = guestInfo ? guestInfo.full_name : '';
+        guest.phone = userInfo ? userInfo.code_phone :'';
+        
+        let total_sum = 0;
+
+        const bookedPaymentResult = await ServiceItemPayments.aggregate([
+          { $lookup: { from: 'serviceitembookings', localField: '_id', foreignField: 'payment_id', as: 'booking_data' } },
+          { $match: { "booking_data.event_id": new mongoose.Types.ObjectId(guest.event_id), "booking_data.guest_id": new mongoose.Types.ObjectId(guest_id), "payment_status": "paid" } },
+          { $sort: { 'createdAt': -1 } }
+        ]).then(async (result2) => {
+          if (result2.length > 0) {
+            const serviceNames = [];
+            for (const p_item of result2) {
+              if (p_item.total_points !== undefined) {                        
+                total_sum += p_item.total_points;
+                for (const booking of p_item.booking_data) {
+                  // Access service ID from booking_data and fetch corresponding service name
+                  const service = await ServiceModel.findById(booking.service_id);
+                  if (service) {
+                    serviceNames.push(service.name);
+                  }
+                }
+              }
+            }
+            // Join service names with comma
+            guest.service_names = serviceNames.join(', ');
+          }
+        }).catch((error) => {
+          console.error("Error:", error);
+        });
+
+        guest.total_loyality_points = total_sum;
+        guest.balance = total_sum- eventRecord.point;
+
+        guestsInfo.push(guest);
+      }
+    }
+
+    const totalGuests = guestsInfo.length > 0 ? guestsInfo : null;
+    if(guestsInfo.length >0){
+      res.json({ status: true, message: 'Data found', data: totalGuests[0] });
+    } else {
+      res.json({ status: false, message: 'No data found', data: null });
+    }
+    
+  } catch (err) {
+    res.status(500).json({ status: false, error: err.message });
+  }
+};
+
+
+
+
 

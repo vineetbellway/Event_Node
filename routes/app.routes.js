@@ -351,7 +351,7 @@ router.get("/guest-potential-report",auth,reportController.guest_potential_repor
 
 
 // get guest loyality report
-//router.get("/loyalty-point-report",reportController.guest_loyalty_point_report);
+router.get("/loyalty-point-report",auth,reportController.guest_loyalty_point_report);
 
 // get menu audit report
 router.get("/menu-audit-report",auth,reportController.menu_audit_report);

@@ -9,6 +9,7 @@ const BookedMenuItem = require("../models/booked_menu_item.model");
 const BookingMenu = require("../models/booking_menu.model");
 const Validator = require("../models/validator.model");
 const User = require("../models/user.model");
+const GuestModel = require("../models/guest.model");
 const Menu = require("../models/menu.model");
 
 
@@ -442,9 +443,17 @@ exports.get_repeated_guests_for_seller_attending_events = async (req, res) => {
             $match: { event_id: { $in: eventIds } }
           },
           {
+            $lookup: {
+              from: 'events', // Assuming the collection name is 'events'
+              localField: 'event_id',
+              foreignField: '_id',
+              as: 'event'
+            }
+          },
+          {
             $group: {
               _id: '$guest_id',
-              eventsAttended: { $addToSet: '$event_id' },
+              eventsAttended: { $addToSet: { $arrayElemAt: ['$event.name', 0] } }, // Assuming the event name field is 'name'
               totalEventsAttended: { $sum: 1 }
             }
           },
@@ -454,13 +463,53 @@ exports.get_repeated_guests_for_seller_attending_events = async (req, res) => {
           {
             $project: {
               _id: 1,
+              guest_id: '$_id', // Retain the guest_id field
               totalEventsAttended: 1,
-              eventsAttended: 1
+              eventsAttended: {
+                $reduce: {
+                  input: '$eventsAttended',
+                  initialValue: '',
+                  in: { $concat: ['$$value', { $cond: [{ $eq: ['$$value', ''] }, '', ', '] }, '$$this'] }
+                }
+              }
             }
           }
         ]);
+        
+        
+        
         if(repeatedGuests.length > 0){
-            res.json({ status: true, message: 'Data found', repeatedGuests });
+           // Array to store additional information about guests
+    let guestsInfo = [];
+    // Iterate through repeatedGuests array
+    for (let i = 0; i < repeatedGuests.length; i++) {
+        const guest = repeatedGuests[i];
+      
+        var guest_id = guest._id;
+        console.log("guest id",guest_id);
+      //  return false;
+        // Retrieve guest information from GuestModel
+        const guestInfo =   await GuestModel.findOne({ "user_id" :  guest_id });
+
+
+        console.log("guestInfo",guestInfo);
+        // return true;
+        // Retrieve user information from UserModel
+        
+         const userInfo =  guestInfo ? await User.findOne({ _id: guestInfo.user_id }) : '';
+               // Add guest name and phone number to the guest object
+
+            guest.name = guestInfo ? guestInfo.full_name : '';
+            guest.phone = userInfo ? userInfo.code_phone :'';
+     
+    
+
+   
+
+        // Push the modified guest object to guestsInfo array
+        guestsInfo.push(guest);
+    }
+            res.json({ status: true, message: 'Data found', guestsInfo });
         } else {
             res.json({ status: false, message: 'No data found', repeatedGuests });
         }

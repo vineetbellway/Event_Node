@@ -411,8 +411,17 @@ exports.get_number_of_guests_for_event = async (req, res) => {
         ]);
         
         const totalGuests = numberOfGuests.length > 0 ? numberOfGuests[0].totalGuests : 0;
-    
-        res.json({ status: true, message : "Data found", data : [{ event: event.name, numberOfGuests: totalGuests }] });
+         var direct_cost = 0;
+         var indirect_cost = 0;
+         var total_cost = direct_cost + indirect_cost;
+        res.json({ status: true, message : "Data found", data : [{ 
+          event_name: event.name, 
+          event_date: event.createdAt, 
+          numberOfGuests: totalGuests ,
+          'direct_cost': direct_cost,
+          'indirect_cost' : indirect_cost,
+          'total_cost' : total_cost,
+        }] });
       } catch (err) {
         res.status(500).send({
             status: false,

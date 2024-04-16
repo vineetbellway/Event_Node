@@ -333,15 +333,15 @@ router.get("/get-validator-events-list",auth, validatorEventController.get_valid
 // get item sales report API
 router.get("/item-sales-report",auth,  reportController.get_item_sales_report);
 
-// get number of guests for event API
-router.get("/number-of-guests-for-event",auth, reportController.get_number_of_guests_for_event);
+// get number of guests for event API (cover report)
+router.get("/number-of-guests-for-event", auth, reportController.get_number_of_guests_for_event);
 
 
 // get repeated guests for seller attending events API
 router.get("/repated-guests-for-seller",auth,reportController.get_repeated_guests_for_seller_attending_events);
 
 // get the number of guests attending events by a specific seller
-router.get("/number-guests-for-seller",auth,eportController.get_number_of_guests_for_seller);
+router.get("/number-guests-for-seller",auth,reportController.get_number_of_guests_for_seller);
 
 // get fns moving items report
 router.get("/fns-moving-items-report",auth,reportController.fns_moving_item_report);

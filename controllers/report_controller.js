@@ -509,7 +509,7 @@ exports.get_repeated_guests_for_seller_attending_events = async (req, res) => {
         // Push the modified guest object to guestsInfo array
         guestsInfo.push(guest);
     }
-            res.json({ status: true, message: 'Data found', guestsInfo });
+            res.json({ status: true, message: 'Data found', data : guestsInfo });
         } else {
             res.json({ status: false, message: 'No data found', repeatedGuests });
         }

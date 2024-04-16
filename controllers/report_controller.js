@@ -394,7 +394,7 @@ exports.get_number_of_guests_for_event = async (req, res) => {
         // Calculate the number of guests attending the event
         const numberOfGuests = await Booking.aggregate([
           {
-            $match: { event_id: new mongoose.Types.ObjectId(eventId),  status: 'active' }
+            $match: { event_id: new mongoose.Types.ObjectId(eventId),  status: 'expired' }
           },
           {
             $group: {
@@ -431,7 +431,7 @@ exports.get_number_of_guests_for_event = async (req, res) => {
             
            
              {
-               $match: { "status": { $in: ["active", "expired"] }, event_id: new mongoose.Types.ObjectId(eventId) }
+               $match: { "status": { $in: [ "expired"] }, event_id: new mongoose.Types.ObjectId(eventId) }
              },
              {
                $group: {
@@ -538,6 +538,7 @@ exports.get_number_of_guests_for_event = async (req, res) => {
           'commision_charge' : event.commision_charge,
           'total_cost' : total_cost,
           'earning' : earning,
+          "revenue":revenue,
           'revenue_per_cover' : revenue_per_cover,
           'expenditure_per_cover' : expenditure_per_cover,
           'revenue_per_cover' : revenue_per_cover,

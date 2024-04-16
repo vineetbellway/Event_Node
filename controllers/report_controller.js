@@ -412,15 +412,137 @@ exports.get_number_of_guests_for_event = async (req, res) => {
         
         const totalGuests = numberOfGuests.length > 0 ? numberOfGuests[0].totalGuests : 0;
          var direct_cost = 0;
-         var indirect_cost = 0;
+         var indirect_cost = event.transportation_charge + event.hire_charge + event.labour_charge  + event.commision_charge ;
          var total_cost = direct_cost + indirect_cost;
+         var revenue_per_cover = 0;
+         var expenditure_per_cover = total_cost/totalGuests;
+         var earning_per_cover = 0;
+
+
+
+         // Find the event by eventId
+     
+       
+     
+         let revenueReport;
+     
+         if (event.type === "entry_event") {
+           revenueReport = await Booking.aggregate([
+            
+           
+             {
+               $match: { "status": { $in: ["active", "expired"] }, event_id: new mongoose.Types.ObjectId(eventId) }
+             },
+             {
+               $group: {
+                 _id: null,
+                 totalAmount: { $sum: '$amount' }, // Sum up the total amount for all guests
+               }
+             },
+             {
+               $project: {
+                 _id: 0,
+                 totalAmount: 1,
+               }
+             }
+           ]);
+     
+     
+     
+         }
+     
+        else if (event.type === "food_event") {
+     
+         revenueReport = await BookedMenuItem.aggregate([
+             {
+               $lookup: {
+                 from: 'menuitempayments',
+                 localField: 'payment_id',
+                 foreignField: '_id',
+                 as: 'menu_item_payment_data',
+               },
+             },
+             {
+               $unwind: '$menu_item_payment_data' // Deconstruct the array
+             },
+             {
+               $match: { "menu_item_payment_data.is_approved": "yes", event_id: new mongoose.Types.ObjectId(eventId) }
+             },
+             {
+               $group: {
+                 _id: null,
+                 totalAmount: { $sum: '$menu_item_payment_data.amount' }, // Sum up the total amount for all guests
+               }
+             },
+             {
+               $project: {
+                 _id: 0,
+                 totalAmount: 1,
+               }
+             }
+           ]);
+         } else {
+           revenueReport = await BookingMenu.aggregate([
+             {
+               $lookup: {
+                 from: 'bookingpayments',
+                 localField: 'payment_id',
+                 foreignField: '_id',
+                 as: 'menu_item_payment_data',
+               },
+             },
+             {
+               $unwind: '$menu_item_payment_data' // Deconstruct the array
+             },
+             {
+               $match: { "menu_item_payment_data.status": "active", event_id: new mongoose.Types.ObjectId(eventId) }
+             },
+             {
+               $group: {
+                 _id: null,
+                 totalAmount: { $sum: '$menu_item_payment_data.amount' }, // Sum up the total amount for all guests
+               }
+             },
+             {
+               $project: {
+                 _id: 0,
+                 totalAmount: 1,
+               }
+             }
+           ]);
+         }
+
+
+         
+
+
+
+         if(revenueReport.length > 0){
+           var revenue = revenueReport[0].totalAmount;
+         } else {
+          var revenue = 0;
+
+         }
+     
+         console.log("revenue",revenueReport)
+         var earning  = revenue - total_cost;
         res.json({ status: true, message : "Data found", data : [{ 
           event_name: event.name, 
-          event_date: event.createdAt, 
+          event_date: event.start_time, 
           numberOfGuests: totalGuests ,
           'direct_cost': direct_cost,
           'indirect_cost' : indirect_cost,
+          'transportation_charge' : event.transportation_charge,
+          'hire_charge' : event.hire_charge,
+          'labour_charge' : event.labour_charge,
+          'commision_charge' : event.commision_charge,
           'total_cost' : total_cost,
+          'earning' : earning,
+          'revenue_per_cover' : revenue_per_cover,
+          'expenditure_per_cover' : expenditure_per_cover,
+          'revenue_per_cover' : revenue_per_cover,
+          'earning_per_cover': earning_per_cover
+
         }] });
       } catch (err) {
         res.status(500).send({

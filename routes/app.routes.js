@@ -341,7 +341,7 @@ router.get("/number-of-guests-for-event",auth, reportController.get_number_of_gu
 router.get("/repated-guests-for-seller",auth,reportController.get_repeated_guests_for_seller_attending_events);
 
 // get the number of guests attending events by a specific seller (guest presence report)
-router.get("/guest-presence-report",reportController.guest_presence_report);
+router.get("/guest-presence-report",auth,reportController.guest_presence_report);
 
 // get fns moving items report
 router.get("/fns-moving-items-report",auth,reportController.fns_moving_item_report);
@@ -486,6 +486,12 @@ router.get("/get-active-event-of-validator",auth,validatorEventController.get_ac
 
 // give feedback reply
 router.post("/give-feedback-reply",auth,feedbackController.give_feedback_reply);
+
+// get fns moving items report
+router.get("/fns-moving-items-report",auth,reportController.fns_moving_item_report);
+
+// get active and expired loyalty events
+router.get("/get-active-and-expired-loyalty-events",auth,reportController.get_active_and_expired_loyalty_events);
 
 cron.schedule("* * * * *", function() {
     //bookingController.sendEventNotification();

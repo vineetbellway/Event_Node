@@ -1296,18 +1296,20 @@ exports.revenue_comparison_report = async (req, res) => {
 
 exports.guest_loyalty_point_report = async (req, res) => {
   try {
-    const guest_id = req.query.guest_id;
+    const event_id = req.query.event_id;
 
     const guestLoyaltyReport = await EventGuestModel.aggregate([
-      { $match: { guest_id: new mongoose.Types.ObjectId(guest_id) } }
+      { $match: { event_id: new mongoose.Types.ObjectId(event_id) } }
     ]);
 
     let guestsInfo = [];
-
+    console.log("guestLoyaltyReport",guestLoyaltyReport);
+    //return false;
     if (guestLoyaltyReport.length > 0) {
       for (let i = 0; i < guestLoyaltyReport.length; i++) {
         const guest = guestLoyaltyReport[i];
-        
+        var guest_id = guest.guest_id;
+        console.log("guest",guest)
         const guestInfo = await GuestModel.findOne({ "user_id" :  guest_id });
         const eventRecord = await EventModel.findById(guest.event_id);
         
@@ -1315,7 +1317,7 @@ exports.guest_loyalty_point_report = async (req, res) => {
 
         guest.name = guestInfo ? guestInfo.full_name : '';
         guest.phone = userInfo ? userInfo.code_phone :'';
-        
+      //  guest.loyalty_point = 
         let total_sum = 0;
 
         const bookedPaymentResult = await ServiceItemPayments.aggregate([
@@ -1344,8 +1346,8 @@ exports.guest_loyalty_point_report = async (req, res) => {
           console.error("Error:", error);
         });
 
-        guest.total_loyality_points = total_sum;
-        guest.balance = total_sum- eventRecord.point;
+        guest.consumed_loyalty_point = total_sum;
+        guest.balance = eventRecord.point -total_sum;
 
         guestsInfo.push(guest);
       }
@@ -1353,7 +1355,7 @@ exports.guest_loyalty_point_report = async (req, res) => {
 
     const totalGuests = guestsInfo.length > 0 ? guestsInfo : null;
     if(guestsInfo.length >0){
-      res.json({ status: true, message: 'Data found', data: totalGuests[0] });
+      res.json({ status: true, message: 'Data found', data: totalGuests});
     } else {
       res.json({ status: false, message: 'No data found', data: null });
     }

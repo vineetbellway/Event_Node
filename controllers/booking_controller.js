@@ -819,7 +819,6 @@ const sendExpireEventNotification = async () => {
 };
 
 const sendExpiredEventNotification = async () => {
-  console.log("here")
   const currentDateTime = new Date();
   const year = currentDateTime.getFullYear();
   const month = ('0' + (currentDateTime.getMonth() + 1)).slice(-2);
@@ -831,11 +830,11 @@ const sendExpiredEventNotification = async () => {
   const currentDateTimeFormatted = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000Z`;
   
   const startDateTime = new Date(currentDateTimeFormatted);
- // console.log("startDateTime",startDateTime);
+  console.log("startDateTime",startDateTime);
  
   const endDateTime = new Date(currentDateTimeFormatted);
   endDateTime.setSeconds(endDateTime.getSeconds() + 1); // Add 1 second
-  //console.log("endDateTime",endDateTime);
+  console.log("endDateTime",endDateTime);
   try {
     const result = await Booking.aggregate([
       {
@@ -868,7 +867,7 @@ const sendExpiredEventNotification = async () => {
 
    
 
-
+    console.log("result",result)
 
     if (result && result.length > 0) {
       for (const bookingData of result) {

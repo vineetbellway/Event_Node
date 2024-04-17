@@ -1486,24 +1486,65 @@ exports.get_active_and_expired_loyalty_events = async (req, res) => {
   try {
     const seller_id = req.query.seller_id;
 
-    const sellerEvents = await EventModel.find({ 
-      seller_id: seller_id,
-      $or: [
-          { status: 'active' },
-          { status: 'expired' }
-      ]
-  }).sort({ createdAt: -1 });
-  
-   
+    const sellerEvents = await EventModel.aggregate([
+      {
+        $match: { 
+          seller_id: new mongoose.Types.ObjectId(seller_id),
+          type: "loyalty",
+          $or: [
+            { status: 'active' },
+            { status: 'expired' }
+          ]
+        }
+      },
+      {
+        $lookup: {
+          from: 'banners',
+          localField: 'banner_id',
+          foreignField: '_id',
+          as: 'banner_data',
+        }
+      },
+      {
+        $sort: { createdAt: -1 }
+      }
+    ]);
+    
+    console.log("sellerEvents", sellerEvents);
 
-    if(sellerEvents.length >0){
-      res.json({ status: true, message: 'Data found', data: sellerEvents});
+    if (sellerEvents.length > 0) {
+      const baseURL = `${req.protocol}://${req.get('host')}`;
+
+      // Update image URLs for each event in the sellerEvents array
+      sellerEvents.forEach(event => {
+        console.log("image", event.image)
+        const eventImageUrl = baseURL + '/uploads/events/' + event.image;
+
+        var banner_data = event.banner_data[0];
+        var bannerImageUrl = '';
+        if (banner_data) {
+          var bannerImageUrl = baseURL + '/uploads/banners/' + banner_data.image;
+          event.image = eventImageUrl;
+          event.banner_data = {
+            ...banner_data,
+            image: bannerImageUrl
+          };
+        } else {
+          console.log("eventImageUrl", eventImageUrl)
+          event.image = eventImageUrl;
+          event.banner_data = null;
+        }
+      });
+
+      res.json({ status: true, message: 'Data found', data: sellerEvents });
     } else {
       res.json({ status: false, message: 'No data found', data: null });
     }
     
   } catch (err) {
+    console.log("err", err);
     res.status(500).json({ status: false, error: err.message });
   }
 };
+
 

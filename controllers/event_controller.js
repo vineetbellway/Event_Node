@@ -40,7 +40,7 @@ exports.create_event = async(req, res, next) => {
     const is_private =  req.body.is_private.trim() ? req.body.is_private.trim() : 'no';
     const latitude = req.body.latitude ?  req.body.latitude.trim() : '';
     const longitude = req.body.longitude ?  req.body.longitude.trim() : '';
- 
+    const selected_payment = req.body.selected_payment ?  req.body.selected_payment.trim() : '';
 
     var user_record = await Seller.findOne({"user_id" : seller_id});
     console.log("user_record",user_record._id)
@@ -140,7 +140,8 @@ exports.create_event = async(req, res, next) => {
           user_booking_limit,
           is_private,
           latitude,
-          longitude
+          longitude,
+          selected_payment
         };
 
         EventModel(eventData)
@@ -266,7 +267,8 @@ exports.create_event = async(req, res, next) => {
           user_booking_limit,
           is_private,
           latitude,
-          longitude
+          longitude,
+          selected_payment
         };
 
         EventModel(eventData)
@@ -567,6 +569,7 @@ exports.search_events = async (req, res) => {
       },
       {
         $match: {
+          "is_private": "no" ,
           $or: [{ name: regex }, { coupon_name: regex }, { venue: regex } ],
           'status' : 'active',
           type: { $ne: "loyalty" } // Exclude documents where type is "loyalty"
@@ -914,7 +917,8 @@ exports.update_event = async (req, res, next) => {
     const is_private =  req.body.is_private.trim() ? req.body.is_private.trim() : 'no';
     const latitude = req.body.latitude ?  req.body.latitude.trim() : '';
     const longitude = req.body.longitude ?  req.body.longitude.trim() : '';  
-
+    const selected_payment = req.body.selected_payment ?  req.body.selected_payment.trim() : '';  
+    
     if(type == "loyalty"){
       if (point == '' || point == 0) {
         res.status(400).send({ status: false, message: "Please enter point", data: null  });
@@ -947,7 +951,11 @@ exports.update_event = async (req, res, next) => {
       status,
       banner_id,
       point,
-      user_booking_limit
+      user_booking_limit,
+      is_private,
+      latitude,
+      longitude,
+      selected_payment
     }; 
 
       // Check if image is not undefined
@@ -1114,6 +1122,39 @@ exports.get_expired_events = async (req, res) => {
     res.status(500).send({
       status: false,
       message: error.toString() || "Internal Server Error",
+    });
+  }
+};
+
+
+exports.update_event_info = async (req, res, next) => {
+  try {
+    const data = {
+      selected_payment: "seller",
+      is_private: "no",
+    };
+
+    const updatedEvents = await EventModel.updateMany({}, data, { new: true });
+
+    if (updatedEvents) {
+      return res.status(200).json({
+        status: true,
+        message: 'Events updated successfully',
+        data: updatedEvents,
+      });
+    } else {
+      return res.status(500).json({
+        status: false,
+        message: "Failed! Please try again",
+        data: null
+      });
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Internal Server Error",
+      data: null
     });
   }
 };

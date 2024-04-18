@@ -197,6 +197,7 @@ const get_bookings = async (req, res) => {
     if (status == "expired") {
       match = {
         $match: {
+          "event_data.is_private": "no" ,
           $and: [
             { "event_data.status": "expired" },
             { "event_data.status": { $ne: "deleted" } }
@@ -207,6 +208,7 @@ const get_bookings = async (req, res) => {
       match = {
         $match: {
           "status": status, 
+          "event_data.is_private": "no" ,
           "event_data.status": { $ne: "deleted" } 
         }
       };

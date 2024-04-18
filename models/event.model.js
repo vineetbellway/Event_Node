@@ -106,6 +106,10 @@ const schema = new mongoose.Schema(
     longitude: {
       type: String,
     },
+
+    selected_payment: {
+      type: String,
+    },
   },
   {
     timestamps: true,

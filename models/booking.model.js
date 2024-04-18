@@ -38,6 +38,9 @@ const schema = new mongoose.Schema(
     is_approve_request: {
       type: String,
     },
+    ticket_limit: {
+      type: String,
+    },
   },
   {
     timestamps: true,

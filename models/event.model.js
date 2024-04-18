@@ -95,7 +95,17 @@ const schema = new mongoose.Schema(
     },  
     user_booking_limit: {
       type: String,
-    } 
+    },
+    is_private: {
+      type: String,
+      default: "no",
+    },
+    latitude: {
+      type: String,
+    },
+    longitude: {
+      type: String,
+    },
   },
   {
     timestamps: true,

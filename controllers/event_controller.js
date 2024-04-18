@@ -33,8 +33,13 @@ exports.create_event = async(req, res, next) => {
     const labour_charge = req.body.labour_charge.trim();
     const commision_charge = req.body.commision_charge.trim();
     const is_cover_charge_added = (req.body.is_cover_charge_added!='') ?  req.body.is_cover_charge_added.trim() : 'no';
+
+    
     const user_booking_limit = req.body.user_booking_limit ?  req.body.user_booking_limit.trim() : '';
 
+    const is_private =  req.body.is_private.trim() ? req.body.is_private.trim() : 'no';
+    const latitude = req.body.latitude ?  req.body.latitude.trim() : '';
+    const longitude = req.body.longitude ?  req.body.longitude.trim() : '';
  
 
     var user_record = await Seller.findOne({"user_id" : seller_id});
@@ -132,7 +137,10 @@ exports.create_event = async(req, res, next) => {
           status,
           banner_id,
           point,
-          user_booking_limit
+          user_booking_limit,
+          is_private,
+          latitude,
+          longitude
         };
 
         EventModel(eventData)
@@ -255,7 +263,10 @@ exports.create_event = async(req, res, next) => {
           status,
           banner_id,
           point,
-          user_booking_limit
+          user_booking_limit,
+          is_private,
+          latitude,
+          longitude
         };
 
         EventModel(eventData)
@@ -900,7 +911,9 @@ exports.update_event = async (req, res, next) => {
     const banner_id = req.body.banner_id ? req.body.banner_id.trim() : null;
     const point = req.body.point ? req.body.point.trim() : 0;
     const user_booking_limit = req.body.user_booking_limit ?  req.body.user_booking_limit.trim() : '';
-
+    const is_private =  req.body.is_private.trim() ? req.body.is_private.trim() : 'no';
+    const latitude = req.body.latitude ?  req.body.latitude.trim() : '';
+    const longitude = req.body.longitude ?  req.body.longitude.trim() : '';  
 
     if(type == "loyalty"){
       if (point == '' || point == 0) {

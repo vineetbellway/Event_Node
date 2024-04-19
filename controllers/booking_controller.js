@@ -1584,7 +1584,6 @@ const get_pending_guest_list_by_event_id = async (req, res) => {
        
         {
           $match: {
-            "event_data.is_private": "no" ,
             $or: [
               { "guest_data.full_name": { $regex: search_key, $options: "i" } },
               { "user_data.code_phone": { $regex: search_key, $options: "i" } },
@@ -1712,7 +1711,6 @@ const get_pending_guest_list = async (req, res) => {
        
         {
           $match: {
-            "event_data.is_private": "no" ,
             $or: [
               { "guest_data.full_name": { $regex: search_key, $options: "i" } },
               { "user_data.code_phone": { $regex: search_key, $options: "i" } },

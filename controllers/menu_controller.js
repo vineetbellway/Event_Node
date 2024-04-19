@@ -10,6 +10,7 @@ const BookingMenu = require("../models/booking_menu.model");
 const BookingPayments = require("../models/booking_payments.model");
 const MenuItemRecord = require("../models/menu_item_record.model");
 const ValidatorQuantity = require("../models/validator_quantity.model");
+const Booking = require("../models/booking.model");
 
 
 exports.create_menu = async (req, res, next) => {
@@ -948,7 +949,7 @@ exports.get_menu_by_event_id = async (req, res) => {
       },
     ]);
 
-
+    console.log("menuResults",menuResults)
       // Check if the event exists
       const event = await EventModel.findById(event_id);
       if (!event) {
@@ -977,6 +978,10 @@ exports.get_menu_by_event_id = async (req, res) => {
       if(event.type == "food_event"){
         if(is_cover_charge_added == "no"){
           console.log("cover charge disabled");
+
+       
+            
+
           // Fetch all menu items selected by the guest
           const selectedMenuItems = await MenuItem.find({
             guest_id: guest_id,
@@ -987,7 +992,6 @@ exports.get_menu_by_event_id = async (req, res) => {
   
   
           // Filter menu items based on the selected limited item's category
-         
 
           const filteredResults = menuResults.filter(item => {
             const menuRecord = selectedMenuItems.find(selectedItem => {
@@ -996,6 +1000,7 @@ exports.get_menu_by_event_id = async (req, res) => {
               
               if(item.is_limited == 'yes' && item.limited_count > 0){
                 
+           
                   return (
                     selectedItem.menu_id &&
                     selectedItem.menu_id.category_id.toString() === item.category_id.toString()
@@ -1109,14 +1114,13 @@ exports.get_menu_by_event_id = async (req, res) => {
 
           const filteredResults2 = filteredResults.filter(item => {
 
-            
+          
             
             if(item.is_limited == "yes"){
 
-
                  // console.log("selectedMenuItems2",selectedMenuItems2)
                   
-                   
+               
                     // Check if the item's category ID matches any of the category IDs of selected items
                     const hasMatchingCategory = selectedMenuItems2.some(selectedItem => {
                       console.log("limited count",selectedItem.menu_id.limited_count)
@@ -1139,8 +1143,15 @@ exports.get_menu_by_event_id = async (req, res) => {
            
         });
         if(filteredResults2.length > 0){
-          var  filteredData = filteredResults2.filter(item => {
+          var bookingData = await Booking.findOne({
+            guest_id: guest_id,
+            event_id: event_id
+          });
+          var  filteredData = filteredResults2.filter(async(item) => {
             if (item.is_limited === "yes") {
+             
+              var ticket_limit = parseInt(bookingData.ticket_limit);
+              item.limited_count = item.limited_count*ticket_limit;
               return item.limited_count > 0;
             } else {
               return item.limited_count === 0;

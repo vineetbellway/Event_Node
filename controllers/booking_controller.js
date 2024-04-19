@@ -276,7 +276,8 @@ const get_bookings = async (req, res) => {
                   // Constructing image URL
                   image: constructImageUrl(req, booking.event_data[0].image),
                 } : null,
-                booked_menu_data:booking.booked_menu_data
+                booked_menu_data:booking.booked_menu_data,
+                ticket_limit: booking.ticket_limit,
               };
             } else {
 
@@ -297,7 +298,8 @@ const get_bookings = async (req, res) => {
                   // Constructing image URL
                   image: constructImageUrl(req, booking.event_data[0].image),
                 } : null,
-                booked_menu_data:booking.booked_menu_data
+                booked_menu_data:booking.booked_menu_data,
+                ticket_limit: booking.ticket_limit,
               };
             }
          
@@ -1538,6 +1540,7 @@ const get_pending_guest_list_by_event_id = async (req, res) => {
   var search_key = req.query.search_key;
   const sanitizedSearchKey = search_key.trim(); 
 
+    
   if (!event_id) {
     res.status(400).json({
       status: false,
@@ -1581,6 +1584,7 @@ const get_pending_guest_list_by_event_id = async (req, res) => {
        
         {
           $match: {
+            "event_data.is_private": "no" ,
             $or: [
               { "guest_data.full_name": { $regex: search_key, $options: "i" } },
               { "user_data.code_phone": { $regex: search_key, $options: "i" } },
@@ -1708,6 +1712,7 @@ const get_pending_guest_list = async (req, res) => {
        
         {
           $match: {
+            "event_data.is_private": "no" ,
             $or: [
               { "guest_data.full_name": { $regex: search_key, $options: "i" } },
               { "user_data.code_phone": { $regex: search_key, $options: "i" } },

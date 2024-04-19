@@ -33,7 +33,10 @@ const book = async (req, res, next) => {
       const fcm_token = req.body.fcm_token;
       const event_id = req.body.event_id;
       const amount = req.body.amount;
+      const ticket_limit = req.body.ticket_limit;
       var event_record = await EventModel.findById(event_id);
+
+    
 
     
 
@@ -85,6 +88,7 @@ const book = async (req, res, next) => {
         'payment_mode': payment_mode,
         'transaction_id': transaction_id,
         'fcm_token': fcm_token,
+        'ticket_limit': ticket_limit,
         'amount' : (event_record.type == "food_event") ? event_record.amount : amount,
        // 'coupon_balance' : coupon_balance,
         'status' : status
@@ -1619,6 +1623,7 @@ const get_pending_guest_list_by_event_id = async (req, res) => {
                     amount: (event_record.is_cover_charge_added == "yes") ? event_record.cover_charge : booking.amount,
                     createdAt: booking.createdAt,
                     updatedAt: booking.updatedAt,
+                    ticket_limit :  booking.ticket_limit,
                     __v: booking.__v,
                   },
                 });
@@ -1758,6 +1763,7 @@ const get_pending_guest_list = async (req, res) => {
                           amount: (event_record.is_cover_charge_added == "yes") ? event_record.cover_charge : booking.amount,
                           createdAt: booking.createdAt,
                           updatedAt: booking.updatedAt,
+                          ticket_limit :  booking.ticket_limit,
                           __v: booking.__v,
                       },
                   };
@@ -1782,6 +1788,7 @@ const get_pending_guest_list = async (req, res) => {
                               amount: (event_record.is_cover_charge_added == "yes") ? event_record.cover_charge : booking.amount,
                               createdAt: booking.createdAt,
                               updatedAt: booking.updatedAt,
+                              ticket_limit :  booking.ticket_limit,
                               __v: booking.__v,
                           },
                       });

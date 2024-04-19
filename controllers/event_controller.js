@@ -9,6 +9,7 @@ const Booking = require("../models/booking.model");
 const Membership = require("../models/membership.model");
 const Seller = require("../models/seller.model");
 const UPI = require("../models/upi.model");
+const BusinessSettings = require("../models/business_settings.model");
 
 
 exports.create_event = async(req, res, next) => {

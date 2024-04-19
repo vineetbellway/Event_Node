@@ -41,6 +41,8 @@ const schema = new mongoose.Schema(
     ticket_limit: {
       type: String,
     },
+
+    
   },
   {
     timestamps: true,

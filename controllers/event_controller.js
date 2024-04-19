@@ -8,6 +8,7 @@ const { baseStatus, userStatus } = require("../utils/enumerator");
 const Booking = require("../models/booking.model");
 const Membership = require("../models/membership.model");
 const Seller = require("../models/seller.model");
+const UPI = require("../models/upi.model");
 
 
 exports.create_event = async(req, res, next) => {
@@ -582,46 +583,60 @@ exports.search_events = async (req, res) => {
         }
       }
     ]);
-    await EventModel.aggregatePaginate(myAggregate, options)
-      .then((result) => {
+    EventModel.aggregatePaginate(myAggregate, options)
+      .then(async (result) => {
         console.log("result",result)
         if (result) {
           const baseURL = `${req.protocol}://${req.get('host')}`;
 
           // Update image URLs for each event in the data array
-          result.data = result.data.map(event => {
+          result.data = await Promise.all(result.data.map(async (event) => {
+            console.log("event",event)
+            var selected_payment = event.selected_payment;
+            if(selected_payment == 'admin'){
+                let settingData = await BusinessSettings.findOne({ razor_pay_key });
+                if (settingData && settingData.upi_id) {
+                  var  razor_pay_key = settingData.upi_id;
+                } else {
+                  var  razor_pay_key = '';
+                }
+              
+            } else {
+              console.log("sellect id",event.seller_id)
+           
+                let settingData = await UPI.findOne({ "seller_id" : event.seller_id });
+                if (settingData && settingData.upi_id) {
+                  var  razor_pay_key = settingData.upi_id;
+                } else {
+                  var  razor_pay_key = '';
+                }
+              
+                // Process existingData here if needed
+              
+            }
             if(event.status!='expired'){
               const eventImageUrl = baseURL + '/uploads/events/' + event.image;
               var banner_data =   event.banner_data[0];
               var bannerImageUrl = '';
               if(banner_data){
-                var bannerImageUrl = baseURL + '/uploads/banners/' + banner_data.image;
-                return {
-                  ...event,
-                  image: eventImageUrl,
-                  banner_data: {
-                    ...banner_data,
-                    image:bannerImageUrl
-
-                  },
-                };
-              } else {
-                return {
-                  ...event,
-                  image: eventImageUrl,
-                  banner_data: null,
-                };
-              }  
+                bannerImageUrl = baseURL + '/uploads/banners/' + banner_data.image;
+              }
+              return {
+                ...event,
+                image: eventImageUrl,
+                razor_pay_key:razor_pay_key,
+                banner_data: banner_data ? {...banner_data, image: bannerImageUrl} : null,
+              };
+            } else {
+              return event;
             }
-                        
-        });         
+          }));
 
-        res.status(200).send({
-          status: true,
-          message: "success",
-          data: result,
-        });
-          
+          res.status(200).send({
+            status: true,
+            message: "success",
+            data: result,
+          });
         }
       })
       .catch((error) => {
@@ -638,6 +653,7 @@ exports.search_events = async (req, res) => {
     });
   }
 };
+
 
 exports.event_by_seller_id = async (req, res) => {
   var id = req.params.id;

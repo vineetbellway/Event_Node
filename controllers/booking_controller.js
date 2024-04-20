@@ -82,7 +82,7 @@ const book = async (req, res, next) => {
         }
       }
 
-      return false;
+
       if(payment_mode == "upi"){
         var status = "active";
       } else {

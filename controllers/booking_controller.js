@@ -77,7 +77,7 @@ const book = async (req, res, next) => {
         console.log("ticket_limit",ticket_limit);
    
         if(ticket_limit >= user_booking_limit){
-          res.status(200).send({ status: false, message: "You can not book event more than " + ticket_limit + " ticket booking limit", data: null });
+          res.status(200).send({ status: false, message: "You can not book event more than " + user_booking_limit + " ticket booking limit", data: null });
           return;
         }
       }

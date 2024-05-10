@@ -417,7 +417,20 @@ exports.get_membership_by_seller_id = async (req, res) => {
                       "status": 1,
                       "createdAt": 1,
                       "updatedAt": 1,
-                      "plan_name": { "$arrayElemAt": ["$plan_data.name", 0] } // Extracting plan_name from plan_data
+                      "plan_name": { "$arrayElemAt": ["$plan_data.name", 0] }, // Extracting plan_name from plan_data
+                      "event_venue_by_google_location" : { "$arrayElemAt": ["$plan_data.event_venue_by_google_location", 0] },
+                      "private_events" : { "$arrayElemAt": ["$plan_data.private_events", 0] },
+                      "event_banner_publishing" : { "$arrayElemAt": ["$plan_data.event_banner_publishing", 0] },
+                      "birthday_banner_publishing" : { "$arrayElemAt": ["$plan_data.birthday_banner_publishing", 0] },
+                      "wedding_anniversary_banner_publishing" : { "$arrayElemAt": ["$plan_data.wedding_anniversary_banner_publishing", 0] },
+                      "razor_pay_account_creation" : { "$arrayElemAt": ["$plan_data.razor_pay_account_creation", 0] },
+                      "item_sales_report" : { "$arrayElemAt": ["$plan_data.item_sales_report", 0] },
+                      "fns_moving_report" : { "$arrayElemAt": ["$plan_data.fns_moving_report", 0] },
+                      "guest_potential_report" : { "$arrayElemAt": ["$plan_data.guest_potential_report", 0] },
+                      "repeated_guest_report" : { "$arrayElemAt": ["$plan_data.repeated_guest_report", 0] },
+                      "profit_loss_and_cover_report" : { "$arrayElemAt": ["$plan_data.profit_loss_and_cover_report", 0] },
+                      "loyaltiy_card_report" : { "$arrayElemAt": ["$plan_data.loyaltiy_card_report", 0] },
+                      "feedback_reply_by_guest" : { "$arrayElemAt": ["$plan_data.feedback_reply_by_guest", 0] },
                   }
               },
               {

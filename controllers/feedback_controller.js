@@ -275,3 +275,63 @@ exports.give_feedback_reply = (req, res, next) => {
     }
   }
 }; 
+
+
+exports.get_rating_breakup_list = async (req, res) => {
+  var event_id = req.query.event_id;
+
+  try {
+    const event = await Event.findById(event_id); // Assuming you have an Event model
+
+    if (!event) {
+      return res.status(404).send({
+        status: false,
+        message: "Event not found",
+        data:null
+      });
+    }
+
+    const ratingBreakdown = await Feedback.aggregate([
+      {
+        $match: {
+          "event_id": new mongoose.Types.ObjectId(event_id),
+        },
+      },
+      {
+        $group: {
+          _id: "$rating",
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { _id: -1 } // Sort by rating in descending order
+      }
+    ]);
+
+    const ratingCounts = {
+      "1": 0,
+      "2": 0,
+      "3":0,
+      "4": 0,
+      "5": 0
+    };
+
+    ratingBreakdown.forEach((item) => {
+      ratingCounts[item._id] = item.count;
+    });
+
+    res.status(200).send({
+      status: true,
+      message: "Data found",
+      event: event.name, // Assuming event has a "name" field
+      data: ratingCounts,
+    });
+
+  } catch (error) {
+    res.status(500).send({
+      status: false,
+      message: error.toString() ?? "Internal Server Error",
+    });
+  }
+};
+

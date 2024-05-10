@@ -493,6 +493,10 @@ router.get("/fns-moving-items-report",auth,reportController.fns_moving_item_repo
 // get active and expired loyalty events
 router.get("/get-active-and-expired-loyalty-events",auth,reportController.get_active_and_expired_loyalty_events);
 
+
+// get rating breakup list
+router.get("/get-rating-breakup-list",auth, feedbackController.get_rating_breakup_list);
+
 cron.schedule("* * * * *", function() {
     //bookingController.sendEventNotification();
     bookingController.sendExpireEventNotification();

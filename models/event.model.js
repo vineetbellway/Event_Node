@@ -40,10 +40,10 @@ const schema = new mongoose.Schema(
       type: String,
     },
     start_time: {
-      type: Date,
+      type: String,
     },
     end_time: {
-      type: Date,
+      type: String,
     },
     coupon_name: {
       type: String,

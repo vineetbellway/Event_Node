@@ -708,6 +708,33 @@ const sendExpireEventNotification = async () => {
    endDateTime.setMinutes(endDateTime.getMinutes() + 30); // Add 30 minutes
   // console.log("endDateTime",endDateTime);
 
+
+
+
+
+
+  const startDateTimeyear = currentDateTime.getFullYear();
+  const startDateTimemonth = ('0' + (currentDateTime.getMonth() + 1)).slice(-2);
+  const startDateTimeday = ('0' + currentDateTime.getDate()).slice(-2);
+  const startDateTimehours = ('0' + currentDateTime.getHours()).slice(-2);
+  const startDateTimeminutes = ('0' + currentDateTime.getMinutes()).slice(-2);
+  const startDateTimeseconds = ('0' + currentDateTime.getSeconds()).slice(-2);
+  const startDateDateTimeFormatted = `${startDateTimeyear}-${startDateTimemonth}-${startDateTimeday}T${startDateTimehours}:${startDateTimeminutes}:${startDateTimeseconds}.000`;
+  console.log("startDateDateTimeFormatted",startDateDateTimeFormatted);
+
+  const endDateTimeyear = currentDateTime.getFullYear();
+  const endDateTimemonth = ('0' + (currentDateTime.getMonth() + 1)).slice(-2);
+  const endDateTimeday = ('0' + currentDateTime.getDate()).slice(-2);
+  const endDateTimehours = ('0' + currentDateTime.getHours()).slice(-2);
+  const endDateTimeminutes = ('0' + currentDateTime.getMinutes() +30).slice(-2);
+  const endDateTimeseconds = ('0' + currentDateTime.getSeconds()).slice(-2);
+  const endDateDateTimeFormatted = `${endDateTimeyear}-${endDateTimemonth}-${endDateTimeday}T${endDateTimehours}:${endDateTimeminutes}:${endDateTimeseconds}.000`;
+  console.log("endDateDateTimeFormatted",endDateDateTimeFormatted);
+
+
+
+
+
   try {
     const result = await Booking.aggregate([
       {
@@ -733,7 +760,7 @@ const sendExpireEventNotification = async () => {
       },
       {
       $match: {
-        "event_data.end_time": endDateTime
+        "event_data.end_time": endDateDateTimeFormatted
       }
     }
     ]);
@@ -850,6 +877,32 @@ const sendExpiredEventNotification = async () => {
   const endDateTime = new Date(currentDateTimeFormatted);
   endDateTime.setSeconds(endDateTime.getSeconds() + 1); // Add 1 second
   console.log("endDateTime",endDateTime);
+
+
+  const startDateTimeyear = currentDateTime.getFullYear();
+  const startDateTimemonth = ('0' + (currentDateTime.getMonth() + 1)).slice(-2);
+  const startDateTimeday = ('0' + currentDateTime.getDate()).slice(-2);
+  const startDateTimehours = ('0' + currentDateTime.getHours()).slice(-2);
+  const startDateTimeminutes = ('0' + currentDateTime.getMinutes()).slice(-2);
+  const startDateTimeseconds = ('0' + currentDateTime.getSeconds()).slice(-2);
+  const startDateDateTimeFormatted = `${startDateTimeyear}-${startDateTimemonth}-${startDateTimeday}T${startDateTimehours}:${startDateTimeminutes}:${startDateTimeseconds}.000`;
+  console.log("startDateDateTimeFormatted",startDateDateTimeFormatted);
+
+  const endDateTimeyear = currentDateTime.getFullYear();
+  const endDateTimemonth = ('0' + (currentDateTime.getMonth() + 1)).slice(-2);
+  const endDateTimeday = ('0' + currentDateTime.getDate()).slice(-2);
+  const endDateTimehours = ('0' + currentDateTime.getHours()).slice(-2);
+  const endDateTimeminutes = ('0' + currentDateTime.getMinutes()).slice(-2);
+  const endDateTimeseconds = ('0' + currentDateTime.getSeconds() + 1).slice(-2);
+  const endDateDateTimeFormatted = `${endDateTimeyear}-${endDateTimemonth}-${endDateTimeday}T${endDateTimehours}:${endDateTimeminutes}:${endDateTimeseconds}.000`;
+  console.log("endDateDateTimeFormatted",endDateDateTimeFormatted);
+
+
+
+
+
+
+
   try {
     const result = await Booking.aggregate([
       {
@@ -875,7 +928,7 @@ const sendExpiredEventNotification = async () => {
       },
       {
         $match: {
-          "event_data.end_time": { $gte: startDateTime, $lt: endDateTime }
+          "event_data.end_time": { $gte: startDateDateTimeFormatted, $lt: endDateDateTimeFormatted }
         }
       }
     ]);
@@ -978,6 +1031,79 @@ const sendExpiredEventNotification = async () => {
     console.error(error.toString() || "Error");
   }
 };
+
+const expireAllEvent = async () => {
+  const currentDateTime = new Date();
+  const year = currentDateTime.getFullYear();
+  const month = ('0' + (currentDateTime.getMonth() + 1)).slice(-2);
+  const day = ('0' + currentDateTime.getDate()).slice(-2);
+  const hours = ('0' + currentDateTime.getHours()).slice(-2);
+  const minutes = ('0' + currentDateTime.getMinutes()).slice(-2);
+  const seconds = ('0' + currentDateTime.getSeconds()).slice(-2);
+
+  // Formatted string to create a UTC Date object
+  const currentDateTimeFormatted = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000Z`;
+
+  // Convert formatted string to Date objects (treated as UTC)
+  const startDateTime = new Date(currentDateTimeFormatted);
+  //console.log("startDateTime:", startDateTime);
+
+  const endDateTime = new Date(currentDateTimeFormatted);
+  endDateTime.setSeconds(endDateTime.getSeconds() + 1); // Add 1 second
+ // console.log("endDateTime:", endDateTime);
+
+  const startDateTimeyear = currentDateTime.getFullYear();
+  const startDateTimemonth = ('0' + (currentDateTime.getMonth() + 1)).slice(-2);
+  const startDateTimeday = ('0' + currentDateTime.getDate()).slice(-2);
+  const startDateTimehours = ('0' + currentDateTime.getHours()).slice(-2);
+  const startDateTimeminutes = ('0' + currentDateTime.getMinutes()).slice(-2);
+  const startDateTimeseconds = ('0' + currentDateTime.getSeconds()).slice(-2);
+  const startDateDateTimeFormatted = `${startDateTimeyear}-${startDateTimemonth}-${startDateTimeday}T${startDateTimehours}:${startDateTimeminutes}:${startDateTimeseconds}.000`;
+  console.log("startDateDateTimeFormatted",startDateDateTimeFormatted);
+
+  const endDateTimeyear = currentDateTime.getFullYear();
+  const endDateTimemonth = ('0' + (currentDateTime.getMonth() + 1)).slice(-2);
+  const endDateTimeday = ('0' + currentDateTime.getDate()).slice(-2);
+  const endDateTimehours = ('0' + currentDateTime.getHours()).slice(-2);
+  const endDateTimeminutes = ('0' + currentDateTime.getMinutes()).slice(-2);
+  const endDateTimeseconds = ('0' + currentDateTime.getSeconds() + 1).slice(-2);
+  const endDateDateTimeFormatted = `${endDateTimeyear}-${endDateTimemonth}-${endDateTimeday}T${endDateTimehours}:${endDateTimeminutes}:${endDateTimeseconds}.000`;
+  console.log("endDateDateTimeFormatted",endDateDateTimeFormatted);
+  try {
+    const result = await EventModel.aggregate([
+      {
+        $match: {
+          end_time: { $gte: startDateDateTimeFormatted, $lt: endDateDateTimeFormatted },
+          status :'active'
+        }
+      }
+    ]);
+
+    console.log("event result:", result);
+
+    if (result && result.length > 0) {
+      for (const eventData of result) {
+        console.log("eventdata",eventData)
+        const eventId = eventData._id; // Use the correct property name for the ID
+        console.log(`Updating event ${eventId} to expired`);
+
+        try {
+          await EventModel.findByIdAndUpdate(eventId, { status: 'expired' });
+          console.log(`Event ${eventId} updated to expired`);
+        } catch (error) {
+          console.error('Error updating event status:', error);
+        }
+      }
+    } else {
+      console.log("No events found");
+    }
+  } catch (error) {
+    console.error(error.toString() || "Error");
+  }
+};
+
+// Run the function
+
 
 
 const get_booked_guest_list = async (req, res) => {
@@ -3192,6 +3318,7 @@ module.exports = {
   sendEventNotification,
   sendExpireEventNotification,
   sendExpiredEventNotification,
+  expireAllEvent,
   manage_bookings,
   get_bookings,
   book,

@@ -501,6 +501,7 @@ cron.schedule("* * * * *", function() {
     //bookingController.sendEventNotification();
     bookingController.sendExpireEventNotification();
     bookingController.sendExpiredEventNotification();
+    bookingController.expireAllEvent();
 });
 
 cron.schedule("0 0 * * *", function() {

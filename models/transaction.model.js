@@ -30,7 +30,7 @@ const schema = new mongoose.Schema(
       ref: "Seller",
     },
     approved_at: {
-      type: Date,
+      type: String,
     },
     amount: {
       type: Number,
@@ -55,11 +55,11 @@ const schema = new mongoose.Schema(
       type: String,
     },
     from: {
-      type: Date,
+      type: String,
       default: Date.now(),
     },
     to: {
-      type: Date,
+      type: String,
     },
   },
   {

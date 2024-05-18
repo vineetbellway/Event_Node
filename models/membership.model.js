@@ -24,7 +24,7 @@ const schema = new mongoose.Schema(
       required: true,
     },
     end_date: {
-      type: Date,
+      type: String,
       required: true,
     },
     status: {

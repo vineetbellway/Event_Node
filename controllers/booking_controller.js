@@ -2561,7 +2561,7 @@ const send_entry_request_to_guest = async (req, res) => {
     }
 
     if(bookingData.is_approve_request == '0'){
-      return res.status(200).json({status: false,message: "Guest has already approved your request",data: null});
+      return res.status(200).json({status: false,message: "This QR code has already been scanned",data: null});
     }
      try {
       const result = await Booking.findOneAndUpdate(

@@ -522,6 +522,8 @@ exports.get_number_of_guests_for_event = async (req, res) => {
 
          if(revenueReport.length > 0){
            var revenue = revenueReport[0].totalAmount;
+            var revenue_per_cover = revenue/totalGuests;
+           
          } else {
           var revenue = 0;
 
@@ -529,6 +531,8 @@ exports.get_number_of_guests_for_event = async (req, res) => {
      
          console.log("revenue",revenueReport)
          var earning  = revenue - total_cost;
+         var earning_per_cover = earning/totalGuests;
+
         res.json({ status: true, message : "Data found", data : { 
           event_name: event.name, 
           event_date: event.start_time, 
@@ -545,7 +549,8 @@ exports.get_number_of_guests_for_event = async (req, res) => {
           'revenue_per_cover' : revenue_per_cover,
           'expenditure_per_cover' : expenditure_per_cover,
           'revenue_per_cover' : revenue_per_cover,
-          'earning_per_cover': earning_per_cover
+          'earning_per_cover': earning_per_cover,
+          'other_charge' : event.others,
 
         } });
       } catch (err) {

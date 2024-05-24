@@ -793,12 +793,14 @@ exports.get_remind_list_for_event = async (req, res) => {
 
           for (const item of guestBannerResult) {
               var relative_data = item.relative_data[0];
+              console.log("banner",item);
               var banner_data = item.banner_data[0];
+            
               const relative_name = relative_data.full_name;
               var birthday_date = relative_data.dob;
               var anniversay_date = relative_data.dom;
-              var banner_type = banner_data.banner_type;
-              var seller_id = banner_data.seller_id;
+              var banner_type = (banner_data) ? banner_data.banner_type : '';
+              var seller_id = (banner_data) ? banner_data.seller_id : '';
               let description, title;
 
               if (banner_type == "birthday") {
@@ -828,7 +830,7 @@ exports.get_remind_list_for_event = async (req, res) => {
               {
                   $match: {
                       guest_id: new mongoose.Types.ObjectId(guest_id),
-                      'event_data.seller_id': new mongoose.Types.ObjectId(seller_id),
+                      'event_data.seller_id': banner_data ? new mongoose.Types.ObjectId(seller_id) : '',
                       'event_data.status': 'active',
                       'event_data.start_time': { $gte: startDateTime}
 
@@ -866,11 +868,21 @@ exports.get_remind_list_for_event = async (req, res) => {
               }
           }
 
-          res.status(200).send({
-              status: true,
-              message: "Data found",
+          if(invitation_list.length > 0){
+              res.status(200).send({
+                status: true,
+                message: "Data found",
+                data: invitation_list,
+            });
+          } else {
+            res.status(200).send({
+              status: false,
+              message: "No data found",
               data: invitation_list,
           });
+          }
+
+          
       } else {
           res.status(200).send({
               status: false,

@@ -10,6 +10,7 @@ const Membership = require("../models/membership.model");
 const Seller = require("../models/seller.model");
 const UPI = require("../models/upi.model");
 const BusinessSettings = require("../models/business_settings.model");
+const Feedback = require("../models/feedback.model");
 
 
 exports.create_event = async(req, res, next) => {
@@ -547,7 +548,7 @@ exports.get_event = async (req, res) => {
 };
 
 
-exports.search_events = async (req, res) => {
+exports.search_events_old = async (req, res) => {
   var keyword = req.params.keyword;
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
@@ -599,10 +600,10 @@ exports.search_events = async (req, res) => {
         console.log("result",result)
         if (result) {
           const baseURL = `${req.protocol}://${req.get('host')}`;
-
+          const ratingsPercentage = {};
           // Update image URLs for each event in the data array
           result.data = await Promise.all(result.data.map(async (event) => {
-            console.log("event",event)
+           // console.log("event",event)
             var selected_payment = event.selected_payment;
             if(selected_payment == 'admin'){
                 let settingData = await BusinessSettings.findOne({ razor_pay_key });
@@ -613,7 +614,6 @@ exports.search_events = async (req, res) => {
                 }
               
             } else {
-              console.log("sellect id",event.seller_id)
            
                 let settingData = await UPI.findOne({ "seller_id" : event.seller_id });
                 if (settingData && settingData.upi_id) {
@@ -632,11 +632,59 @@ exports.search_events = async (req, res) => {
               if(banner_data){
                 bannerImageUrl = baseURL + '/uploads/banners/' + banner_data.image;
               }
+              var seller_id = event.seller_id;
+
+              var sellerEvents  = await EventModel.find({ seller_id: seller_id });
+          
+              sellerEvents.forEach(async(event) => {
+                // console.log("event",event._id);
+                var event_id = event._id;
+                const ratingBreakdown = await Feedback.aggregate([
+                  {
+                    $match: {
+                      "event_id": new mongoose.Types.ObjectId(event_id),
+                    },
+                  },
+                  {
+                    $group: {
+                      _id: "$rating",
+                      count: { $sum: 1 }
+                    }
+                  },
+                  {
+                    $sort: { _id: -1 } // Sort by rating in descending order
+                  }
+                ]);
+
+
+
+                console.log("ratingBreakdown",ratingBreakdown)  
+
+                // Calculate rating percentages
+                const ratingsCount = { 5.0: 0, 4.0: 0, 3.0: 0, 2.0: 0, 1.0: 0 };
+                const totalRatings = ratingBreakdown.length;
+                ratingBreakdown.forEach(rating => {
+                  if (ratingsCount[rating.stars] !== undefined) {
+                    ratingsCount[rating.stars]++;
+                  }
+                });
+  
+              
+                for (let star in ratingsCount) {
+                  ratingsPercentage[star] = (ratingsCount[star] / totalRatings) * 100;
+                }
+              });
+
+
+             
+
+                 
               return {
                 ...event,
                 image: eventImageUrl,
                 razor_pay_key:razor_pay_key,
                 banner_data: banner_data ? {...banner_data, image: bannerImageUrl} : null,
+                rating_data:ratingsPercentage
               };
             } else {
               return event;
@@ -664,6 +712,175 @@ exports.search_events = async (req, res) => {
     });
   }
 };
+
+exports.search_events = async (req, res) => {
+  const keyword = req.params.keyword;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const myCustomLabels = {
+    totalDocs: "totalDocs",
+    docs: "data",
+    limit: "limit",
+    page: "page",
+    nextPage: "nextPage",
+    prevPage: "prevPage",
+    totalPages: "totalPages",
+    pagingCounter: "slNo",
+    meta: "paginator",
+  };
+
+  const options = {
+    page: page,
+    limit: limit,
+    customLabels: myCustomLabels,
+  };
+
+  try {
+    const regex = new RegExp(keyword, "i");
+    const myAggregate = EventModel.aggregate([
+      {
+        $lookup: {
+          from: 'banners',
+          localField: 'banner_id',
+          foreignField: '_id',
+          as: 'banner_data',
+        },
+      },
+      {
+        $match: {
+          is_private: "no",
+          $or: [{ name: regex }, { coupon_name: regex }, { venue: regex }],
+          status: 'active',
+          type: { $ne: "loyalty" }
+        },
+      },
+      {
+        $sort: {
+          createdAt: -1
+        }
+      }
+    ]);
+
+    EventModel.aggregatePaginate(myAggregate, options)
+      .then(async (result) => {
+        if (result) {
+          const baseURL = `${req.protocol}://${req.get('host')}`;
+
+          result.data = await Promise.all(result.data.map(async (event) => {
+            const selected_payment = event.selected_payment;
+            let razor_pay_key = '';
+
+            if (selected_payment === 'admin') {
+              const settingData = await BusinessSettings.findOne({ razor_pay_key });
+              razor_pay_key = settingData?.upi_id || '';
+            } else {
+              const settingData = await UPI.findOne({ seller_id: event.seller_id });
+              razor_pay_key = settingData?.upi_id || '';
+            }
+
+            if (event.status !== 'expired') {
+              const eventImageUrl = baseURL + '/uploads/events/' + event.image;
+              const banner_data = event.banner_data[0];
+              const bannerImageUrl = banner_data ? baseURL + '/uploads/banners/' + banner_data.image : '';
+
+              const sellerEvents = await EventModel.find({ seller_id: event.seller_id });
+              const eventIds = sellerEvents.map(e => e._id);
+
+              const guestRatings = await Feedback.aggregate([
+                {
+                  $match: {
+                    event_id: { $in: eventIds }
+                  },
+                },
+                {
+                  $group: {
+                    _id: {
+                      guest_id: "$guest_id",
+                      rating: "$rating"
+                    }
+                  }
+                },
+                {
+                  $group: {
+                    _id: "$_id.rating",
+                    count: { $sum: 1 }
+                  }
+                },
+                {
+                  $sort: { _id: -1 }
+                }
+              ]);
+
+              const totalGuestsResult = await Feedback.aggregate([
+                {
+                  $match: {
+                    event_id: { $in: eventIds }
+                  },
+                },
+                {
+                  $group: {
+                    _id: "$guest_id"
+                  }
+                },
+                {
+                  $count: "totalGuests"
+                }
+              ]);
+
+              const totalGuests = totalGuestsResult.length > 0 ? totalGuestsResult[0].totalGuests : 0;
+              console.log("totalGuests",totalGuests)
+              console.log("guestRatings",guestRatings)
+              const ratingsPercentage = {};
+              var totalSum = 0;
+
+              guestRatings.forEach(rating => {
+                totalSum += rating.count;
+              });
+
+              console.log("totalSum",totalSum)
+              
+
+              guestRatings.forEach(rating => {
+                ratingsPercentage[rating._id] = ((rating.count / totalSum) * 100).toFixed(2).toString();
+              });
+
+
+
+              return {
+                ...event,
+                image: eventImageUrl,
+                razor_pay_key: razor_pay_key,
+                banner_data: banner_data ? { ...banner_data, image: bannerImageUrl } : null,
+                rating_data: ratingsPercentage
+              };
+            } else {
+              return event;
+            }
+          }));
+
+          res.status(200).send({
+            status: true,
+            message: "success",
+            data: result,
+          });
+        }
+      })
+      .catch((error) => {
+        console.log("error", error);
+        res.send({
+          status: false,
+          message: error.toString() ?? "Error",
+        });
+      });
+  } catch (error) {
+    res.status(500).send({
+      status: false,
+      message: error.toString() ?? "Internal Server Error",
+    });
+  }
+};
+
+
 
 
 exports.event_by_seller_id = async (req, res) => {

@@ -25,8 +25,8 @@ exports.create_event = async(req, res, next) => {
     const country = req.body.country.trim();
     const state = req.body.state.trim();
     const city = req.body.city.trim();
-    const start_time = req.body.start_time.trim();
-    const end_time = req.body.end_time.trim();
+    var start_time = req.body.start_time.trim();
+    var end_time = req.body.end_time.trim();
     const coupon_name = req.body.coupon_name.trim();
     const amount = req.body.amount.trim();
     const instructions = req.body.instructions.trim();
@@ -87,6 +87,16 @@ exports.create_event = async(req, res, next) => {
 
   ]);
   console.log("sellerMemberShip",sellerMemberShip)
+
+
+  start_time = start_time.split(" ");
+  start_time = start_time[0]+"T"+start_time[1];
+
+  end_time = end_time.split(" ");
+  end_time = end_time[0]+"T"+end_time[1];
+ 
+
+
    if(sellerMemberShip.length > 0){
      var eventLimit = sellerMemberShip[0].event_limit;
      console.log("eventLimit",eventLimit)
@@ -915,8 +925,8 @@ exports.update_event = async (req, res, next) => {
     const country = req.body.country.trim();
     const state = req.body.state.trim();
     const city = req.body.city.trim();
-    const start_time = req.body.start_time.trim();
-    const end_time = req.body.end_time.trim();
+    var start_time = req.body.start_time.trim();
+    var end_time = req.body.end_time.trim();
     const coupon_name = req.body.coupon_name.trim();
     const amount = req.body.amount.trim();
     const instructions = req.body.instructions.trim();
@@ -935,6 +945,13 @@ exports.update_event = async (req, res, next) => {
     const latitude = req.body.latitude ?  req.body.latitude.trim() : '';
     const longitude = req.body.longitude ?  req.body.longitude.trim() : '';  
     const selected_payment = req.body.selected_payment ?  req.body.selected_payment.trim() : '';  
+
+
+    start_time = start_time.split(" ");
+    start_time = start_time[0]+"T"+start_time[1];
+  
+    end_time = end_time.split(" ");
+    end_time = end_time[0]+"T"+end_time[1];
     
     if(type == "loyalty"){
       if (point == '' || point == 0) {

@@ -14,10 +14,10 @@ const schema = new mongoose.Schema(
       type: String,
     },
     dob: {
-      type: String,
+      type: Date,
     },
     dom: {
-      type: String,
+      type: Date,
     },
     status: {
       type: String,

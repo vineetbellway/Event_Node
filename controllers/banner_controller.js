@@ -548,8 +548,8 @@ exports.get_guest_banner_list = async (req, res) => {
   
       for (const banner of banners) {
         const seller = await SellerModel.findOne({ user_id: banner.seller_id, district: guestCity });
-        
-
+        var user_record = await User.findById(seller.user_id);
+        console.log("user_record",user_record)
 
 
         if (seller && seller.district === guestCity) {
@@ -593,6 +593,7 @@ exports.get_guest_banner_list = async (req, res) => {
                 event_id: "",
                 banner_type:bannerType,
                 image: imageUrl,
+                seller_mobile_number:user_record.code_phone,
                 description: guestBannerResult[0].description,
                 createdAt: banner.createdAt,
                 updatedAt: banner.updatedAt,
@@ -612,6 +613,7 @@ exports.get_guest_banner_list = async (req, res) => {
               banner_type:bannerType,
               image: imageUrl,
               description:'',
+              seller_mobile_number:user_record.code_phone,
               createdAt: banner.createdAt,
               updatedAt: banner.updatedAt,
             };

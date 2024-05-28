@@ -534,7 +534,6 @@ exports.get_guest_banner_list = async (req, res) => {
     const guestCity = guest.district;
     var guestUserId =  guest.user_id;
 
-    console.log("guestUserId",guestUserId)
 
     const banners = await BannerModel.aggregate([
       {
@@ -555,14 +554,12 @@ exports.get_guest_banner_list = async (req, res) => {
           const baseURL = `${protocol}://${host}`;
           const imageUrl = baseURL + '/uploads/banners/' + banner.image;
           var bannerType = banner.banner_type;
-          console.log("bannerType",bannerType);
           let includeBanner = true;
           
 
         
           if(bannerType == "birthday" || bannerType == "anniversary"){
-           console.log("guestUserId",guestUserId);
-           console.log("banner id",banner._id); 
+          
            var guestBannerResult =  await GuestBannerModel.aggregate([
               {
                 $match: {
@@ -574,7 +571,6 @@ exports.get_guest_banner_list = async (req, res) => {
                 $sort: { createdAt: -1 }, // Sort by createdAt in descending order
               },
             ]);
-            console.log("guestBannerResult",guestBannerResult)
             if (guestBannerResult.length == 0) {
               // If the guest doesn't have this type of banner, exclude it from the response
               includeBanner = false;
@@ -584,7 +580,8 @@ exports.get_guest_banner_list = async (req, res) => {
               const response = {
                 _id: banner._id,
                 seller_id: banner.seller_id,
-                event_id: banner.event_id,
+                event_id: "",
+                banner_type:bannerType,
                 image: imageUrl,
                 createdAt: banner.createdAt,
                 updatedAt: banner.updatedAt,
@@ -595,10 +592,13 @@ exports.get_guest_banner_list = async (req, res) => {
 
             }
           } else {
+
+            var  eventRecord  = await EventModel.findOne({ banner_id : banner._id });
             const response = {
               _id: banner._id,
               seller_id: banner.seller_id,
-              event_id: banner.event_id,
+              event_id: eventRecord ? eventRecord._id:"",
+              banner_type:bannerType,
               image: imageUrl,
               createdAt: banner.createdAt,
               updatedAt: banner.updatedAt,

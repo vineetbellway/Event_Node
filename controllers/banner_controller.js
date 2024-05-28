@@ -125,17 +125,19 @@ exports.create_banner = async (req, res, next) => {
         var guest_name = item.full_name;
         var relative_name = item.relative_name;
 
-        var guestBannerData = {'guest_id' : item.user_id,'banner_id' : banner_id }
+         // Building notification description based on banner type
+         var description;
+         if (banner_type == "birthday") {
+           description = "Hi, " + guest_name + " your dear one " + relative_name + "'s birthday is on " + date + ". Come and celebrate with us";
+         } else if (banner_type == "anniversary") {
+           description = "Hi, " + guest_name + " your dear one " + relative_name + "'s marriage anniversary is on " + date + ". Come and celebrate with us";
+         }
+
+        var guestBannerData = {'guest_id' : item.user_id,'banner_id' : banner_id ,'description':description }
 
         await GuestBannerModel(guestBannerData).save();
 
-        // Building notification description based on banner type
-        var description;
-        if (banner_type == "birthday") {
-          description = "Hi, " + guest_name + " your dear one " + relative_name + "'s birthday is on " + date + ". Come and celebrate with us";
-        } else if (banner_type == "anniversary") {
-          description = "Hi, " + guest_name + " your dear one " + relative_name + "'s marriage anniversary is on " + date + ". Come and celebrate with us";
-        }
+       
 
         var fcm_token = user_data.fcm_token;
 
@@ -423,7 +425,7 @@ exports.update_banner = async (req, res, next) => {
 
         var fcm_token = user_data.fcm_token;
 
-        var guestBannerData = {'guest_id' : item.user_id,'banner_id' : banner_id }
+        var guestBannerData = {'guest_id' : item.user_id,'banner_id' : banner_id,'description':description }
 
 
           // Check if the record already exists
@@ -546,6 +548,9 @@ exports.get_guest_banner_list = async (req, res) => {
   
       for (const banner of banners) {
         const seller = await SellerModel.findOne({ user_id: banner.seller_id, district: guestCity });
+        
+
+
 
         if (seller && seller.district === guestCity) {
           // Cities match, include banner in the response
@@ -571,18 +576,24 @@ exports.get_guest_banner_list = async (req, res) => {
                 $sort: { createdAt: -1 }, // Sort by createdAt in descending order
               },
             ]);
+            console.log("guestBannerResult",guestBannerResult)
+
             if (guestBannerResult.length == 0) {
               // If the guest doesn't have this type of banner, exclude it from the response
               includeBanner = false;
               
             }
+            console.log("includeBanner",includeBanner)
             if (includeBanner){
+              
+
               const response = {
                 _id: banner._id,
                 seller_id: banner.seller_id,
                 event_id: "",
                 banner_type:bannerType,
                 image: imageUrl,
+                message: '',
                 createdAt: banner.createdAt,
                 updatedAt: banner.updatedAt,
               };
@@ -659,6 +670,9 @@ exports.get_guest_list_for_banner = async (req, res) => {
     let filter;
 
     const dateField = banner_type === 'birthday' ? '$dob' : '$dom';
+
+
+
 
     filter = {
       $match: {
@@ -813,7 +827,7 @@ exports.get_remind_list_for_event = async (req, res) => {
                   anniversay_date = new Date(anniversay_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
                   description = "Your dear one " + relative_name + "'s marriage anniversary is on " + anniversay_date + ". Come and celebrate with us";
-                  title = 'Annivaersary invitation';
+                  title = 'Anniversary invitation';
                   invitation_list.push({ 'title': title, 'description': description });
               }
           }

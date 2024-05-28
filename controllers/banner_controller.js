@@ -1019,32 +1019,50 @@ exports.sendRemindNotificationOfEvent = async () => {
   const hours = ('0' + currentDateTime.getHours()).slice(-2);
   const minutes = ('0' + currentDateTime.getMinutes()).slice(-2);
   const seconds = ('0' + currentDateTime.getSeconds()).slice(-2);
-  
-  console.log("current month",month);
+
+  // Calculate twelve hours before the current time
+// Calculate twelve hours before the current time
+const twelveHoursBeforeStartForEvent1 = new Date(currentDateTime.getTime() - (12 * 60 * 60 * 1000));
+const offset = currentDateTime.getTimezoneOffset() * 60 * 1000; // Get timezone offset in milliseconds
+const twelveHoursBeforeStartForEventAdjusted = new Date(twelveHoursBeforeStartForEvent1.getTime() - offset);
+const twelveHoursBeforeStartForEventFormatted = twelveHoursBeforeStartForEventAdjusted.toISOString().substring(0, 19) + '.000';console.log("twelveHoursBeforeStartForEventFormatted",twelveHoursBeforeStartForEventFormatted);
+console.log("twelveHoursBeforeStartForEventFormatted",twelveHoursBeforeStartForEventFormatted);
+
+
+// Calculate 24 hours before the current time
+const twentyFourHoursBeforeStartForEvent1 = new Date(currentDateTime.getTime() - (24 * 60 * 60 * 1000));
+const offset24 = currentDateTime.getTimezoneOffset() * 60 * 1000; // Get timezone offset in milliseconds
+const twentyFourHoursBeforeStartForEventAdjusted = new Date(twentyFourHoursBeforeStartForEvent1.getTime() - offset24);
+const twentyFourHoursBeforeStartForEventFormatted = twentyFourHoursBeforeStartForEventAdjusted.toISOString().substring(0, 19) + '.000';
+
+console.log("twentyFourHoursBeforeStartForEventFormatted",twentyFourHoursBeforeStartForEventFormatted);
+
+console.log("current month",month);
   console.log("current day",day);
 
-  var thour = 12-hours;
-  thour  = thour < 10 ? '0' + thour :thour;
+  var thour1 = (hours > 12) ? hours - 12 : 12 - hours;
+  thour  = thour1 < 10 ? '0' + thour1 :thour1;
 
 
-  var thhour = 24-hours;
-  thhour  = thhour < 10 ? '0' + thhour :thhour;
+  var thhour1 = (hours > 24) ? hours - 24 : 24 - hours;
+ 
+  thhour  = thhour1 < 10 ? '0' + thhour1 :hours;
+
+  console.log("hours",hours);
+  console.log("thour",thour)
 
   const currentDateTimeFormatted = `${year}-${c_month}-${c_day}T${hours}:${minutes}:${seconds}.000Z`;
-  const twelveHoursBeforeStart = `${year}-${c_month}-${c_day}T${thour}:${minutes}:${seconds}.000Z`;
-  const twentyFourHoursBeforeStart2 = `${year}-${c_month}-${c_day - 1}T${thhour}:${minutes}:${seconds}.000Z`;
-
+  var  currentDateTimeFormattedForEvent = `${year}-${c_month}-${c_day}T00:00:00.000`;
+  const currentDateTimeFormattedForEvent1 = `${year}-${c_month}-${c_day}T${hours}:${minutes}:${seconds}.000`;
+ 
   currentDateTime.setHours(currentDateTime.getHours() - 24);
+  
+  const twentyFourHoursBeforeStart = `${year}-${c_month}-${day}T${hours}:${minutes}:${seconds}.000Z`;
 
 
-  const twentyFourHoursBeforeStart = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000Z`;
   
   const startDateTime = new Date(currentDateTimeFormatted);
-  console.log("startDateTime",startDateTime)
 
-console.log("twelveHoursBeforeStart",twelveHoursBeforeStart)
-
-console.log("twentyFourHoursBeforeStart",twentyFourHoursBeforeStart)
 
 
   try {
@@ -1103,6 +1121,8 @@ console.log("twentyFourHoursBeforeStart",twentyFourHoursBeforeStart)
       },
       { $unset: 'guest_data' },
     ]);
+
+    console.log("remind_list",remind_list)
 
     if (remind_list && remind_list.length > 0) {
       for (const item of remind_list) {
@@ -1178,6 +1198,10 @@ console.log("twentyFourHoursBeforeStart",twentyFourHoursBeforeStart)
 
     var eventBannerData = await BannerModel.find({'banner_type' : 'event'});
     console.log("eventBannerData",eventBannerData);
+    console.log("currentDateTimeFormattedForEvent",currentDateTimeFormattedForEvent1);
+    console.log("twelveHoursBeforeStartForEvent",twelveHoursBeforeStartForEventFormatted);
+    console.log("twentyFourHoursBeforeStartForEvent",twentyFourHoursBeforeStartForEventFormatted)
+
 
     if(eventBannerData.length > 0){
       for(item of eventBannerData){
@@ -1197,9 +1221,9 @@ console.log("twentyFourHoursBeforeStart",twentyFourHoursBeforeStart)
                   'event_data.seller_id': new mongoose.Types.ObjectId(seller_id),
 
                   $or: [
-                    { 'event_data.start_time': { $eq: startDateTime } }, // Event is today or in the future
-                    { 'event_data.start_time': { $gte: twelveHoursBeforeStart, $lt: currentDateTime } }, // Event is 12 hours before current time
-                    { 'event_data.start_time': { $gte: twentyFourHoursBeforeStart, $lt: twelveHoursBeforeStart } }, // Event is 24 hours before current time
+                    { 'event_data.start_time': { $gte: currentDateTimeFormattedForEvent } }, // Event is today or in the future
+                    { 'event_data.start_time': { $gte: twelveHoursBeforeStartForEventFormatted, $lt: currentDateTimeFormattedForEvent1 } }, // Event is 12 hours before current date time
+                    { 'event_data.start_time': { $gte: twentyFourHoursBeforeStartForEventFormatted, $lt: currentDateTimeFormattedForEvent1 } }, // Event is 24 hours before current date time
                 ]
     
               },
@@ -1209,8 +1233,8 @@ console.log("twentyFourHoursBeforeStart",twentyFourHoursBeforeStart)
           },
         ]);
     
-        console.log("bookedEventData", bookedEventData);
-    
+         console.log("bookedEventData", bookedEventData);
+         var addedEventIds = new Set(); 
         if (bookedEventData.length > 0) {
             for (const [key, item1] of Object.entries(bookedEventData)) {
     
@@ -1246,7 +1270,6 @@ console.log("twentyFourHoursBeforeStart",twentyFourHoursBeforeStart)
                       .catch((error) => {
                         console.error('Error sending push notification:', error);
                       });
-                    invitation_list.push({ 'title': title, 'description': description });
                 }
             }
         }

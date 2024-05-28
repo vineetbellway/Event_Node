@@ -593,7 +593,7 @@ exports.get_guest_banner_list = async (req, res) => {
                 event_id: "",
                 banner_type:bannerType,
                 image: imageUrl,
-                message: '',
+                description: guestBannerResult[0].description,
                 createdAt: banner.createdAt,
                 updatedAt: banner.updatedAt,
               };
@@ -611,6 +611,7 @@ exports.get_guest_banner_list = async (req, res) => {
               event_id: eventRecord ? eventRecord._id:"",
               banner_type:bannerType,
               image: imageUrl,
+              description:'',
               createdAt: banner.createdAt,
               updatedAt: banner.updatedAt,
             };

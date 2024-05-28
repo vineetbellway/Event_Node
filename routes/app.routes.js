@@ -506,8 +506,12 @@ cron.schedule("* * * * *", function() {
 
 cron.schedule("0 0 * * *", function() {
     membershipController.disableSellerServices();
-    bannerController.sendRemindNotificationOfEvent();
 });
+
+cron.schedule("0 * * * *", function() {
+  bannerController.sendRemindNotificationOfEvent();
+});
+
 
 
 

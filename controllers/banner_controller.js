@@ -12,7 +12,7 @@ const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
 const { sendPushNotification } = require('../config/firebase.config'); // Update with the correct path to your module.
-
+const { addNotification } = require('../helpers/notification_helper');
 
 exports.create_banner = async (req, res, next) => {
   try {
@@ -1198,7 +1198,8 @@ console.log("current month",month);
             title: title,
             body: description,
           };
-          
+          addNotification(item.guest_id, item.guest_id , title, description, 'app');
+
 
           // Sending push notification
           sendPushNotification(fcm_token, notification, {})
@@ -1278,6 +1279,8 @@ console.log("current month",month);
                       title: title,
                       body: description,
                     };
+
+                    addNotification(item1.guest_id, item1.guest_id , title, description, 'app');
           
                     // Sending push notification
                     sendPushNotification(fcm_token, notification, {})

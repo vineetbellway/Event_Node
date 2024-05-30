@@ -490,6 +490,7 @@ exports.get_event = async (req, res) => {
 
     if (result && result.length > 0) {
       console.log("result",result)
+      var event = result[0];
       const baseURL = `${req.protocol}://${req.get('host')}`;
       
       // Update the image URL for the event
@@ -504,6 +505,65 @@ exports.get_event = async (req, res) => {
         var banner_data = null;
       }
 
+      const sellerEvents = await EventModel.find({ seller_id: event.seller_id });
+      const eventIds = sellerEvents.map(e => e._id);
+
+      const guestRatings = await Feedback.aggregate([
+        {
+          $match: {
+            event_id: { $in: eventIds }
+          },
+        },
+        {
+          $group: {
+            _id: {
+              guest_id: "$guest_id",
+              rating: "$rating"
+            }
+          }
+        },
+        {
+          $group: {
+            _id: "$_id.rating",
+            count: { $sum: 1 }
+          }
+        },
+        {
+          $sort: { _id: -1 }
+        }
+      ]);
+
+      const totalGuestsResult = await Feedback.aggregate([
+        {
+          $match: {
+            event_id: { $in: eventIds }
+          },
+        },
+        {
+          $group: {
+            _id: "$guest_id"
+          }
+        },
+        {
+          $count: "totalGuests"
+        }
+      ]);
+
+      const totalGuests = totalGuestsResult.length > 0 ? totalGuestsResult[0].totalGuests : 0;
+    
+      const ratingsPercentage = {};
+      var totalSum = 0;
+
+      guestRatings.forEach(rating => {
+        totalSum += rating.count;
+      });
+      
+
+      guestRatings.forEach(rating => {
+        ratingsPercentage[rating._id] = ((rating.count / totalSum) * 100).toFixed(2).toString();
+      });
+
+
       console.log("banner_data",banner_data)
 
       if(banner_data == null){
@@ -512,12 +572,14 @@ exports.get_event = async (req, res) => {
           ...result[0],
           image: eventImageUrl,
           banner_data: null,
+          rating_data: ratingsPercentage
         };
       } else {
         // Update the event response
         var updatedResult = {
           ...result[0],
           image: eventImageUrl,
+          rating_data: ratingsPercentage,
           banner_data: {
             ...banner_data, // Assuming there's only one banner
             image: bannerImageUrl,
@@ -778,12 +840,7 @@ exports.search_events = async (req, res) => {
               razor_pay_key = settingData?.upi_id || '';
             }
 
-            if (event.status !== 'expired') {
-              const eventImageUrl = baseURL + '/uploads/events/' + event.image;
-              const banner_data = event.banner_data[0];
-              const bannerImageUrl = banner_data ? baseURL + '/uploads/banners/' + banner_data.image : '';
-
-              const sellerEvents = await EventModel.find({ seller_id: event.seller_id });
+            const sellerEvents = await EventModel.find({ seller_id: event.seller_id });
               const eventIds = sellerEvents.map(e => e._id);
 
               const guestRatings = await Feedback.aggregate([
@@ -828,21 +885,25 @@ exports.search_events = async (req, res) => {
               ]);
 
               const totalGuests = totalGuestsResult.length > 0 ? totalGuestsResult[0].totalGuests : 0;
-              console.log("totalGuests",totalGuests)
-              console.log("guestRatings",guestRatings)
+            
               const ratingsPercentage = {};
               var totalSum = 0;
 
               guestRatings.forEach(rating => {
                 totalSum += rating.count;
               });
-
-              console.log("totalSum",totalSum)
               
 
               guestRatings.forEach(rating => {
                 ratingsPercentage[rating._id] = ((rating.count / totalSum) * 100).toFixed(2).toString();
               });
+
+            if (event.status !== 'expired') {
+              const eventImageUrl = baseURL + '/uploads/events/' + event.image;
+              const banner_data = event.banner_data[0];
+              const bannerImageUrl = banner_data ? baseURL + '/uploads/banners/' + banner_data.image : '';
+
+              
 
 
 
@@ -854,7 +915,11 @@ exports.search_events = async (req, res) => {
                 rating_data: ratingsPercentage
               };
             } else {
-              return event;
+              return {
+                ...event,
+                rating_data: ratingsPercentage
+
+              }
             }
           }));
 

@@ -11,6 +11,8 @@ const Seller = require("../models/seller.model");
 const UPI = require("../models/upi.model");
 const BusinessSettings = require("../models/business_settings.model");
 const Feedback = require("../models/feedback.model");
+const User = require("../models/user.model");
+const SellerModel = require("../models/seller.model");
 
 
 exports.create_event = async(req, res, next) => {
@@ -557,11 +559,17 @@ exports.get_event = async (req, res) => {
       guestRatings.forEach(rating => {
         totalSum += rating.count;
       });
-      
+      var average_rating = 0;
 
       guestRatings.forEach(rating => {
-        ratingsPercentage[rating._id] = ((rating.count / totalSum) * 100).toFixed(2).toString();
+        ratingsPercentage[rating._id] = Math.round(((rating.count / totalSum) * 100).toFixed(2)).toString();
+        average_rating =  totalSum/guestRatings.length;
       });
+
+      const seller = await SellerModel.findOne({ user_id: event.seller_id });
+              ratingsPercentage.seller_name = seller.contact_name;
+              ratingsPercentage.total_events = sellerEvents.length;
+              ratingsPercentage.average_rating = average_rating.toString();
 
 
       console.log("banner_data",banner_data)
@@ -892,18 +900,22 @@ exports.search_events = async (req, res) => {
               guestRatings.forEach(rating => {
                 totalSum += rating.count;
               });
-              
-
+              console.log("guestRatings",guestRatings)
+              var average_rating = 0;
               guestRatings.forEach(rating => {
-                ratingsPercentage[rating._id] = ((rating.count / totalSum) * 100).toFixed(2).toString();
+                ratingsPercentage[rating._id] = Math.round(((rating.count / totalSum) * 100).toFixed(2)).toString();
+                 average_rating =  totalSum/guestRatings.length;
               });
+
 
             if (event.status !== 'expired') {
               const eventImageUrl = baseURL + '/uploads/events/' + event.image;
               const banner_data = event.banner_data[0];
               const bannerImageUrl = banner_data ? baseURL + '/uploads/banners/' + banner_data.image : '';
-
-              
+              const seller = await SellerModel.findOne({ user_id: event.seller_id });
+              ratingsPercentage.seller_name = seller.contact_name;
+              ratingsPercentage.total_events = sellerEvents.length;
+              ratingsPercentage.average_rating = average_rating.toString();;
 
 
 

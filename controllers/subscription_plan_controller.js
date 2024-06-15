@@ -57,6 +57,7 @@ exports.get_subscription_plans = async (req, res) => {
     limit: limit,
     customLabels: myCustomLabels,
   };
+  
   try {
     var myAggregate = SubscriptionPlan.aggregate([
       {
@@ -68,13 +69,24 @@ exports.get_subscription_plans = async (req, res) => {
         $sort: { createdAt: -1 },
       },
     ]);
+    
     await SubscriptionPlan.aggregatePaginate(myAggregate, options)
       .then((result) => {
         if (result) {
+          // Map through the result data and replace name with plan_name
+          const transformedData = result.data.map(plan => {
+            const { name, ...rest } = plan;
+            return { plan_name: name, ...rest };
+          });
+
+          // Send the transformed data in the response
           res.status(200).send({
             status: true,
             message: "success",
-            data: result,
+            data: {
+              ...result,
+              data: transformedData, // Replace the original data with the transformed data
+            },
           });
         }
       })

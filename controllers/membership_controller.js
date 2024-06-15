@@ -444,14 +444,16 @@ exports.get_membership_by_seller_id = async (req, res) => {
 
           ])
           .then(async(result) => {
-              console.log("result",result[0].seller_id)
 
               if (result.length > 0) {
-
+                var seller_id = result[0].seller_id;
+              //  console.log("seller_id",seller_id)
+                var sellerRecord = await Seller.findById(seller_id);
+              //  console.log("sellerRecord",sellerRecord.user_id)
+                var user_id = sellerRecord.user_id;
+             
               
-
-              var seller_id = result[0].seller_id;
-              const sellerEvents = await EventModel.find({ seller_id: seller_id });
+              const sellerEvents = await EventModel.find({ seller_id: user_id });
               var sellerEventLength = sellerEvents.length; 
               var eventLimit = result[0].event_limit;
 
@@ -492,12 +494,15 @@ exports.get_membership_by_seller_id = async (req, res) => {
 
                 console.log("eDateTime",eDateTime)
 
+                
+
                 if(todayDateTime >= eDateTime){
                   console.log("inside this")
                   result[0].status = "denied";
                 }
             } else {
-                if(sellerEventLength > eventLimit){
+              console.log("sellerEventLength",sellerEventLength)
+                if(sellerEventLength >= eventLimit){
                   result[0].status = "denied";
 
               }

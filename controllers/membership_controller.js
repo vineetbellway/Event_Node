@@ -6,6 +6,7 @@ var nodemailer = require('nodemailer');
 const Seller = require("../models/seller.model");
 const User = require("../models/user.model");
 
+const EventModel = require("../models/event.model");
 
 
 exports.create_membership = (req, res, next) => {
@@ -431,6 +432,7 @@ exports.get_membership_by_seller_id = async (req, res) => {
                       "profit_loss_and_cover_report" : { "$arrayElemAt": ["$plan_data.profit_loss_and_cover_report", 0] },
                       "loyaltiy_card_report" : { "$arrayElemAt": ["$plan_data.loyaltiy_card_report", 0] },
                       "feedback_reply_by_guest" : { "$arrayElemAt": ["$plan_data.feedback_reply_by_guest", 0] },
+                      "event_limit": { "$arrayElemAt": ["$plan_data.event_limit", 0] } 
                   }
               },
               {
@@ -441,9 +443,67 @@ exports.get_membership_by_seller_id = async (req, res) => {
             }
 
           ])
-          .then((result) => {
-              console.log("result",result)
+          .then(async(result) => {
+              console.log("result",result[0].seller_id)
+
               if (result.length > 0) {
+
+              
+
+              var seller_id = result[0].seller_id;
+              const sellerEvents = await EventModel.find({ seller_id: seller_id });
+              var sellerEventLength = sellerEvents.length; 
+              var eventLimit = result[0].event_limit;
+
+              if(eventLimit == "unlimited"){
+               
+                var endDate = result[0].end_date;
+
+                console.log("endDate",endDate)
+
+
+
+
+                const endDateTime = new Date(endDate);
+                const endYear = endDateTime.getFullYear();
+                const endMonth = ('0' + (endDateTime.getMonth() + 1)).slice(-2);
+                const endDay = ('0' + endDateTime.getDate()).slice(-2);
+
+                const endDateTimeFormatted = `${endYear}-${endMonth}-${endDay}`;
+                
+                const eDateTime = new Date(endDateTimeFormatted);
+
+
+
+
+                const currentDateTime = new Date();
+                const year = currentDateTime.getFullYear();
+                const month = ('0' + (currentDateTime.getMonth() + 1)).slice(-2);
+                const day = ('0' + currentDateTime.getDate()).slice(-2);
+                const hours = ('0' + currentDateTime.getHours()).slice(-2);
+                const minutes = ('0' + currentDateTime.getMinutes()).slice(-2);
+                const seconds = ('0' + currentDateTime.getSeconds()).slice(-2);
+                
+                const currentDateTimeFormatted = `${year}-${month}-${day}`;
+                
+                const todayDateTime = new Date(currentDateTimeFormatted);
+
+                console.log("todayDateTime",todayDateTime)
+
+                console.log("eDateTime",eDateTime)
+
+                if(todayDateTime >= eDateTime){
+                  console.log("inside this")
+                  result[0].status = "denied";
+                }
+            } else {
+                if(sellerEventLength > eventLimit){
+                  result[0].status = "denied";
+
+              }
+            }
+             
+              
                   res.status(200).send({
                       status: true,
                       message: "success",

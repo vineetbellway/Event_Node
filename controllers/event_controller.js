@@ -227,7 +227,7 @@ exports.create_event = async(req, res, next) => {
         if(sellerEventLength >= eventLimit){
           res.status(200).send({
             status: false,
-            message: "You can add more than "+eventLimit + "event",
+            message: "You can not add more than "+eventLimit + " event",
             data:null
           });
         } else {

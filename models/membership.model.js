@@ -31,6 +31,10 @@ const schema = new mongoose.Schema(
       type: String,
       default: baseStatus.active,
     },
+    is_event_created_after_renew_plan: {
+      type: String,
+      default: "0",
+    },
   },
   {
     timestamps: true,

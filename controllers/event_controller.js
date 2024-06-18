@@ -49,11 +49,13 @@ exports.create_event = async(req, res, next) => {
 
     var user_record = await Seller.findOne({"user_id" : seller_id});
     console.log("user_record",user_record._id)
+ //   return false;
 
     var sellerMemberShip = await Membership.aggregate([
       {
           $match: {
               seller_id: new mongoose.Types.ObjectId(user_record._id),
+              "status" : "active"
           },
       },
       {
@@ -76,9 +78,10 @@ exports.create_event = async(req, res, next) => {
               "createdAt": 1,
               "updatedAt": 1,
               "event_limit" :1,
+              "is_event_created_after_renew_plan" :1,
               "plan_name": { "$arrayElemAt": ["$plan_data.name", 0] } ,
               "description": { "$arrayElemAt": ["$plan_data.description", 0] },
-              "event_limit": { "$arrayElemAt": ["$plan_data.event_limit", 0] } 
+              "event_limit": { "$arrayElemAt": ["$plan_data.event_limit", 0] },
           }
       },
       {
@@ -224,7 +227,23 @@ exports.create_event = async(req, res, next) => {
       const sellerEvents = await EventModel.find({ seller_id: seller_id, 'status' : 'active' });
       var sellerEventLength = sellerEvents.length; 
       if(eventLimit > 0){
-        if(sellerEventLength >= eventLimit){
+        var is_event_created_after_renew_plan = sellerMemberShip[0].is_event_created_after_renew_plan;
+
+        var is_event_created_after_renew_plan = sellerMemberShip[0].is_event_created_after_renew_plan;
+        console.log("is_event_created_after_renew_plan",is_event_created_after_renew_plan)
+        var updateData = {
+          is_event_created_after_renew_plan: "1",
+        };
+      
+      
+      var membership_id = sellerMemberShip[0]._id;
+
+      console.log("membership_id",membership_id)
+  
+
+      
+
+        if(is_event_created_after_renew_plan > '0'){
           res.status(200).send({
             status: false,
             message: "You can not add more than "+eventLimit + " event",
@@ -298,6 +317,12 @@ exports.create_event = async(req, res, next) => {
               const baseURL = `${protocol}://${host}`;
               const imageUrl = baseURL + '/uploads/events/' + result.image;
               console.log("result",result)
+
+
+     await Membership.findOneAndUpdate(
+      { _id: new ObjectId(membership_id) }, 
+      updateData,
+    );
 
             
             

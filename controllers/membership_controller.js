@@ -457,7 +457,8 @@ exports.get_membership_by_seller_id = async (req, res) => {
               const sellerEvents = await EventModel.find({ seller_id: user_id });
               var sellerEventLength = sellerEvents.length; 
               var eventLimit = result[0].event_limit;
-              console.log("eventLimit",eventLimit)
+              console.log("eventLimit",eventLimit);
+
 
               if(eventLimit == "unlimited"){
                
@@ -503,6 +504,7 @@ exports.get_membership_by_seller_id = async (req, res) => {
                   result[0].status = "denied";
                 }
             } else if (eventLimit !== "unlimited" && sellerEventLength >= eventLimit) {
+              console.log("sellerEventLength",sellerEventLength)
               // Only set status to "denied" if event limit is exceeded and the end date has passed
               const endDate = new Date(result[0].end_date);
               const currentDate = new Date();

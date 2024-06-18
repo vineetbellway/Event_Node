@@ -446,6 +446,7 @@ exports.get_membership_by_seller_id = async (req, res) => {
           .then(async(result) => {
 
               if (result.length > 0) {
+                console.log("result",result);
                 var seller_id = result[0].seller_id;
               //  console.log("seller_id",seller_id)
                 var sellerRecord = await Seller.findById(seller_id);
@@ -456,6 +457,7 @@ exports.get_membership_by_seller_id = async (req, res) => {
               const sellerEvents = await EventModel.find({ seller_id: user_id });
               var sellerEventLength = sellerEvents.length; 
               var eventLimit = result[0].event_limit;
+              console.log("eventLimit",eventLimit)
 
               if(eventLimit == "unlimited"){
                
@@ -500,13 +502,17 @@ exports.get_membership_by_seller_id = async (req, res) => {
                   console.log("inside this")
                   result[0].status = "denied";
                 }
-            } else {
-              console.log("sellerEventLength",sellerEventLength)
-                if(sellerEventLength >= eventLimit){
-                  result[0].status = "denied";
+            } else if (eventLimit !== "unlimited" && sellerEventLength >= eventLimit) {
+              // Only set status to "denied" if event limit is exceeded and the end date has passed
+              const endDate = new Date(result[0].end_date);
+              const currentDate = new Date();
+              console.log("currentDate",currentDate);
+              console.log("endDate",endDate);
 
+              if (currentDate >= endDate) {
+                result[0].status = "denied";
               }
-            }
+          }
              
               
                   res.status(200).send({

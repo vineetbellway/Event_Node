@@ -418,6 +418,7 @@ exports.get_membership_by_seller_id = async (req, res) => {
                       "status": 1,
                       "createdAt": 1,
                       "updatedAt": 1,
+                      "is_event_created_after_renew_plan": 1,
                       "plan_name": { "$arrayElemAt": ["$plan_data.name", 0] }, // Extracting plan_name from plan_data
                       "event_venue_by_google_location" : { "$arrayElemAt": ["$plan_data.event_venue_by_google_location", 0] },
                       "private_events" : { "$arrayElemAt": ["$plan_data.private_events", 0] },
@@ -512,6 +513,12 @@ exports.get_membership_by_seller_id = async (req, res) => {
               console.log("endDate",endDate);
 
               if (currentDate >= endDate) {
+                result[0].status = "denied";
+              }
+
+              console.log("is_event_created_after_renew_plan",result[0].is_event_created_after_renew_plan)
+
+              if(result[0].is_event_created_after_renew_plan > '0'){
                 result[0].status = "denied";
               }
           }

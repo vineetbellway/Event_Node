@@ -521,9 +521,37 @@ exports.get_membership_by_seller_id = async (req, res) => {
               if(result[0].is_event_created_after_renew_plan > '0'){
                 result[0].status = "denied";
               }
-          }
-             
               
+
+          }
+          var currentPlanCreatedAt = result[0].createdAt;
+          console.log("currentPlanCreatedAt",currentPlanCreatedAt)
+
+          // Query to find the previous plan data
+          var previousPlanData = await Membership.aggregate([
+            { 
+                $match: {
+                    seller_id: seller_id,
+                    createdAt: { $lt: currentPlanCreatedAt }
+                }
+            },
+            {
+                $sort: { createdAt: -1 }
+            },
+            {
+                $limit: 1
+            },
+            {
+                $lookup: {
+                    from: 'subscriptionplans', // collection name for Subscription model
+                    localField: 'plan_id',
+                    foreignField: '_id',
+                    as: 'subscription_plan'
+                }
+            }
+        ]);
+        var previousPlanName =   (previousPlanData.length > 0) ? previousPlanData[0].subscription_plan[0].name : '';             
+        result[0].previous_plan_name = previousPlanName;
                   res.status(200).send({
                       status: true,
                       message: "success",

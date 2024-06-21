@@ -481,7 +481,7 @@ exports.get_membership_by_seller_id = async (req, res) => {
           }
 
           // Find highest plan name
-          var highestPlanName = '';
+          var highestPlanData = '';
           const sellerPlanData = await Membership.aggregate([
               { $match: { seller_id: seller_id } },
               { $sort: { createdAt: -1 } },
@@ -498,17 +498,19 @@ exports.get_membership_by_seller_id = async (req, res) => {
           var currentPlanDay = result[0].days;
           sellerPlanData.forEach((plan) => {
               if (currentPlanDay <= plan.subscription_plan[0].days) {
-                  highestPlanName = plan.subscription_plan[0].name;
-                  currentPlanDay = plan.subscription_plan[0].days; // Update currentPlanDay if needed
+                highestPlanData = plan.subscription_plan[0];
               }
           });
 
-          result[0].highest_plan_name = highestPlanName;
+         // result[0].highest_plan_name = highestPlanName;
           // Return data with highest plan name
           res.status(200).send({
               status: true,
               message: "success",
-              data: result[0],
+              data: {
+                current_plan_data: result[0],
+                highest_plan_data: highestPlanData
+            },
           });
       } else {
           res.status(200).send({

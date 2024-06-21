@@ -15,6 +15,7 @@ const EventGuestModel = require("../models/event_guest.model");
 const BookedServiceItem = require("../models/booked_service_item.model");
 const ServiceItemPayments = require("../models/service_item_payments.model");
 const ServiceModel = require("../models/service.model");
+const { admin } = require("../config/firebase.config");
 
 
 exports.get_item_sales_report_validator_wise = async (req, res) => {
@@ -239,6 +240,19 @@ exports.get_item_sales_report_validator_wise = async (req, res) => {
 exports.get_item_sales_report = async (req, res) => {
   try {
       const eventId = req.query.event_id;
+
+      const token = req.header("Authorization").replace("Bearer", "").trim();
+      console.log("auth token",token)
+
+      admin
+      .auth()
+      .verifyIdToken(token)
+      .then(function (decodedToken) {
+        var uid = decodedToken.uid;
+        console.log("user id",uid)
+        req.phone_number = decodedToken.phone_number;
+
+      });
 
       console.log("eventId",eventId)
 

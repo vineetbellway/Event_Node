@@ -7,7 +7,7 @@ const Seller = require("../models/seller.model");
 const User = require("../models/user.model");
 
 const EventModel = require("../models/event.model");
-
+const SubscriptionPlan = require("../models/subscription_plan.model");
 
 exports.create_membership = (req, res, next) => {
   if (!req.body) {
@@ -391,192 +391,137 @@ exports.get_membership_by_seller_id = async (req, res) => {
   var seller_id = req.params.id;
   if (!seller_id) {
       res.status(400).send({ status: false, message: "seller_id missing" });
-  } else {
-      try {
-          await Membership.aggregate([
-              {
-                  $match: {
-                      seller_id: new mongoose.Types.ObjectId(seller_id),
-                  },
+      return;
+  }
+
+  try {
+      // Fetch membership data
+      const result = await Membership.aggregate([
+          { $match: { seller_id: new mongoose.Types.ObjectId(seller_id) } },
+          {
+              $lookup: {
+                  from: 'subscriptionplans',
+                  localField: 'plan_id',
+                  foreignField: '_id',
+                  as: 'plan_data',
               },
+          },
+          {
+              $project: {
+                  "_id": 1,
+                  "seller_id": 1,
+                  "plan_id": 1,
+                  "amount": 1,
+                  "txn": 1,
+                  "end_date": 1,
+                  "status": 1,
+                  "createdAt": 1,
+                  "updatedAt": 1,
+                  "is_event_created_after_renew_plan": 1,
+                  "plan_name": { "$arrayElemAt": ["$plan_data.name", 0] },
+                  "event_venue_by_google_location": { "$arrayElemAt": ["$plan_data.event_venue_by_google_location", 0] },
+                  "private_events": { "$arrayElemAt": ["$plan_data.private_events", 0] },
+                  "event_banner_publishing": { "$arrayElemAt": ["$plan_data.event_banner_publishing", 0] },
+                  "birthday_banner_publishing": { "$arrayElemAt": ["$plan_data.birthday_banner_publishing", 0] },
+                  "wedding_anniversary_banner_publishing": { "$arrayElemAt": ["$plan_data.wedding_anniversary_banner_publishing", 0] },
+                  "razor_pay_account_creation": { "$arrayElemAt": ["$plan_data.razor_pay_account_creation", 0] },
+                  "item_sales_report": { "$arrayElemAt": ["$plan_data.item_sales_report", 0] },
+                  "fns_moving_report": { "$arrayElemAt": ["$plan_data.fns_moving_report", 0] },
+                  "guest_potential_report": { "$arrayElemAt": ["$plan_data.guest_potential_report", 0] },
+                  "repeated_guest_report": { "$arrayElemAt": ["$plan_data.repeated_guest_report", 0] },
+                  "profit_loss_and_cover_report": { "$arrayElemAt": ["$plan_data.profit_loss_and_cover_report", 0] },
+                  "loyaltiy_card_report": { "$arrayElemAt": ["$plan_data.loyaltiy_card_report", 0] },
+                  "feedback_reply_by_guest": { "$arrayElemAt": ["$plan_data.feedback_reply_by_guest", 0] },
+                  "event_limit": { "$arrayElemAt": ["$plan_data.event_limit", 0] },
+                  "days": { "$arrayElemAt": ["$plan_data.days", 0] },
+              }
+          },
+          { $sort: { "createdAt": -1 } },
+          { $limit: 1 }
+      ]);
+
+      if (result.length > 0) {
+          // Process membership data
+
+          var seller_id = result[0].seller_id;
+          var sellerRecord = await Seller.findById(seller_id);
+          var user_id = sellerRecord.user_id;
+
+          const sellerEvents = await EventModel.find({ seller_id: user_id });
+          var sellerEventLength = sellerEvents.length;
+          var eventLimit = result[0].event_limit;
+
+          // Check if event limit is unlimited
+          if (eventLimit === "unlimited") {
+              var endDate = result[0].end_date;
+              const endDateTime = new Date(endDate);
+              const endYear = endDateTime.getFullYear();
+              const endMonth = ('0' + (endDateTime.getMonth() + 1)).slice(-2);
+              const endDay = ('0' + endDateTime.getDate()).slice(-2);
+              const endDateTimeFormatted = `${endYear}-${endMonth}-${endDay}`;
+              const eDateTime = new Date(endDateTimeFormatted);
+
+              const currentDateTime = new Date();
+              const year = currentDateTime.getFullYear();
+              const month = ('0' + (currentDateTime.getMonth() + 1)).slice(-2);
+              const day = ('0' + currentDateTime.getDate()).slice(-2);
+              const currentDateTimeFormatted = `${year}-${month}-${day}`;
+              const todayDateTime = new Date(currentDateTimeFormatted);
+
+              if (todayDateTime >= eDateTime) {
+                  result[0].status = "denied";
+              }
+          } else if (eventLimit !== "unlimited" && sellerEventLength >= eventLimit) {
+              const endDate = new Date(result[0].end_date);
+              const currentDate = new Date();
+
+              if (currentDate >= endDate || result[0].is_event_created_after_renew_plan > '0') {
+                  result[0].status = "denied";
+              }
+          }
+
+          // Find highest plan name
+          var highestPlanName = '';
+          const sellerPlanData = await Membership.aggregate([
+              { $match: { seller_id: seller_id } },
+              { $sort: { createdAt: -1 } },
               {
                   $lookup: {
                       from: 'subscriptionplans',
                       localField: 'plan_id',
                       foreignField: '_id',
-                      as: 'plan_data',
-                  },
-              },
-              {
-                  $project: {
-                      "_id": 1,
-                      "seller_id": 1,
-                      "plan_id": 1,
-                      "amount": 1,
-                      "txn": 1,
-                      "end_date": 1,
-                      "status": 1,
-                      "createdAt": 1,
-                      "updatedAt": 1,
-                      "is_event_created_after_renew_plan": 1,
-                      "plan_name": { "$arrayElemAt": ["$plan_data.name", 0] }, // Extracting plan_name from plan_data
-                      "event_venue_by_google_location" : { "$arrayElemAt": ["$plan_data.event_venue_by_google_location", 0] },
-                      "private_events" : { "$arrayElemAt": ["$plan_data.private_events", 0] },
-                      "event_banner_publishing" : { "$arrayElemAt": ["$plan_data.event_banner_publishing", 0] },
-                      "birthday_banner_publishing" : { "$arrayElemAt": ["$plan_data.birthday_banner_publishing", 0] },
-                      "wedding_anniversary_banner_publishing" : { "$arrayElemAt": ["$plan_data.wedding_anniversary_banner_publishing", 0] },
-                      "razor_pay_account_creation" : { "$arrayElemAt": ["$plan_data.razor_pay_account_creation", 0] },
-                      "item_sales_report" : { "$arrayElemAt": ["$plan_data.item_sales_report", 0] },
-                      "fns_moving_report" : { "$arrayElemAt": ["$plan_data.fns_moving_report", 0] },
-                      "guest_potential_report" : { "$arrayElemAt": ["$plan_data.guest_potential_report", 0] },
-                      "repeated_guest_report" : { "$arrayElemAt": ["$plan_data.repeated_guest_report", 0] },
-                      "profit_loss_and_cover_report" : { "$arrayElemAt": ["$plan_data.profit_loss_and_cover_report", 0] },
-                      "loyaltiy_card_report" : { "$arrayElemAt": ["$plan_data.loyaltiy_card_report", 0] },
-                      "feedback_reply_by_guest" : { "$arrayElemAt": ["$plan_data.feedback_reply_by_guest", 0] },
-                      "event_limit": { "$arrayElemAt": ["$plan_data.event_limit", 0] } 
+                      as: 'subscription_plan'
                   }
-              },
-              {
-                $sort: { "createdAt": -1 } // Sort by createdAt in descending order
-            },
-            {
-                $limit: 1 // Limit to only the latest plan
-            }
-
-          ])
-          .then(async(result) => {
-
-              if (result.length > 0) {
-                console.log("result",result);
-                var seller_id = result[0].seller_id;
-              //  console.log("seller_id",seller_id)
-                var sellerRecord = await Seller.findById(seller_id);
-              //  console.log("sellerRecord",sellerRecord.user_id)
-                var user_id = sellerRecord.user_id;
-             
-              
-              const sellerEvents = await EventModel.find({ seller_id: user_id });
-              var sellerEventLength = sellerEvents.length; 
-              var eventLimit = result[0].event_limit;
-              console.log("eventLimit",eventLimit);
-
-
-              if(eventLimit == "unlimited"){
-               
-                var endDate = result[0].end_date;
-
-                console.log("endDate",endDate)
-
-
-
-
-                const endDateTime = new Date(endDate);
-                const endYear = endDateTime.getFullYear();
-                const endMonth = ('0' + (endDateTime.getMonth() + 1)).slice(-2);
-                const endDay = ('0' + endDateTime.getDate()).slice(-2);
-
-                const endDateTimeFormatted = `${endYear}-${endMonth}-${endDay}`;
-                
-                const eDateTime = new Date(endDateTimeFormatted);
-
-
-
-
-                const currentDateTime = new Date();
-                const year = currentDateTime.getFullYear();
-                const month = ('0' + (currentDateTime.getMonth() + 1)).slice(-2);
-                const day = ('0' + currentDateTime.getDate()).slice(-2);
-                const hours = ('0' + currentDateTime.getHours()).slice(-2);
-                const minutes = ('0' + currentDateTime.getMinutes()).slice(-2);
-                const seconds = ('0' + currentDateTime.getSeconds()).slice(-2);
-                
-                const currentDateTimeFormatted = `${year}-${month}-${day}`;
-                
-                const todayDateTime = new Date(currentDateTimeFormatted);
-
-                console.log("todayDateTime",todayDateTime)
-
-                console.log("eDateTime",eDateTime)
-
-                
-
-                if(todayDateTime >= eDateTime){
-                  console.log("inside this")
-                  result[0].status = "denied";
-                }
-            } else if (eventLimit !== "unlimited" && sellerEventLength >= eventLimit) {
-              console.log("sellerEventLength",sellerEventLength)
-              // Only set status to "denied" if event limit is exceeded and the end date has passed
-              const endDate = new Date(result[0].end_date);
-              const currentDate = new Date();
-              console.log("currentDate",currentDate);
-              console.log("endDate",endDate);
-
-              if (currentDate >= endDate) {
-                result[0].status = "denied";
               }
+          ]);
 
-              console.log("is_event_created_after_renew_plan",result[0].is_event_created_after_renew_plan)
-
-              if(result[0].is_event_created_after_renew_plan > '0'){
-                result[0].status = "denied";
+          var currentPlanDay = result[0].days;
+          sellerPlanData.forEach((plan) => {
+              if (currentPlanDay <= plan.subscription_plan[0].days) {
+                  highestPlanName = plan.subscription_plan[0].name;
+                  currentPlanDay = plan.subscription_plan[0].days; // Update currentPlanDay if needed
               }
-              
-
-          }
-          var currentPlanCreatedAt = result[0].createdAt;
-          console.log("currentPlanCreatedAt",currentPlanCreatedAt)
-
-          // Query to find the previous plan data
-          var previousPlanData = await Membership.aggregate([
-            { 
-                $match: {
-                    seller_id: seller_id,
-                    createdAt: { $lt: currentPlanCreatedAt }
-                }
-            },
-            {
-                $sort: { createdAt: -1 }
-            },
-            {
-                $limit: 1
-            },
-            {
-                $lookup: {
-                    from: 'subscriptionplans', // collection name for Subscription model
-                    localField: 'plan_id',
-                    foreignField: '_id',
-                    as: 'subscription_plan'
-                }
-            }
-        ]);
-        var previousPlanName =   (previousPlanData.length > 0) ? previousPlanData[0].subscription_plan[0].name : '';             
-        result[0].previous_plan_name = previousPlanName;
-                  res.status(200).send({
-                      status: true,
-                      message: "success",
-                      data: result[0],
-                  });
-              } else {
-                  res.status(200).send({
-                      status: false,
-                      message: "No data found",
-                      data: null,
-                  });
-              }
-          })
-          .catch((error) => {
-              res.send({
-                  status: false,
-                  message: error.toString() ?? "Error",
-              });
           });
-      } catch (error) {
-          res.status(500).send({
+
+          result[0].highest_plan_name = highestPlanName;
+          // Return data with highest plan name
+          res.status(200).send({
+              status: true,
+              message: "success",
+              data: result[0],
+          });
+      } else {
+          res.status(200).send({
               status: false,
-              message: error.toString() ?? "Internal Server Error",
+              message: "No data found",
+              data: null,
           });
       }
+  } catch (error) {
+      res.status(500).send({
+          status: false,
+          message: error.toString() ?? "Internal Server Error",
+      });
   }
 };
 

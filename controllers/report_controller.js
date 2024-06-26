@@ -490,7 +490,7 @@ exports.get_number_of_guests_for_event = async (req, res) => {
           // var seller_id = '665fedfb5f1b4ac29301e3d1';
   
           const result = await Membership.aggregate([
-              { $match: { seller_id: new mongoose.Types.ObjectId(seller_id) } },
+              { $match: { seller_id: new mongoose.Types.ObjectId(seller_id),'status':'active' } },
               {
                   $lookup: {
                       from: 'subscriptionplans',
@@ -756,7 +756,7 @@ exports.get_repeated_guests_for_seller_attending_events = async (req, res) => {
           // var seller_id = '665fedfb5f1b4ac29301e3d1';
   
           const result = await Membership.aggregate([
-              { $match: { seller_id: new mongoose.Types.ObjectId(seller_id) } },
+              { $match: { seller_id: new mongoose.Types.ObjectId(seller_id),'status':'active' } },
               {
                   $lookup: {
                       from: 'subscriptionplans',
@@ -1174,7 +1174,7 @@ exports.fns_moving_item_report = async (req, res) => {
         // var seller_id = '665fedfb5f1b4ac29301e3d1';
 
         const result = await Membership.aggregate([
-            { $match: { seller_id: new mongoose.Types.ObjectId(seller_id) } },
+            { $match: { seller_id: new mongoose.Types.ObjectId(seller_id),'status':'active' } },
             {
                 $lookup: {
                     from: 'subscriptionplans',
@@ -1432,7 +1432,7 @@ exports.guest_potential_report = async (req, res) => {
       // var seller_id = '665fedfb5f1b4ac29301e3d1';
 
       const result = await Membership.aggregate([
-          { $match: { seller_id: new mongoose.Types.ObjectId(seller_id) } },
+          { $match: { seller_id: new mongoose.Types.ObjectId(seller_id),'status':'active' } },
           {
               $lookup: {
                   from: 'subscriptionplans',
@@ -1855,7 +1855,7 @@ exports.guest_loyalty_point_report = async (req, res) => {
         // var seller_id = '665fedfb5f1b4ac29301e3d1';
 
         const result = await Membership.aggregate([
-            { $match: { seller_id: new mongoose.Types.ObjectId(seller_id) } },
+            { $match: { seller_id: new mongoose.Types.ObjectId(seller_id),'status':'active' } },
             {
                 $lookup: {
                     from: 'subscriptionplans',

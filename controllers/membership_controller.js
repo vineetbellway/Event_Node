@@ -466,7 +466,7 @@ exports.get_membership_by_seller_id = async (req, res) => {
               const month = ('0' + (currentDateTime.getMonth() + 1)).slice(-2);
               const day = ('0' + currentDateTime.getDate()).slice(-2);
               const currentDateTimeFormatted = `${year}-${month}-${day}`;
-              const todayDateTime = new Date(currentDateTimeFormatted);
+              var todayDateTime = new Date(currentDateTimeFormatted);
 
               var plan_days = result[0].days;
               var plan_amount = result[0].amount;
@@ -475,30 +475,39 @@ exports.get_membership_by_seller_id = async (req, res) => {
 
           // Define the dates as ISO strings
               const createdAt = result[0].createdAt;
-              const createdAtDate = new Date(createdAt);
+              const planTakenDate = new Date(createdAt);
 
-
+          //    var todayDateTime = new Date("2024-06-01T00:00:00.000Z");
 
               var oneDayAmount = Math.round(plan_amount/plan_days);
+// Check if today is the first day of the month
+const isFirstDayOfMonth = todayDateTime.getDate() === 1;
+
+console.log("isFirstDayOfMonth",isFirstDayOfMonth)
+
               console.log("oneDayAmount",oneDayAmount)
+
 
               // Create Date objects
 
               console.log("endDate",endDate);
               console.log("todayDateTime",todayDateTime);
-              console.log("plan taken date",createdAtDate);
+              console.log("plan taken date",planTakenDate);
 
               // Calculate the difference in milliseconds
-              const diffInMilliseconds = todayDateTime - createdAtDate;
+              const diffInMilliseconds = todayDateTime - planTakenDate;
 
               // Convert milliseconds to days
               const millisecondsInADay = 24 * 60 * 60 * 1000;
-              const diffInDays = Math.round(diffInMilliseconds / millisecondsInADay);
+              var diffInDays = Math.round(diffInMilliseconds / millisecondsInADay);
+              if (isFirstDayOfMonth) {
+                diffInDays += 30; // Count the whole day if it's the first day of the month
+              }
+              
               console.log("diffInDays",diffInDays);
-
-
-
                   var used_amount =  (oneDayAmount)*diffInDays;
+
+
                   console.log("plan_amount",plan_amount);
                   console.log("used_amount",used_amount);
                   var  remaining_amount = plan_amount - used_amount;
@@ -563,6 +572,7 @@ exports.get_membership_by_seller_id = async (req, res) => {
           });
       }
   } catch (error) {
+    console.log('error',error)
       res.status(500).send({
           status: false,
           message: error.toString() ?? "Internal Server Error",

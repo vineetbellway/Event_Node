@@ -468,12 +468,53 @@ exports.get_membership_by_seller_id = async (req, res) => {
               const currentDateTimeFormatted = `${year}-${month}-${day}`;
               const todayDateTime = new Date(currentDateTimeFormatted);
 
+              var plan_days = result[0].days;
+              var plan_amount = result[0].amount;
+
+              console.log("plan_days",plan_days)
+
+          // Define the dates as ISO strings
+              const createdAt = result[0].createdAt;
+              const createdAtDate = new Date(createdAt);
+
+
+
+              var oneDayAmount = Math.round(plan_amount/plan_days);
+              console.log("oneDayAmount",oneDayAmount)
+
+              // Create Date objects
+
+              console.log("endDate",endDate);
+              console.log("todayDateTime",todayDateTime);
+              console.log("plan taken date",createdAtDate);
+
+              // Calculate the difference in milliseconds
+              const diffInMilliseconds = todayDateTime - createdAtDate;
+
+              // Convert milliseconds to days
+              const millisecondsInADay = 24 * 60 * 60 * 1000;
+              const diffInDays = Math.round(diffInMilliseconds / millisecondsInADay);
+              console.log("diffInDays",diffInDays);
+
+
+
+                  var used_amount =  (oneDayAmount)*diffInDays;
+                  console.log("plan_amount",plan_amount);
+                  console.log("used_amount",used_amount);
+                  var  remaining_amount = plan_amount - used_amount;
+                  if(plan_days == "180"){
+                    result[0].remaining_amount = remaining_amount;
+                  } else {
+                    result[0].remaining_amount = 0;
+                  }
+                  
               if (todayDateTime >= eDateTime) {
                   result[0].status = "denied";
               }
           } else if (eventLimit !== "unlimited" && sellerEventLength >= eventLimit) {
               const endDate = new Date(result[0].end_date);
               const currentDate = new Date();
+              result[0].remaining_amount = 0;
 
               if (currentDate >= endDate || result[0].is_event_created_after_renew_plan > '0') {
                   result[0].status = "denied";
@@ -501,6 +542,8 @@ exports.get_membership_by_seller_id = async (req, res) => {
                 highestPlanData = plan.subscription_plan[0];
               }
           });
+
+
 
          // result[0].highest_plan_name = highestPlanName;
           // Return data with highest plan name

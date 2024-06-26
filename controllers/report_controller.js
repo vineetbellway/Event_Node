@@ -259,7 +259,7 @@ exports.get_item_sales_report = async (req, res) => {
     
         var seller_id = seller_record._id;
 
-         var seller_id = '665fedfb5f1b4ac29301e3d1';
+      //   var seller_id = '665fedfb5f1b4ac29301e3d1';
 
         const result = await Membership.aggregate([
             { $match: { seller_id: new mongoose.Types.ObjectId(seller_id),'status':'active' } },

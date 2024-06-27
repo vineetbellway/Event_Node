@@ -1087,9 +1087,106 @@ exports.search_events = async (req, res) => {
     EventModel.aggregatePaginate(myAggregate, options)
       .then(async (result) => {
         if (result) {
-          // Processing and formatting result data as before
-          // ...
+          const baseURL = `${req.protocol}://${req.get('host')}`;
 
+          result.data = await Promise.all(result.data.map(async (event) => {
+            const selected_payment = event.selected_payment;
+            let razor_pay_key = '';
+
+            if (selected_payment === 'admin') {
+              const settingData = await BusinessSettings.findOne({ razor_pay_key });
+              razor_pay_key = settingData?.upi_id || '';
+            } else {
+              const settingData = await UPI.findOne({ seller_id: event.seller_id });
+              razor_pay_key = settingData?.upi_id || '';
+            }
+
+            const sellerEvents = await EventModel.find({ seller_id: event.seller_id });
+              const eventIds = sellerEvents.map(e => e._id);
+
+              const guestRatings = await Feedback.aggregate([
+                {
+                  $match: {
+                    event_id: { $in: eventIds }
+                  },
+                },
+                {
+                  $group: {
+                    _id: {
+                      guest_id: "$guest_id",
+                      rating: "$rating"
+                    }
+                  }
+                },
+                {
+                  $group: {
+                    _id: "$_id.rating",
+                    count: { $sum: 1 }
+                  }
+                },
+                {
+                  $sort: { _id: -1 }
+                }
+              ]);
+
+              const totalGuestsResult = await Feedback.aggregate([
+                {
+                  $match: {
+                    event_id: { $in: eventIds }
+                  },
+                },
+                {
+                  $group: {
+                    _id: "$guest_id"
+                  }
+                },
+                {
+                  $count: "totalGuests"
+                }
+              ]);
+
+              const totalGuests = totalGuestsResult.length > 0 ? totalGuestsResult[0].totalGuests : 0;
+            
+              const ratingsPercentage = {};
+              var totalSum = 0;
+
+              guestRatings.forEach(rating => {
+                totalSum += rating.count;
+              });
+              console.log("guestRatings",guestRatings)
+              var average_rating = 0;
+              guestRatings.forEach(rating => {
+                ratingsPercentage[rating._id] = Math.round(((rating.count / totalSum) * 100).toFixed(2)).toString();
+                 average_rating =  totalSum/guestRatings.length;
+              });
+
+
+            if (event.status !== 'expired') {
+              const eventImageUrl = baseURL + '/uploads/events/' + event.image;
+              const banner_data = event.banner_data[0];
+              const bannerImageUrl = banner_data ? baseURL + '/uploads/banners/' + banner_data.image : '';
+              const seller = await SellerModel.findOne({ user_id: event.seller_id });
+              ratingsPercentage.seller_name = seller.contact_name;
+              ratingsPercentage.total_events = sellerEvents.length;
+              ratingsPercentage.average_rating = average_rating.toString();;
+
+
+
+              return {
+                ...event,
+                image: eventImageUrl,
+                razor_pay_key: razor_pay_key,
+                banner_data: banner_data ? { ...banner_data, image: bannerImageUrl } : null,
+                rating_data: ratingsPercentage
+              };
+            } else {
+              return {
+                ...event,
+                rating_data: ratingsPercentage
+
+              }
+            }
+          }));
           res.status(200).send({
             status: true,
             message: "success",

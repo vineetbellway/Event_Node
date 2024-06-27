@@ -480,12 +480,15 @@ exports.get_membership_by_seller_id = async (req, res) => {
           //    var todayDateTime = new Date("2024-06-01T00:00:00.000Z");
 
               var oneDayAmount = Math.round(plan_amount/plan_days);
+              var oneMonthAmount = (plan_amount / 6).toFixed(2);
+
+              console.log("oneMonthAmount",oneMonthAmount)
               // Check if today is the first day of the month
               const  dayOfMonth = todayDateTime.getDate() >= 1;
 
               console.log("dayOfMonth",dayOfMonth)
 
-              console.log("oneDayAmount",oneDayAmount);
+             // console.log("oneDayAmount",oneDayAmount);
 
               // Create Date objects
 
@@ -498,8 +501,15 @@ exports.get_membership_by_seller_id = async (req, res) => {
                   const millisecondsInADay = 24 * 60 * 60 * 1000;
                   var diffInDays = Math.round(diffInMilliseconds / millisecondsInADay);
 
-                  console.log("used days before",diffInDays)
-                  if (dayOfMonth) {
+                  // Calculate the number of months between todayDateTime and planTakenDate
+                  const diffInMonths = 
+                      (todayDateTime.getFullYear() - planTakenDate.getFullYear()) * 12 + 
+                      todayDateTime.getMonth() - planTakenDate.getMonth();
+
+                  console.log("diffInMonths", diffInMonths);
+
+                 // console.log("used days before",diffInDays)
+                /*  if (dayOfMonth) {
                     var todayDateTimeYear = todayDateTime.getFullYear();
                     var todayDateTimeMonth = ('0' + (todayDateTime.getMonth() + 1)).slice(-2);
                     const todayDateTimeDay = ('0' + todayDateTime.getDate()).slice(-2);
@@ -523,31 +533,35 @@ exports.get_membership_by_seller_id = async (req, res) => {
 
 
                     diffInDays = diffInDays + differenceInDays - 1; 
-                  }
+                  }*/
               
-                  console.log("used days after",diffInDays);
-                  var used_amount =  (oneDayAmount)*diffInDays;
-                  console.log("plan_amount",plan_amount);
-                  console.log("used_amount",used_amount);
-                  var  remaining_amount = plan_amount - used_amount;
-                  if(plan_days == "180"){
-                    result[0].remaining_amount = remaining_amount;
-                  } else {
-                    result[0].remaining_amount = 0;
-                  }
-                  
-              if (todayDateTime >= eDateTime) {
-                  result[0].status = "denied";
-              }
-          } else if (eventLimit !== "unlimited" && sellerEventLength >= eventLimit) {
-              const endDate = new Date(result[0].end_date);
-              const currentDate = new Date();
-              result[0].remaining_amount = 0;
+                  //  console.log("used days after",diffInDays);
+                   // var used_amount_old =  (oneDayAmount)*diffInDays;
+                    var used_amount =  (oneMonthAmount)*(diffInMonths+1);
+                    used_amount = used_amount.toFixed(2)
 
-              if (currentDate >= endDate || result[0].is_event_created_after_renew_plan > '0') {
-                  result[0].status = "denied";
-              }
-          }
+                    console.log("plan_amount",plan_amount);
+                    console.log("used_amount",used_amount);
+                    var  remaining_amount = plan_amount - used_amount;
+                    remaining_amount = remaining_amount.toFixed(2);
+                    if(plan_days == "180"){
+                      result[0].remaining_amount = remaining_amount;
+                    } else {
+                      result[0].remaining_amount = 0;
+                    }
+                    
+                if (todayDateTime >= eDateTime) {
+                    result[0].status = "denied";
+                }
+            } else if (eventLimit !== "unlimited" && sellerEventLength >= eventLimit) {
+                const endDate = new Date(result[0].end_date);
+                const currentDate = new Date();
+                result[0].remaining_amount = 0;
+
+                if (currentDate >= endDate || result[0].is_event_created_after_renew_plan > '0') {
+                    result[0].status = "denied";
+                }
+            }
 
           // Find highest plan name
           var highestPlanData = '';

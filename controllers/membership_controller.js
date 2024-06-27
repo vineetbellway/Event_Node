@@ -473,41 +473,60 @@ exports.get_membership_by_seller_id = async (req, res) => {
 
               console.log("plan_days",plan_days)
 
-          // Define the dates as ISO strings
+              // Define the dates as ISO strings
               const createdAt = result[0].createdAt;
               const planTakenDate = new Date(createdAt);
 
           //    var todayDateTime = new Date("2024-06-01T00:00:00.000Z");
 
               var oneDayAmount = Math.round(plan_amount/plan_days);
-// Check if today is the first day of the month
-const isFirstDayOfMonth = todayDateTime.getDate() === 1;
+              // Check if today is the first day of the month
+              const  dayOfMonth = todayDateTime.getDate() >= 1;
 
-console.log("isFirstDayOfMonth",isFirstDayOfMonth)
+              console.log("dayOfMonth",dayOfMonth)
 
-              console.log("oneDayAmount",oneDayAmount)
-
+              console.log("oneDayAmount",oneDayAmount);
 
               // Create Date objects
 
-              console.log("endDate",endDate);
-              console.log("todayDateTime",todayDateTime);
-              console.log("plan taken date",planTakenDate);
+                  console.log("plan taken date",planTakenDate);
 
-              // Calculate the difference in milliseconds
-              const diffInMilliseconds = todayDateTime - planTakenDate;
+                  // Calculate the difference in milliseconds
+                  const diffInMilliseconds = todayDateTime - planTakenDate;
 
-              // Convert milliseconds to days
-              const millisecondsInADay = 24 * 60 * 60 * 1000;
-              var diffInDays = Math.round(diffInMilliseconds / millisecondsInADay);
-              if (isFirstDayOfMonth) {
-                diffInDays += 30; // Count the whole day if it's the first day of the month
-              }
+                  // Convert milliseconds to days
+                  const millisecondsInADay = 24 * 60 * 60 * 1000;
+                  var diffInDays = Math.round(diffInMilliseconds / millisecondsInADay);
+
+                  console.log("used days before",diffInDays)
+                  if (dayOfMonth) {
+                    var todayDateTimeYear = todayDateTime.getFullYear();
+                    var todayDateTimeMonth = ('0' + (todayDateTime.getMonth() + 1)).slice(-2);
+                    const todayDateTimeDay = ('0' + todayDateTime.getDate()).slice(-2);
+                    console.log("todayDateTimeMonth",todayDateTimeMonth);
+                    console.log("todayDateTimeYear",todayDateTimeYear);
+                    console.log("todayDateTimeDay",todayDateTimeDay);
+                    var totalDaysInMOnth = new Date(todayDateTimeYear, todayDateTimeMonth, 0).getDate();
+                    var endDateOfMonth = `${todayDateTimeYear}-${todayDateTimeMonth}-${totalDaysInMOnth}`;
+                    var endDateOfMonth = new Date(endDateOfMonth);  
+                     console.log("endDateOfMonth",endDateOfMonth);
+                     console.log("todayDateTime",todayDateTime);
+
+
+                    // Calculate the difference in milliseconds
+                  const differenceInTime = endDateOfMonth.getTime() - todayDateTime.getTime();
+
+                  // Convert the difference from milliseconds to days
+                  const differenceInDays = differenceInTime / (1000 * 3600 * 24);
+
+                    console.log("differenceInDays",differenceInDays);
+
+
+                    diffInDays = diffInDays + differenceInDays - 1; 
+                  }
               
-              console.log("diffInDays",diffInDays);
+                  console.log("used days after",diffInDays);
                   var used_amount =  (oneDayAmount)*diffInDays;
-
-
                   console.log("plan_amount",plan_amount);
                   console.log("used_amount",used_amount);
                   var  remaining_amount = plan_amount - used_amount;

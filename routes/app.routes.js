@@ -349,6 +349,9 @@ router.get("/fns-moving-items-report",auth,reportController.fns_moving_item_repo
 // get guest potential report
 router.get("/guest-potential-report",auth,reportController.guest_potential_report);
 
+// get booker guest presence report
+router.get("/booker-guest-presence-report",auth,reportController.booker_guest_presence_report);
+
 
 // get guest loyality report
 router.get("/loyalty-point-report",auth,reportController.guest_loyalty_point_report);

@@ -17,6 +17,8 @@ const ServiceItemPayments = require("../models/service_item_payments.model");
 const ServiceModel = require("../models/service.model");
 const { admin } = require("../config/firebase.config");
 const Membership = require("../models/membership.model");
+const EventValidator = require("../models/event_validator.model");
+
 
 
 exports.get_item_sales_report_validator_wise = async (req, res) => {
@@ -2055,3 +2057,197 @@ exports.get_active_and_expired_loyalty_events = async (req, res) => {
 };
 
 
+exports.booker_guest_presence_report = async (req, res) => {
+  try {
+      const validator_id = req.query.validator_id;
+      var event_validator_record = await EventValidator.findOne({"validator_id":validator_id,'role' : 'booker'});
+     // console.log("event_validator_record",event_validator_record);
+      if(!event_validator_record){
+        return res.json({ status: false, message: 'No booker found', data: null });
+
+      }
+      var event_id = event_validator_record.event_id;
+
+      const eventData = await EventModel.findById(event_id);
+    //  console.log("eventData",eventData)
+
+    if(eventData.type == 'entry_event'){
+      var reportData = await Booking.aggregate([
+        {
+          $match: { event_id: new mongoose.Types.ObjectId(event_id) }
+        },
+        {
+          $group: {
+            _id: '$guest_id',
+          }
+        }
+    
+      ]);
+      
+
+      var reportInfo = [];
+      // Iterate through repeatedGuests array
+      for (let i = 0; i < reportData.length; i++) {
+          const guest = reportData[i];
+          var guest_id = guest._id;
+ 
+          const guestInfo =   await GuestModel.findOne({ "user_id" :  guest_id });
+           const userInfo =  guestInfo ? await User.findOne({ _id: guestInfo.user_id }) : '';
+            // Add guest name and phone number to the guest object
+           guest.name = guestInfo ? guestInfo.full_name : '';
+            guest.phone = userInfo ? userInfo.code_phone :'';
+            guest.money_spend = 0;
+           // Push the modified guest object to guestsInfo array
+           reportInfo.push(guest);
+      }
+    } 
+    
+    console.log("type",eventData.type)
+    
+    if (eventData.type === "food_event") {
+   
+      var reportData = await BookedMenuItem.aggregate([
+          {
+            $lookup: {
+              from: 'menuitempayments',
+              localField: 'payment_id',
+              foreignField: '_id',
+              as: 'menu_item_payment_data',
+            },
+          },
+          {
+            $unwind: '$menu_item_payment_data' // Deconstruct the array
+          },
+          {
+            $match: { "menu_item_payment_data.is_approved": "yes", event_id: new mongoose.Types.ObjectId(event_id) }
+          },
+          {
+            $group: {
+              _id: '$guest_id',
+              money_spend: { $sum: '$menu_item_payment_data.amount' } // Assuming 'amount' is the field representing the total amount
+            }
+          },
+        ]);
+
+        var reportInfo = [];
+        console.log("reportData",reportData)
+        // Iterate through repeatedGuests array
+        for (let i = 0; i < reportData.length; i++) {
+            const guest = reportData[i];
+            var guest_id = guest._id;
+   
+            const guestInfo =   await GuestModel.findOne({ "user_id" :  guest_id });
+             const userInfo =  guestInfo ? await User.findOne({ _id: guestInfo.user_id }) : '';
+              // Add guest name and phone number to the guest object
+             guest.name = guestInfo ? guestInfo.full_name : '';
+              guest.phone = userInfo ? userInfo.code_phone :'';
+             // Push the modified guest object to guestsInfo array
+             reportInfo.push(guest);
+        }
+
+      } 
+
+      if (eventData.type === "entry_food_event") {
+        var reportData =await BookingMenu.aggregate([
+          {
+            $lookup: {
+              from: 'bookingpayments',
+              localField: 'payment_id',
+              foreignField: '_id',
+              as: 'menu_item_payment_data',
+            },
+          },
+          {
+            $unwind: '$menu_item_payment_data' // Deconstruct the array
+          },
+          {
+            $match: { "menu_item_payment_data.status": "active", event_id: new mongoose.Types.ObjectId(event_id) }
+          },
+          {
+            $group: {
+              _id: '$guest_id',
+              money_spend: { $sum: '$menu_item_payment_data.amount' } // Assuming 'amount' is the field representing the total amount
+            }
+          }
+        ]);
+        var reportInfo = [];
+        console.log("reportData",reportData)
+        // Iterate through repeatedGuests array
+        for (let i = 0; i < reportData.length; i++) {
+            const guest = reportData[i];
+            var guest_id = guest._id;
+   
+            const guestInfo =   await GuestModel.findOne({ "user_id" :  guest_id });
+             const userInfo =  guestInfo ? await User.findOne({ _id: guestInfo.user_id }) : '';
+              // Add guest name and phone number to the guest object
+             guest.name = guestInfo ? guestInfo.full_name : '';
+              guest.phone = userInfo ? userInfo.code_phone :'';
+             // Push the modified guest object to guestsInfo array
+             reportInfo.push(guest);
+        }
+      }
+    
+    
+    
+    
+    
+    
+    
+     if (eventData.type === "loyalty") {
+       var reportData =await BookedServiceItem.aggregate([
+          {
+            $lookup: {
+              from: 'serviceitempayments',
+              localField: 'payment_id',
+              foreignField: '_id',
+              as: 'service_item_payment_data',
+            },
+          },
+          {
+            $unwind: '$service_item_payment_data' // Deconstruct the array
+          },
+          {
+            $match: {  event_id: new mongoose.Types.ObjectId(event_id) }
+          },
+          {
+            $group: {
+              _id: '$guest_id',
+              money_spend: { $sum: '$service_item_payment_data.total_points' } // Assuming 'amount' is the field representing the total amount
+            }
+          }
+        ]);
+        var reportInfo = [];
+        console.log("reportData",reportData)
+        // Iterate through repeatedGuests array
+        for (let i = 0; i < reportData.length; i++) {
+            const guest = reportData[i];
+            var guest_id = guest._id;
+   
+            const guestInfo =   await GuestModel.findOne({ "user_id" :  guest_id });
+             const userInfo =  guestInfo ? await User.findOne({ _id: guestInfo.user_id }) : '';
+              // Add guest name and phone number to the guest object
+             guest.name = guestInfo ? guestInfo.full_name : '';
+              guest.phone = userInfo ? userInfo.code_phone :'';
+             // Push the modified guest object to guestsInfo array
+             reportInfo.push(guest);
+        }
+    }
+   
+    
+
+      
+      console.log("reportInfo",reportInfo);
+  
+      var  data = reportInfo.length > 0 ? reportInfo : [];
+      if(data.length > 0){
+        res.json({ status: true,message: 'Data found', data : data})
+      } else {
+        res.json({ status: false,message: 'No data found', data : data})
+      } 
+  
+      ;
+    } catch (err) {
+      console.log("error",err)
+      res.status(500).json({ status: false, error: err.message });
+    }
+};

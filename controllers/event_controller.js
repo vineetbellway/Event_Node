@@ -1147,7 +1147,7 @@ exports.search_events = async (req, res) => {
 
               const totalGuests = totalGuestsResult.length > 0 ? totalGuestsResult[0].totalGuests : 0;
             
-              const ratingsPercentage = {};
+              var ratingsPercentage = {};
               var totalSum = 0;
 
               guestRatings.forEach(rating => {
@@ -1155,37 +1155,46 @@ exports.search_events = async (req, res) => {
               });
               console.log("guestRatings",guestRatings)
               var average_rating = 0;
-              guestRatings.forEach(rating => {
-                ratingsPercentage[rating._id] = Math.round(((rating.count / totalSum) * 100).toFixed(2)).toString();
-                 average_rating =  totalSum/guestRatings.length;
-              });
-
-
-            if (event.status !== 'expired') {
-              const eventImageUrl = baseURL + '/uploads/events/' + event.image;
-              const banner_data = event.banner_data[0];
-              const bannerImageUrl = banner_data ? baseURL + '/uploads/banners/' + banner_data.image : '';
-              const seller = await SellerModel.findOne({ user_id: event.seller_id });
-              ratingsPercentage.seller_name = seller.contact_name;
-              ratingsPercentage.total_events = sellerEvents.length;
-              ratingsPercentage.average_rating = average_rating.toString();;
-
-
-
-              return {
-                ...event,
-                image: eventImageUrl,
-                razor_pay_key: razor_pay_key,
-                banner_data: banner_data ? { ...banner_data, image: bannerImageUrl } : null,
-                rating_data: ratingsPercentage
-              };
-            } else {
-              return {
-                ...event,
-                rating_data: ratingsPercentage
-
+              if(guestRatings.length > 0){
+                guestRatings.forEach(rating => {
+                  ratingsPercentage[rating._id] = Math.round(((rating.count / totalSum) * 100).toFixed(2)).toString();
+                   average_rating =  totalSum/guestRatings.length;
+                });
+              } else {
+                  var ratingsPercentage = {
+                    "5.0": "0",
+                    "4.0": "0",
+                    "3.0": "0",
+                    "2.0": "0",
+                    "1.0": "0"
+                };     
               }
+              
+              const eventImageUrl = baseURL + '/uploads/events/' + event.image;
+
+            
+
+            const seller = await SellerModel.findOne({ user_id: event.seller_id });
+
+
+            const banner_data = event.banner_data[0];
+            const bannerImageUrl = banner_data ? baseURL + '/uploads/banners/' + banner_data.image : '';
+           
+
+            ratingsPercentage.seller_name = seller.contact_name;
+            ratingsPercentage.total_events = sellerEvents.length;
+            ratingsPercentage.average_rating = average_rating.toString();
+
+            return {
+              ...event,
+              image: eventImageUrl,
+              razor_pay_key: razor_pay_key,
+              banner_data: banner_data ? { ...banner_data, image: bannerImageUrl } : null,
+              rating_data: ratingsPercentage
+
             }
+
+
           }));
           res.status(200).send({
             status: true,

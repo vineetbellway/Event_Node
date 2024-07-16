@@ -440,7 +440,9 @@ exports.get_membership_by_seller_id = async (req, res) => {
           { $limit: 1 }
       ]);
 
-      if (result.length > 0) {
+      console.log("result",result);
+
+      if(result.length > 0) {
           // Process membership data
 
           var seller_id = result[0].seller_id;
@@ -450,7 +452,7 @@ exports.get_membership_by_seller_id = async (req, res) => {
           const sellerEvents = await EventModel.find({ seller_id: user_id });
           var sellerEventLength = sellerEvents.length;
           var eventLimit = result[0].event_limit;
-
+          console.log("eventLimit",eventLimit);
           
 
           // Check if event limit is unlimited
@@ -603,6 +605,10 @@ exports.get_membership_by_seller_id = async (req, res) => {
           res.status(200).send({
               status: false,
               message: "No data found",
+              data: {
+                current_plan_data: null,
+                highest_plan_data: null
+            },
              // data: null,
           });
       }

@@ -451,6 +451,8 @@ exports.get_membership_by_seller_id = async (req, res) => {
           var sellerEventLength = sellerEvents.length;
           var eventLimit = result[0].event_limit;
 
+          
+
           // Check if event limit is unlimited
           if (eventLimit === "unlimited") {
               var endDate = result[0].end_date;
@@ -601,7 +603,7 @@ exports.get_membership_by_seller_id = async (req, res) => {
           res.status(200).send({
               status: false,
               message: "No data found",
-              data: null,
+             // data: null,
           });
       }
   } catch (error) {

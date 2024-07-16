@@ -309,11 +309,11 @@ exports.get_rating_breakup_list = async (req, res) => {
     ]);
 
     const ratingCounts = {
-      "1": 0,
-      "2": 0,
-      "3":0,
-      "4": 0,
-      "5": 0
+      "1.0": 0,
+      "2.0": 0,
+      "3.0":0,
+      "4.0": 0,
+      "5.0": 0
     };
 
     ratingBreakdown.forEach((item) => {

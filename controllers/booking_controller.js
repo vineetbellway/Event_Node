@@ -1685,7 +1685,7 @@ const get_pending_guest_list_by_event_id = async (req, res) => {
         {
           $match: {
             event_id: new mongoose.Types.ObjectId(event_id),
-            status: "pending",
+            status: "active",
              "payment_mode": { $nin: ["upi"] } , // Exclude documents with payment_mode not equal to "upi" or "pay on counter"
 
           },

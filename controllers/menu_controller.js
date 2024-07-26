@@ -974,7 +974,7 @@ exports.get_menu_by_event_id = async (req, res) => {
 
       var is_cover_charge_added = event.is_cover_charge_added;
     //  console.log("is_cover_charge_added",is_cover_charge_added)
-    //  console.log("event",event);
+     console.log("event",event);
       if(event.type == "food_event"){
         if(is_cover_charge_added == "no"){
           console.log("cover charge disabled");
@@ -3019,7 +3019,7 @@ exports.manage_menu_item = async (req, res, next) => {
   }
 };
 
-exports.get_menu_items = async (req, res) => {
+exports.get_menu_items_backup_26_july = async (req, res) => {
   try {
     var guest_id = req.query.guest_id;
     var event_id = req.query.event_id;
@@ -3074,6 +3074,227 @@ exports.get_menu_items = async (req, res) => {
         data: [],
       });
     }
+  } catch (error) {
+    res.status(500).send({
+      status: false,
+      message: error.toString() || "Internal Server Error",
+      data: null,
+    });
+  }
+};
+
+exports.get_menu_items = async (req, res) => {
+  try {
+    var guest_id = req.query.guest_id;
+    var event_id = req.query.event_id;
+    // Check if the event exists
+    const event = await EventModel.findById(event_id);
+    if (!event) {
+      return res.status(404).send({
+        status: false,
+        message: "Event not found",
+        data: null,
+      });
+    }
+
+    console.log("event",event)
+
+    if(event.is_cover_charge_added == 'no'){
+           // Fetch all menu items
+     const menuResults = await Menu.aggregate([
+      {
+        $match: {
+          event_id: new mongoose.Types.ObjectId(event_id),
+        },
+      },
+      {
+        $lookup: {
+          from: "uoms",
+          localField: "uom_id",
+          foreignField: "_id",
+          as: "uom_data",
+        },
+      },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "category_id",
+          foreignField: "_id",
+          as: "category_data",
+        },
+      },
+      {
+        $unwind: "$uom_data",
+      },
+      {
+        $unwind: "$category_data",
+      },
+      {
+        $project: {
+          _id: 1,
+          event_id: 1,
+          name: 1,
+          uom_id: 1,
+          category_id: 1,
+          total_stock: 1,
+          cost_price: 1,
+          selling_price: 1,
+          uom: "$uom_data.name",
+          category: "$category_data.name",
+          status: 1,
+          is_limited: 1,
+          limited_count: 1,
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      },
+    ]);
+
+
+
+          // Fetch all menu items selected by the guest
+          const selectedMenuItems = await MenuItem.find({
+            guest_id: guest_id,
+            event_id: event_id,
+            quantity: { $gt: 0 },
+          }).populate('menu_id');
+  
+  
+          console.log("selectedMenuItems",selectedMenuItems)
+          // Filter menu items based on the selected limited item's category
+
+          const filteredResults = menuResults.filter(item => {
+            const menuRecord = selectedMenuItems.find(selectedItem => {
+              //console.log("s",selectedItem.menu_id.is_limited)
+              var is_limited = selectedItem.menu_id.is_limited;
+              console.log("item.is_limited",item.is_limited)
+              if(item.is_limited == 'yes' && item.limited_count > 0){
+                
+           
+                  return (
+                    selectedItem.menu_id &&
+                    selectedItem.menu_id.category_id.toString() === item.category_id.toString()
+                  );
+                
+                
+              }
+             
+            });
+
+
+            return !menuRecord || (menuRecord.menu_id._id.toString() === item._id.toString());
+  
+            
+          });
+
+          console.log("finalResponse 22",filteredResults)
+  
+  
+
+
+
+    console.log("filteredResults",filteredResults);
+    //return false;
+    if (filteredResults.length > 0) {
+      let sum = 0;
+      const menuPromises = filteredResults.map(async (item) => {
+        //console.log("item", item);
+          var menu_id = item._id;
+          var menu_record = await Menu.findById(menu_id);
+          if (menu_record) {
+            var new_price = menu_record.selling_price;
+            sum += new_price;
+            return {
+              ...item,
+              quantity: item.quantity, // Include quantity in the response
+            }; // Return item with new_price for Promise.all
+          }
+        
+      });
+
+      const new_result = await Promise.all(menuPromises);
+
+      console.log("new_result",new_result)
+
+      const filteredMenuList = new_result.filter((item) => item);
+        res.status(200).send({
+          status: true,
+          message: "Data found",
+          data: {
+            menu_list: filteredMenuList,
+            total_selling_price: sum, // Calculate sum after promises are resolved
+          },
+        });
+
+
+      
+    } else {
+      res.status(200).send({
+        status: true,
+        message: "No data found",
+        data: [],
+      });
+    }
+
+    } else {
+      const result = await MenuItem.aggregate([
+        {
+          $match: {
+            guest_id: new mongoose.Types.ObjectId(guest_id),
+            event_id: new mongoose.Types.ObjectId(event_id),
+          },
+        },
+      ]);
+      console.log("result",result);
+      //return false;
+      if (result.length > 0) {
+        let sum = 0;
+        const menuPromises = result.map(async (item) => {
+          //console.log("item", item);
+          if (item && typeof item.quantity === 'number' && item.quantity > 0) {
+            var menu_id = item.menu_id;
+            var menu_record = await Menu.findById(menu_id);
+            if (menu_record) {
+              var new_price = menu_record.selling_price * item.quantity;
+              sum += new_price;
+              return {
+                ...item,
+                quantity: item.quantity, // Include quantity in the response
+              }; // Return item with new_price for Promise.all
+            }
+          }
+        });
+  
+        const new_result = await Promise.all(menuPromises);
+  
+  
+  
+        const filteredMenuList = new_result.filter((item) => item && typeof item.quantity === 'number' && item.quantity > 0);
+          res.status(200).send({
+            status: true,
+            message: "Data found",
+            data: {
+              menu_list: filteredMenuList,
+              total_selling_price: sum, // Calculate sum after promises are resolved
+            },
+          });
+  
+  
+        
+      } else {
+        res.status(200).send({
+          status: true,
+          message: "No data found",
+          data: [],
+        });
+      }
+
+    }
+
+
+
+
+    
   } catch (error) {
     res.status(500).send({
       status: false,

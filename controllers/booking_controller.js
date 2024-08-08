@@ -2375,16 +2375,30 @@ const get_booked_menu_list = async (req, res) => {
               } else {
                 // If the menu item doesn't exist, create a new entry
                // console.log("inside else quantity",bookedMenuRecord.quantity)
-                groupedMenuData[menuKey] = {
-                  ...menuRecord.toObject(),
-                  menu_quantity: bookedMenuRecord.quantity,
-                };
+               groupedMenuData[menuKey] = {
+                ...menuRecord.toObject(),
+               // menu_quantity: bookedMenuRecord.quantity,
+              };
+               if(paymentRecord.status == "active"){ 
+                if(paymentRecord.is_consumed == "no"){
+                  groupedMenuData[menuKey].menu_quantity += bookedMenuRecord.quantity;
+                } else {
+                  groupedMenuData[menuKey].menu_quantity -= bookedMenuRecord.quantity;
+                }
+
+                
+               
+              }
+
+
+               console.log("inside else",groupedMenuData)
+               
               }
             }
           }
 
           return Object.values(groupedMenuData)
-            .filter(menuItem => menuItem.menu_quantity > 0); 
+            .filter(menuItem => menuItem.menu_quantity > 1); 
         })
       );
 
@@ -2400,7 +2414,7 @@ const get_booked_menu_list = async (req, res) => {
       } else {
         res.status(200).json({
           status: false,
-          message: "No booked menus found",
+          message: "No data found",
           data: [],
         });
       }

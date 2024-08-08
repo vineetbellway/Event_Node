@@ -15,6 +15,8 @@ const Menu = require("../models/menu.model");
 const MenuItem = require("../models/menu_item.model");
 const Validator = require("../models/validator.model");
 const ValidatorEventBalance = require("../models/validator_event_balance.model");
+const UPI = require("../models/upi.model");
+const BusinessSettings = require("../models/business_settings.model");
 
 
 // It will book event by guest
@@ -260,12 +262,35 @@ const get_bookings = async (req, res) => {
           $sort: { createdAt: -1 }, // Sort by createdAt in descending order
         },
       ])
-      .then((result) => {
+      .then(async(result) => {
         console.log("result",result)
         if (result && result.length > 0) {
           var booking_data = [];
 
           for (const booking of result) {
+
+            let razor_pay_key = '';
+
+            if (booking.event_data && booking.event_data.length > 0) {
+              const event = booking.event_data[0];
+              var selected_payment = event.selected_payment;
+
+              if (selected_payment == 'admin') {
+                let settingData = await BusinessSettings.find();
+                console.log("settingData",settingData)
+                if (settingData.length > 0) {
+                  razor_pay_key = settingData[0].razor_pay_key;
+                }
+              } else {
+                let settingData = await UPI.findOne({ "seller_id": event.seller_id });
+                if (settingData && settingData.upi_id) {
+                  razor_pay_key = settingData.upi_id;
+                }
+              }
+            }
+
+
+
             if(status == 'expired'){
               var response = {
                 _id: booking._id,
@@ -304,6 +329,8 @@ const get_bookings = async (req, res) => {
                   ...booking.event_data[0],
                   // Constructing image URL
                   image: constructImageUrl(req, booking.event_data[0].image),
+                  razor_pay_key: razor_pay_key
+
                 } : null,
                 booked_menu_data:booking.booked_menu_data,
                 ticket_limit: booking.ticket_limit,

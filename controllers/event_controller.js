@@ -701,9 +701,9 @@ exports.search_events_old = async (req, res) => {
            // console.log("event",event)
             var selected_payment = event.selected_payment;
             if(selected_payment == 'admin'){
-                let settingData = await BusinessSettings.findOne({ razor_pay_key });
-                if (settingData && settingData.upi_id) {
-                  var  razor_pay_key = settingData.upi_id;
+                let settingData = await BusinessSettings.find();
+                if (settingData.length > 0) {
+                  var  razor_pay_key = settingData[0].razor_pay_key;
                 } else {
                   var  razor_pay_key = '';
                 }
@@ -1094,8 +1094,8 @@ exports.search_events = async (req, res) => {
             let razor_pay_key = '';
 
             if (selected_payment === 'admin') {
-              const settingData = await BusinessSettings.findOne({ razor_pay_key });
-              razor_pay_key = settingData?.upi_id || '';
+              const settingData = await BusinessSettings.find();
+              razor_pay_key = (settingData.length > 0) ? settingData[0].razor_pay_key : '';
             } else {
               const settingData = await UPI.findOne({ seller_id: event.seller_id });
               razor_pay_key = settingData?.upi_id || '';

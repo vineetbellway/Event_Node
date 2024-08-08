@@ -3585,12 +3585,17 @@ exports.book_menu_items = async (req, res, next) => {
           }
           var menu_item_id = _id;
 
-          var bookingMenuData = await BookingMenu.find({"event_id":event_id,"guest_id":guest_id,"menu_id":menu_id});
+         // var bookingMenuData = await BookingMenu.find({"event_id":event_id,"guest_id":guest_id,"menu_id":menu_id});
 
           
-          var booking_id = bookingMenuData[0].booking_id;
-     
-  
+         // var booking_id = bookingMenuData[0].booking_id;
+          
+         var bookingData1 = await Booking.find({"event_id":event_id,"guest_id":guest_id});
+
+         var booking_id = bookingData1[0]._id;
+         console.log("booking_id",booking_id)
+       //  return false;
+
           const bookingData = {
             booking_id,
             event_id,

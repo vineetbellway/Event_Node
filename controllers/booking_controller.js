@@ -2404,7 +2404,7 @@ const get_booked_menu_list = async (req, res) => {
           }
 
           return Object.values(groupedMenuData)
-            .filter(menuItem => menuItem.menu_quantity > 1); 
+            .filter(menuItem => menuItem.menu_quantity > 0); 
         })
       );
 

@@ -383,7 +383,7 @@ exports.get_item_sales_report = async (req, res) => {
                   
                   {
                     $lookup: {
-                      from: 'menuitempayments',
+                      from: 'bookingpayments',
                       localField: 'payment_id',
                       foreignField: '_id',
                       as: 'menu_item_payment_data',

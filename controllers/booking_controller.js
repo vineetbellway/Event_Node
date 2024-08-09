@@ -58,7 +58,7 @@ const book = async (req, res, next) => {
 
       const guesteEventBookings = await Booking.find({ event_id: event_id ,guest_id: guest_id });
       if(guesteEventBookings.length > 0){
-        res.status(200).send({ status: false, message: "You have already booked this event", data: null });
+        res.status(200).send({ status: false, message: "You have already booked menu for this event", data: null });
         return;
       }
 
@@ -2330,7 +2330,7 @@ const get_booked_menu_list = async (req, res) => {
         result.map(async (item) => {
           const groupedMenuData = {};
 
-          console.log("bookedMenuRecord",item.booked_menu_data)
+          console.log("bookedMenuRecord",item.booked_menu_data);
 
           for (const bookedMenuRecord of item.booked_menu_data) {
             const menuRecord = await Menu.findById(bookedMenuRecord.menu_id);
@@ -2347,10 +2347,14 @@ const get_booked_menu_list = async (req, res) => {
 
             if (paymentRecord) {
               const menuKey = `${menuRecord.name}_${menuRecord._id}`;
-              //console.log("menuKey",menuKey);
+              console.log("menuKey",menuKey);
           
 
               if (groupedMenuData[menuKey]) {
+                console.log("inside if");
+
+
+
                 // If the menu item already exists, add the quantity
                 console.log("inside if quantity",bookedMenuRecord)
                if(paymentRecord.status == "active"){ 
@@ -2375,20 +2379,22 @@ const get_booked_menu_list = async (req, res) => {
               } else {
                 // If the menu item doesn't exist, create a new entry
                // console.log("inside else quantity",bookedMenuRecord.quantity)
-               groupedMenuData[menuKey] = {
+              /* groupedMenuData[menuKey] = {
                 ...menuRecord.toObject(),
                // menu_quantity: bookedMenuRecord.quantity,
-              };
-               if(paymentRecord.status == "active"){ 
+              };*/
+             /*  if(paymentRecord.status == "active"){ 
                 if(paymentRecord.is_consumed == "no"){
                   groupedMenuData[menuKey].menu_quantity += bookedMenuRecord.quantity;
                 } else {
                   groupedMenuData[menuKey].menu_quantity -= bookedMenuRecord.quantity;
                 }
+               }*/
 
-                
-               
-              }
+               groupedMenuData[menuKey] = {
+                ...menuRecord.toObject(),
+                menu_quantity: bookedMenuRecord.quantity,
+              };
 
 
                console.log("inside else",groupedMenuData)
